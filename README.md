@@ -90,7 +90,7 @@ timer->inherits("QObject");         // returns true
 timer->inherits("QAbstractButton"); // returns false
 ```
 
-19. 使用弱属性机制，可以存储临时的值用于传递判断。
+19. 使用弱属性机制，可以存储临时的值用于传递判断。可以通过widget->dynamicPropertyNames()列出所有弱属性名称，然后通过widget->property("name")取出对应的弱属性的值。
 
 20. 在开发时, 无论是出于维护的便捷性, 还是节省内存资源的考虑, 都应该有一个 qss 文件来存放所有的样式表, 而不应该将 setStyleSheet 写的到处都是。如果是初学阶段或者测试阶段可以直接UI上右键设置样式表，正式项目还是建议统一到一个qss样式表文件比较好，统一管理。
 
@@ -322,6 +322,62 @@ dialog.exec();
 ```
 
 73. 安全的删除Qt的对象类，强烈建议使用deleteLater而不是delete，因为deleteLater会选择在合适的时机进行释放，而delete会立即释放，很可能会出错崩溃。如果要批量删除对象集合，可以用qDeleteAll，比如 qDeleteAll(btns);
+
+74. 在QTableView控件中，如果需要自定义的列按钮、复选框、下拉框等其他模式显示，可以采用自定义委托QItemDelegate来实现，如果需要禁用某列，则在自定义委托的重载createEditor函数返回0即可。自定义委托对应的控件在进入编辑状态的时候出现，如果想一直出现，则需要重载paint函数用drawPrimitive或者drawControl来绘制。
+
+75. 将 QApplication::style() 对应的drawPrimitive、drawControl、drawItemText、drawItemPixmap等几个方法用熟悉了，再结合QStyleOption属性，可以玩转各种自定义委托，还可以直接使用paint函数中的painter进行各种绘制，各种牛逼的表格、树状列表、下拉框等，绝对屌炸天。QApplication::style()->drawControl 的第4个参数如果不设置，则绘制出来的控件不会应用样式表。
+
+76. 心中有坐标，万物皆painter，强烈建议在学习自定义控件绘制的时候，将qpainter.h头文件中的函数全部看一遍、试一遍、理解一遍，这里边包含了所有Qt内置的绘制的接口，对应的参数都试一遍，你会发现很多新大陆，会大大激发你的绘制的兴趣，犹如神笔马良一般，策马崩腾遨游代码绘制的世界。
+
+77. 在使用setItemWidget或者setCellWidget的过程中，有时候会发现设置的控件没有居中显示而是默认的左对齐，而且不会自动拉伸填充，对于追求完美的程序员来说，这个可不大好看，有个终极通用办法就是，将这个控件放到一个widget的布局中，然后将widget添加到item中，这样就完美解决了，而且这样可以组合多个控件产生复杂的控件。
+``` c++
+//实例化进度条控件
+QProgressBar *progress = new QProgressBar;
+//增加widget+布局巧妙实现居中
+QWidget *widget = new QWidget;
+QHBoxLayout *layout = new QHBoxLayout;
+layout->setSpacing(0);
+layout->setMargin(0);
+layout->addWidget(progress);
+widget->setLayout(layout);
+ui->tableWidget->setCellWidget(0, 0, widget);
+```
+
+78. 很多时候需要在已知背景色的情况下，能够清晰的绘制文字，这个时候需要计算对应的文字颜色。
+``` c++
+//根据背景色自动计算合适的前景色
+double gray = (0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue()) / 255;
+QColor textColor = gray > 0.5 ? Qt::black : Qt::white;
+```
+
+79. 对QTableView或者QTableWidget禁用列拖动。
+``` c++
+#if (QT_VERSION <= QT_VERSION_CHECK(5,0,0))
+    ui->tableView->horizontalHeader()->setResizeMode(0, QHeaderView::Fixed);
+#else
+    ui->tableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
+#endif
+```
+
+80. 从Qt4转到Qt5，有些类的方法已经废弃或者过时了，如果想要在Qt5中启用Qt4的方法，比如QHeadVew的setMovable，可以在你的pro或者pri文件中加上一行即可：DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0
+
+81. Qt中的QColor对颜色封装的很完美，支持各种转换，比如rgb、hsb、cmy、hsl，对应的是toRgb、toHsv、toCmyk、toHsl，还支持透明度设置，颜色值还能转成16进制格式显示。
+``` c++
+QColor color(255, 0, 0, 100);
+qDebug() << color.name() << color.name(QColor::HexArgb);
+//输出 #ff0000 #64ff0000
+```
+
+82. QVariant类型异常的强大，可以说是万能的类型，在进行配置文件的存储的时候，经常会用到QVariant的转换，QVariant默认自带了toString、toFloat等各种转换，但是还是不够，比如有时候需要从QVariant转到QColor，而却没有提供toColor的函数，这个时候就要用到万能办法。
+``` c++
+if (variant.typeName() == "QColor") {
+    QColor color = variant.value<QColor>();
+    QFont font = variant.value<QFont>();
+    QString nodeValue = color.name(QColor::HexArgb);
+}
+```
+
+83. Qt中的QString和const char *之间转换，最好用toStdString().c_str()而不是toLocal8Bit().constData()，比如在setProperty中如果用后者，字符串中文就会不正确，英文正常。
 
 93. 不要怀疑这部分被狗吃了，^_^中间部分待更新，会持续更新。也欢迎各位在文章底部留言加进去。
 

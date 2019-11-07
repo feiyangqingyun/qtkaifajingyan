@@ -427,5 +427,5 @@ if (variant.typeName() == "QColor") {
 |Qt国内镜像下载地址|[https://mirrors.cloud.tencent.com/qt](https://mirrors.cloud.tencent.com/qt)|
 
 ### 三、其他
-1. Qt入门书籍推荐霍亚飞的《Qt Creator快速入门》《Qt5编程入门》，Qt进阶书籍推荐官方的《C++ GUI Qt4编程》。
+1. Qt入门书籍推荐霍亚飞的《Qt Creator快速入门》，Qt进阶书籍推荐官方的《C++ GUI Qt4编程》，qml书籍推荐《Qt5编程入门》。
 2. 强烈推荐程序员自我修养和规划系列书《大话程序员》《程序员的成长课》《解忧程序员》，受益匪浅，受益终生！

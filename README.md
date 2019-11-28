@@ -385,6 +385,37 @@ if (variant.typeName() == "QColor") {
 
 86. Qt中有个全局的焦点切换信号focusChanged，可以用它做自定义的输入法。Qt4中默认会安装输入法上下文，比如在main函数打印a.inputContext会显示值，这个默认安装的输入法上下文，会拦截两个牛逼的信号QEvent::RequestSoftwareInputPanel和QEvent::CloseSoftwareInputPanel，以至于就算你安装了全局的事件过滤器依然识别不到这两个信号，你只需要在main函数执行a.setInputContext(0)即可，意思是安装输入法上下文为空。
 
+87. 在Qt5.10以后，表格控件QTableWidget或者QTableView的默认最小列宽改成了15，以前的版本是0，所以在新版的qt中，如果设置表格的列宽过小，不会应用，取的是最小的列宽。所以如果要设置更小的列宽需要重新设置ui->tableView->horizontalHeader()->setMinimumSectionSize(0);
+
+88. Qt源码中内置了一些未公开的不能直接使用的黑科技，都藏在对应模块的private中，比如gui-private widgets-private等，比如zip文件解压类QZipReader、压缩类QZipWriter就在gui-private模块中，需要在pro中引入QT += gui-private才能使用。
+``` c++
+#include "QtGui/private/qzipreader_p.h"
+#include "QtGui/private/qzipwriter_p.h"
+
+QZipReader reader(dirPath);
+QString path("");
+//解压文件夹到当前目录
+reader.extractAll(path);
+//文件夹名称
+QZipReader::FileInfo fileInfo = reader.entryInfoAt(0);
+//解压文件
+QFile file(filePath);
+file.open(QIODevice::WriteOnly);
+file.write(reader.fileData(QString::fromLocal8Bit("%1").arg(filePath)));
+file.close();
+reader.close();
+
+QZipWriter *writer = new QZipWriter(dirPath);
+//添加文件夹
+writer->addDirectory(unCompress);
+//添加文件
+QFile file(filePath);
+file.open(QIODevice::ReadOnly);
+writer->addFile(data, file.readAll());
+file.close();
+writer->close();
+```
+
 93. 不要怀疑这部分被狗吃了，^_^中间部分待更新，会持续更新。也欢迎各位在文章底部留言加进去。
 
 94. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！

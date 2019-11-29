@@ -450,6 +450,7 @@ writer->close();
 |寒山-居士|[https://blog.csdn.net/esonpo](https://blog.csdn.net/esonpo)|
 |feiyangqingyun|[https://blog.csdn.net/feiyangqingyun](https://blog.csdn.net/feiyangqingyun)|
 |前行中小猪|[http://blog.csdn.net/goforwardtostep](http://blog.csdn.net/goforwardtostep)|
+|Qt君|[https://blog.csdn.net/nicai_xiaoqinxi](https://blog.csdn.net/nicai_xiaoqinxi)|    
 |涛哥的知乎专栏|[https://zhuanlan.zhihu.com/TaoQt](https://zhuanlan.zhihu.com/TaoQt)|
 |Qt老外视频教程|[http://space.bilibili.com/2592237/#!/index](http://space.bilibili.com/2592237/#!/index)|
 |Qt维基补充文档|[https://wiki.qt.io/Main](https://wiki.qt.io/Main)|

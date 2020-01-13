@@ -450,6 +450,8 @@ writer->close();
 ### 二、推荐的Qt论坛+个人博客+网站
 | 名称 | 网址 |
 | ------ | ------ |
+|QtWidget开源demo集合|[https://gitee.com/feiyangqingyun/QWidgetDemo](https://gitee.com/feiyangqingyun/QWidgetDemo)|
+|QtQuick/Qml开源demo集合|[https://gitee.com/jaredtao/TaoQuick](https://gitee.com/jaredtao/TaoQuick)|
 |qtcn|[http://www.qtcn.org](http://www.qtcn.org)|
 |豆子的空间|[https://www.devbean.net](https://www.devbean.net)|
 |yafeilinux|[http://www.qter.org](http://www.qter.org)|

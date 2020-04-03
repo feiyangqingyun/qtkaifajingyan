@@ -12,7 +12,7 @@
 
 6. 可以在pro文件中写上标记版本号+ico图标（Qt5才支持）
 ``` c++
-VERSION   	= 2018.7.25
+VERSION     = 2018.7.25
 RC_ICONS    = main0.ico
 ```
 
@@ -131,19 +131,52 @@ QMainWindow > .QWidget {
 
 30. QMediaPlayer依赖本地解码器，WIN上下载k-lite或者LAV Filters安装即可。
 
-31. 代码判断MSVC编译器版本。
+31. 判断编译器类型、编译器版本、操作系统。
 ``` c++
-if (_MSC_VER == 1800)
-MSVC++ 14.0 _MSC_VER == 1900 (Visual Studio 2015)
-MSVC++ 12.0 _MSC_VER == 1800 (Visual Studio 2013)
-MSVC++ 11.0 _MSC_VER == 1700 (Visual Studio 2012)
-MSVC++ 10.0 _MSC_VER == 1600 (Visual Studio 2010)
-MSVC++ 9.0  _MSC_VER == 1500 (Visual Studio 2008)
-MSVC++ 8.0  _MSC_VER == 1400 (Visual Studio 2005)
-MSVC++ 7.1  _MSC_VER == 1310 (Visual Studio 2003)
-MSVC++ 7.0  _MSC_VER == 1300
-MSVC++ 6.0  _MSC_VER == 1200
-MSVC++ 5.0  _MSC_VER == 1100
+//GCC编译器
+#ifdef __GNUC__
+#if __GNUC__ >= 3 // GCC3.0以上
+
+//MSVC编译器
+#ifdef _MSC_VER
+#if _MSC_VER >=1000 // VC++4.0以上
+#if _MSC_VER >=1100 // VC++5.0以上
+#if _MSC_VER >=1200 // VC++6.0以上
+#if _MSC_VER >=1300 // VC2003以上
+#if _MSC_VER >=1400 // VC2005以上
+#if _MSC_VER >=1500 // VC2008以上
+#if _MSC_VER >=1600 // VC2010以上
+#if _MSC_VER >=1700 // VC2012以上
+#if _MSC_VER >=1800 // VC2013以上
+#if _MSC_VER >=1900 // VC2015以上
+
+//Borland C++
+#ifdef __BORLANDC__
+
+//Cygwin
+#ifdef __CYGWIN__
+#ifdef __CYGWIN32__
+
+//mingw
+#ifdef __MINGW32__
+
+//windows
+#ifdef _WIN32    //32bit
+#ifdef _WIN64    //64bit
+#ifdef _WINDOWS     //图形界面程序
+#ifdef _CONSOLE     //控制台程序
+//Windows（95/98/Me/NT/2000/XP/Vista）和Windows CE都定义了
+#if (WINVER >= 0x030a)     // Windows 3.1以上
+#if (WINVER >= 0x0400)     // Windows 95/NT4.0以上
+#if (WINVER >= 0x0410)     // Windows 98以上
+#if (WINVER >= 0x0500)     // Windows Me/2000以上
+#if (WINVER >= 0x0501)     // Windows XP以上
+#if (WINVER >= 0x0600)     // Windows Vista以上
+//_WIN32_WINNT 内核版本
+#if (_WIN32_WINNT >= 0x0500) // Windows 2000以上
+#if (_WIN32_WINNT >= 0x0501) // Windows XP以上
+#if (_WIN32_WINNT >= 0x0600) // Windows Vista以上
+
 ```
 
 32. 在pro中判断不同平台：message($$QT_ARCH) contains(QT_ARCH,arm)。
@@ -211,7 +244,7 @@ connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
 loop.exec();
 ```
 
-47. 多种预定义变量 #if (defined webkit) || (defined webengine)。
+47. 多种预定义变量 #if (defined webkit) || (defined webengine)，去掉生成空的debug和release目录 CONFIG -= debug_and_release。
 
 48. 新版的Qtcreator增强了语法检查，会弹出很多警告提示等，可以在插件列表中关闭clang打头的几个即可，Help》About Plugins。也可以设置代码检查级别，Tools》Options 》C++ 》Code Model。
 
@@ -433,21 +466,44 @@ writer->close();
 
 93. Qt支持所有的界面控件比如QPushButton、QLineEdit自动关联 on_控件名_信号(参数) 信号槽，比如按钮的单击信号 on_pushButton_clicked()，然后直接实现槽函数即可。
 
-94. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！
+94. QWebEngineView控件由于使用了opengl，在某些电脑上可能由于opengl的驱动过低会导致花屏或者各种奇奇怪怪的问题，比如showfullscreen的情况下鼠标右键失效，需要在main函数启用软件opengl渲染。
+```c++
+#if (QT_VERSION > QT_VERSION_CHECK(5,4,0))
+    QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
+#endif
+    QApplication a(argc, argv);
+```
+另外一个方法解决 全屏+QWebEngineView控件一起会产生右键菜单无法弹出的BUG,需要上移一个像素
+```c++
+QRect rect = qApp->desktop()->geometry();
+rect.setY(-1);
+rect.setHeight(rect.height());
+this->setGeometry(rect);
+```
 
-95. 在Qt的学习过程中，学会查看对应类的头文件是一个好习惯，如果在该类的头文件没有找到对应的函数，可以去他的父类中找找，实在不行还有爷爷类，肯定能找到的。通过头文件你会发现很多函数接口其实Qt已经帮我们封装好了，有空还可以阅读下他的实现代码。
+95. QStyle内置了很多方法用处很大，比如精确获取滑动条鼠标按下处的值。
+```c++
+QStyle::sliderValueFromPosition(minimum(), maximum(), event->x(), width());
+```
 
-96. Qt安装目录下的Examples目录下的例子，看完学完，月薪20K起步；Qt常用类的头文件的函数看完学完使用一遍并加以融会贯通，月薪30K起步。
 
-97. 崩溃的80%都是因为要么越界，要么未初始化，死扣这两点，80%的问题解决了。
+### 二、其他经验
 
-98. Qt一共有几百个版本，关于如何选择Qt版本的问题，我一般保留四个版本，为了兼容Qt4用4.8.7，最后的支持XP的版本5.7.0，最新的长期支持版本比如5.9.8，最高的新版本比如5.13.1。强烈不建议使用5.0到5.3之间的版本，太多BUG和坑，稳定性和兼容性相比于之后的版本相当差，能换就换，不能换睡服领导也要换。
+1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！
 
-99. 终极秘籍：如果遇到问题搜索Qt方面找不到答案，试着将关键字用JAVA C# android打头，你会发现别有一番天地，其他人很可能做过！
+2. 在Qt的学习过程中，学会查看对应类的头文件是一个好习惯，如果在该类的头文件没有找到对应的函数，可以去他的父类中找找，实在不行还有爷爷类，肯定能找到的。通过头文件你会发现很多函数接口其实Qt已经帮我们封装好了，有空还可以阅读下他的实现代码。
 
-100. 最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
+3. Qt安装目录下的Examples目录下的例子，看完学完，月薪20K起步；Qt常用类的头文件的函数看完学完使用一遍并加以融会贯通，月薪30K起步。
 
-### 二、推荐的Qt论坛+个人博客+网站
+4. 如果出现崩溃和段错误，80%都是因为要么越界，要么未初始化，死扣这两点，80%的问题解决了。
+
+5. Qt一共有几百个版本，关于如何选择Qt版本的问题，我一般保留四个版本，为了兼容Qt4用4.8.7，最后的支持XP的版本5.7.0，最新的长期支持版本比如5.9.8，最高的新版本比如5.13.1。强烈不建议使用5.0到5.3之间的版本，太多BUG和坑，稳定性和兼容性相比于之后的版本相当差，能换就换，不能换睡服领导也要换。
+
+6. 终极秘籍：如果遇到问题搜索Qt方面找不到答案，试着将关键字用JAVA C# android打头，你会发现别有一番天地，其他人很可能做过！
+
+7. 最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
+
+### 三、推荐的Qt论坛+个人博客+网站
 | 名称 | 网址 |
 | ------ | ------ |
 |QtWidget开源demo集合|[https://gitee.com/feiyangqingyun/QWidgetDemo](https://gitee.com/feiyangqingyun/QWidgetDemo)|

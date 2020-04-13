@@ -12,7 +12,7 @@
 
 6. 可以在pro文件中写上标记版本号+ico图标（Qt5才支持）
 ``` c++
-VERSION     = 2018.7.25
+VERSION   	= 2018.7.25
 RC_ICONS    = main0.ico
 ```
 
@@ -486,6 +486,29 @@ this->setGeometry(rect);
 QStyle::sliderValueFromPosition(minimum(), maximum(), event->x(), width());
 ```
 
+96. 用QFile读写文件的时候，推荐用QTextStream文件流的方式来读写文件，速度快很多，基本上会有30%的提升，文件越大性能区别越大。
+```c++
+//从文件加载英文属性与中文属性对照表
+QFile file(":/propertyname.txt");
+if (file.open(QFile::ReadOnly)) {
+    //QTextStream方法读取速度至少快30%
+#if 0
+    while(!file.atEnd()) {
+        QString line = file.readLine();
+        appendName(line);
+    }
+#else
+    QTextStream in(&file);
+    while (!in.atEnd()) {
+        QString line = in.readLine();
+        appendName(line);
+    }
+#endif
+    file.close();
+}
+```
+
+97. QSS文件不支持UTF8，切记不要在QtCreator中打开qss文件来编辑保存，这样很可能导致qss加载以后没有效果，你需要保存为ANSI格式。
 
 ### 二、其他经验
 
@@ -529,6 +552,7 @@ QStyle::sliderValueFromPosition(minimum(), maximum(), event->x(), width());
 |Qt维基补充文档|[https://wiki.qt.io/Main](https://wiki.qt.io/Main)|
 |Qt源码查看网站|[https://code.woboq.org/qt5](https://code.woboq.org/qt5)|
 |Qt官方下载地址|[https://download.qt.io](https://download.qt.io)|
+|Qt官方下载新地址|[https://download.qt.io/new_archive/qt/](https://download.qt.io/new_archive/qt/)|
 |Qt国内镜像下载地址|[https://mirrors.cloud.tencent.com/qt](https://mirrors.cloud.tencent.com/qt)|
 |精美图表控件QWT|[http://qwt.sourceforge.net/](http://qwt.sourceforge.net/)|
 |精美图表控件QCustomPlot|[https://www.qcustomplot.com/](https://www.qcustomplot.com/)|

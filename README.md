@@ -510,6 +510,14 @@ if (file.open(QFile::ReadOnly)) {
 
 97. QSS文件不支持UTF8，切记不要在QtCreator中打开qss文件来编辑保存，这样很可能导致qss加载以后没有效果，你需要保存为ANSI格式。
 
+98. QString内置了很多转换函数，比如可以调用toDouble转为double数据，但是当你转完并打印的时候你会发现精确少了，只剩下三位了，其实原始数据还是完整的精确度的，只是打印的时候优化成了三位，如果要保证完整的精确度，可以调用 qSetRealNumberPrecision 函数设置精确度位数即可。
+```c++
+QString s1, s2;
+s1 = "666.5567124";
+s2.setNum(888.5632123, 'f', 7);
+qDebug() << qSetRealNumberPrecision(10) << s1.toDouble() << s2.toDouble();
+```
+
 ### 二、其他经验
 
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！

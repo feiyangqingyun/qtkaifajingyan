@@ -12,7 +12,7 @@
 
 6. 可以在pro文件中写上标记版本号+ico图标（Qt5才支持）
 ``` c++
-VERSION   	= 2018.7.25
+VERSION     = 2018.7.25
 RC_ICONS    = main0.ico
 ```
 
@@ -564,6 +564,9 @@ qDebug() << qSetRealNumberPrecision(10) << s1.toDouble() << s2.toDouble();
 |Qt国内镜像下载地址|[https://mirrors.cloud.tencent.com/qt](https://mirrors.cloud.tencent.com/qt)|
 |精美图表控件QWT|[http://qwt.sourceforge.net/](http://qwt.sourceforge.net/)|
 |精美图表控件QCustomPlot|[https://www.qcustomplot.com/](https://www.qcustomplot.com/)|
+|免费图标下载|[http://www.easyicon.net/](http://www.easyicon.net/)|
+|图形字体下载|[https://www.iconfont.cn/](https://www.iconfont.cn/)|
+|漂亮界面网站|[https://www.ui.cn/](https://www.ui.cn/)|
 
 ### 三、其他
 1. Qt入门书籍推荐霍亚飞的《Qt Creator快速入门》，Qt进阶书籍推荐官方的《C++ GUI Qt4编程》，qml书籍推荐《Qt5编程入门》。

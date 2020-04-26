@@ -209,8 +209,17 @@ QWidget::showEvent(e);
 
 40. Qt5以后提供了类QScroller直接将控件滚动。
 ``` c++
+//禁用横向滚动条
+ui->listWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+//禁用纵向滚动条
+ui->listWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+//设置横向按照像素值为单位滚动
 ui->listWidget->setHorizontalScrollMode(QListWidget::ScrollPerPixel);
-QScroller::grabGesture(ui->listWidget,QScroller::LeftMouseButtonGesture);
+//设置纵向按照像素值为单位滚动
+ui->listWidget->setVerticalScrollMode(QListWidget::ScrollPerPixel);
+//设置滚动对象以及滚动方式为鼠标左键拉动滚动
+QScroller::grabGesture(ui->listWidget, QScroller::LeftMouseButtonGesture);
+//还有个QScrollerProperties可以设置滚动的一些参数
 ```
 
 41. 如果使用sqlite数据库不想产生数据库文件，可以创建内存数据库。
@@ -526,13 +535,15 @@ qDebug() << qSetRealNumberPrecision(10) << s1.toDouble() << s2.toDouble();
 
 3. Qt安装目录下的Examples目录下的例子，看完学完，月薪20K起步；Qt常用类的头文件的函数看完学完使用一遍并加以融会贯通，月薪30K起步。
 
-4. 如果出现崩溃和段错误，80%都是因为要么越界，要么未初始化，死扣这两点，80%的问题解决了。
+4. Qt在开发阶段不支持中文目录，切记，这是无数人可能犯的错误，在安装Qt集成开发环境以及编译器的时候，务必记得目录必须英文，否则很可能不正常，建议尽量用默认的安装位置。
 
-5. Qt一共有几百个版本，关于如何选择Qt版本的问题，我一般保留四个版本，为了兼容Qt4用4.8.7，最后的支持XP的版本5.7.0，最新的长期支持版本比如5.9.8，最高的新版本比如5.13.1。强烈不建议使用5.0到5.3之间的版本，太多BUG和坑，稳定性和兼容性相比于之后的版本相当差，能换就换，不能换睡服领导也要换。
+5. 如果出现崩溃和段错误，80%都是因为要么越界，要么未初始化，死扣这两点，80%的问题解决了。
 
-6. 终极秘籍：如果遇到问题搜索Qt方面找不到答案，试着将关键字用JAVA C# android打头，你会发现别有一番天地，其他人很可能做过！
+6. Qt一共有几百个版本，关于如何选择Qt版本的问题，我一般保留四个版本，为了兼容Qt4用4.8.7，最后的支持XP的版本5.7.0，最新的长期支持版本比如5.9.8，最高的新版本比如5.13.1。强烈不建议使用5.0到5.3之间的版本，太多BUG和坑，稳定性和兼容性相比于之后的版本相当差，能换就换，不能换睡服领导也要换。
 
-7. 最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
+7. 终极秘籍：如果遇到问题搜索Qt方面找不到答案，试着将关键字用JAVA C# android打头，你会发现别有一番天地，其他人很可能做过！
+
+8. 最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
 
 ### 三、推荐的Qt论坛+个人博客+网站
 | 名称 | 网址 |

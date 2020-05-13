@@ -278,9 +278,9 @@ QString note = content.toUtf8().toPercentEncoding();
 CONFIG += resources_big
 
 53. Qt中继承QWidget之后，样式表不起作用，解决办法有三个。强烈推荐方法一。
-方法一：设置属性 this->setAttribute(Qt::WA_StyledBackground, true);
-方法二：改成继承QFrame，因为QFrame自带paintEvent函数已做了实现，在使用样式表时会进行解析和绘制。
-方法三：重新实现QWidget的paintEvent函数时，使用QStylePainter绘制。
+- 方法一：设置属性 this->setAttribute(Qt::WA_StyledBackground, true);
+- 方法二：改成继承QFrame，因为QFrame自带paintEvent函数已做了实现，在使用样式表时会进行解析和绘制。
+- 方法三：重新实现QWidget的paintEvent函数时，使用QStylePainter绘制。
 ``` c++
 void myclass::paintEvent(QPaintEvent *)
 {

@@ -543,6 +543,45 @@ while (it.hasNext()) {
 
 102. 默认程序中获取焦点以后会有虚边框，如果看着觉得碍眼不舒服可以去掉，设置样式即可：setStyleSheet("*{outline:0px;}");
 
+103. Qt表格控件一些常用的设置封装，QTableWidget继承自QTableView，所以下面这个函数支持传入QTableWidget。
+```c++
+void QUIHelper::initTableView(QTableView *tableView, int rowHeight, bool headVisible, bool edit)
+{
+    //奇数偶数行颜色交替
+    tableView->setAlternatingRowColors(false);
+    //垂直表头是否可见
+    tableView->verticalHeader()->setVisible(headVisible);
+    //选中一行表头是否加粗
+    tableView->horizontalHeader()->setHighlightSections(false);
+    //最后一行拉伸填充
+    tableView->horizontalHeader()->setStretchLastSection(true);
+    //行标题最小宽度尺寸
+    tableView->horizontalHeader()->setMinimumSectionSize(0);
+    //行标题最大高度
+    tableView->horizontalHeader()->setMaximumHeight(rowHeight);
+    //默认行高
+    tableView->verticalHeader()->setDefaultSectionSize(rowHeight);
+    //选中时一行整体选中
+    tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    //只允许选择单个
+    tableView->setSelectionMode(QAbstractItemView::SingleSelection);
+
+    //表头不可单击
+#if (QT_VERSION > QT_VERSION_CHECK(5,0,0))
+    tableView->horizontalHeader()->setSectionsClickable(false);
+#else
+    tableView->horizontalHeader()->setClickable(false);
+#endif
+
+    //鼠标按下即进入编辑模式
+    if (edit) {
+        tableView->setEditTriggers(QAbstractItemView::CurrentChanged | QAbstractItemView::DoubleClicked);
+    } else {
+        tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    }
+}
+```
+
 ### 二、其他经验
 
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！

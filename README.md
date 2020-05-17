@@ -582,6 +582,16 @@ void QUIHelper::initTableView(QTableView *tableView, int rowHeight, bool headVis
 }
 ```
 
+104. 在一些大的项目中，可能嵌套了很多子项目，有时候会遇到子项目依赖其他子项目的时候，比如一部分子项目用来生成动态库，一部分子项目依赖这个动态库进行编译，此时就需要子项目按照顺序编译。
+```c++
+TEMPLATE = subdirs
+#设置ordered参数以后会依次编译 demo designer examples
+CONFIG  += ordered
+SUBDIRS += demo
+SUBDIRS += designer
+SUBDIRS += examples
+```
+
 ### 二、其他经验
 
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！

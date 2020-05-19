@@ -517,7 +517,39 @@ if (file.open(QFile::ReadOnly)) {
 }
 ```
 
-97. QSS文件不支持UTF8，切记不要在QtCreator中打开qss文件来编辑保存，这样很可能导致qss加载以后没有效果，你需要保存为ANSI格式。
+97. 用QFile.readAll()读取QSS文件默认是ANSI格式，不支持UTF8，如果在QtCreator中打开qss文件来编辑保存，这样很可能导致qss加载以后没有效果。
+```c++
+void frmMain::initStyle()
+{
+    //加载样式表
+    QString qss;
+    //QFile file(":/qss/psblack.css");
+    //QFile file(":/qss/flatwhite.css");
+    QFile file(":/qss/lightblue.css");
+    if (file.open(QFile::ReadOnly)) {
+#if 1
+        //用QTextStream读取样式文件不用区分文件编码 带bom也行
+        QStringList list;
+        QTextStream in(&file);
+        //in.setCodec("utf-8");
+        while (!in.atEnd()) {
+            QString line;
+            in >> line;
+            list << line;
+        }
+
+        qss = list.join("\n");
+#else
+        //用readAll读取默认支持的是ANSI格式,如果不小心用creator打开编辑过了很可能打不开
+        qss = QLatin1String(file.readAll());
+#endif
+        QString paletteColor = qss.mid(20, 7);
+        qApp->setPalette(QPalette(QColor(paletteColor)));
+        qApp->setStyleSheet(qss);
+        file.close();
+    }
+}
+```
 
 98. QString内置了很多转换函数，比如可以调用toDouble转为double数据，但是当你转完并打印的时候你会发现精确少了，只剩下三位了，其实原始数据还是完整的精确度的，只是打印的时候优化成了三位，如果要保证完整的精确度，可以调用 qSetRealNumberPrecision 函数设置精确度位数即可。
 ```c++

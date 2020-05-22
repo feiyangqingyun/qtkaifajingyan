@@ -12,8 +12,8 @@
 
 6. 可以在pro文件中写上标记版本号+ico图标（Qt5才支持）
 ``` c++
-VERSION     = 2018.7.25
-RC_ICONS    = main0.ico
+VERSION  = 2020.10.25
+RC_ICONS = main0.ico
 ```
 
 7. 管理员运行程序，限定在MSVC编译器。
@@ -623,6 +623,15 @@ SUBDIRS += demo
 SUBDIRS += designer
 SUBDIRS += examples
 ```
+
+105. MSVC编译器的选择说明
+- x86       32/64 位系统上编译在 32    位系统上运行
+- amd64_x86 64    位系统上编译在 32/64 位系统上运行
+- amd64     64    位系统上编译在 64    位系统上运行
+- x86_amd64 32    位系统上编译在 64    位系统上运行
+- x86_arm   32    位系统上编译在 arm   系统上运行
+- amd64_arm 64    位系统上编译在 arm   系统上运行
+
 
 ### 二、其他经验
 

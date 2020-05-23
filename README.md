@@ -282,12 +282,12 @@ CONFIG += resources_big
 - 方法二：改成继承QFrame，因为QFrame自带paintEvent函数已做了实现，在使用样式表时会进行解析和绘制。
 - 方法三：重新实现QWidget的paintEvent函数时，使用QStylePainter绘制。
 ``` c++
-void myclass::paintEvent(QPaintEvent *)
+void Widget::paintEvent(QPaintEvent *)
 {
-    QStyleOption o;
-    o.initFrom(this);
-    QPainter p(this);
-    style()->drawPrimitive(QStyle::PE_Widget, &o, &p, this);
+    QStyleOption option;
+    option.initFrom(this);
+    QPainter painter(this);
+    style()->drawPrimitive(QStyle::PE_Widget, &option, &painter, this);
 }
 ```
 
@@ -625,6 +625,12 @@ SUBDIRS += examples
 ```
 
 105. MSVC编译器的选择说明
+- 如果是32位的Qt则编译器选择x86开头的
+- 如果是64位的Qt则编译器选择amd64开头的
+- 具体是看安装的Qt构建套件版本以及目标运行平台的系统位数和架构
+- 一般现在的电脑默认以64位的居多，选择amd64即可
+- 如果用户需要兼容32位的系统则建议选择32位的Qt，这样即可在32位也可以在64位系统运行
+- 诸葛大佬补充：x86/x64都是编译环境和运行环境相同，没有或。带下划线的就是交叉编译，前面是编译环境，后面是运行环境。
 
 | 名称 | 说明 |
 | ------ | ------ |

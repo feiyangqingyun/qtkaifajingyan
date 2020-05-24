@@ -641,6 +641,12 @@ SUBDIRS += examples
 |amd64_x86|64位系统上编译在32/64位系统上运行|
 |amd64_arm|64位系统上编译在arm系统上运行|
 
+106. 很多时候用QDialog的时候会发现阻塞了消息，而有的时候我们希望是后台的一些消息继续运行不要终止，此时需要做个设置。
+```c++
+QDialog dialog;
+dialog.setWindowModality(Qt::WindowModal);
+```
+
 ### 二、其他经验
 
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！

@@ -179,7 +179,15 @@ QMainWindow > .QWidget {
 
 ```
 
-32. 在pro中判断不同平台：message($$QT_ARCH) contains(QT_ARCH,arm)。
+32. 在pro中判断不同平台及构建套件位数
+``` c++
+#打印当前Qt构建套件的信息
+message($$QT_ARCH)
+#表示arm平台构建套件
+contains(QT_ARCH, arm) {}
+#表示64位的构建套件
+contains(QT_ARCH, x86_64) {}
+```
 
 33. Qt最小化后恢复界面假死冻结，加上代码
 ``` c++
@@ -665,9 +673,10 @@ dialog.setWindowModality(Qt::WindowModal);
 
 8. 最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
 
-### 三、推荐的Qt论坛+个人博客+网站
+### 三、推荐的Qt论坛+个人博客+网站+群
 | 名称 | 网址 |
 | ------ | ------ |
+|QQ学习群| Qt交流大会群 853086607(雨田哥) Qt技术交流群 46679801(3000人群) Qt进阶之路群 734623697(武威的涛哥)|
 |QtWidget开源demo集合|[https://gitee.com/feiyangqingyun/QWidgetDemo](https://gitee.com/feiyangqingyun/QWidgetDemo)|
 |QtQuick/Qml开源demo集合|[https://gitee.com/jaredtao/TaoQuick](https://gitee.com/jaredtao/TaoQuick)|
 |qtcn|[http://www.qtcn.org](http://www.qtcn.org)|

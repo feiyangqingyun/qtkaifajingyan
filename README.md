@@ -676,7 +676,7 @@ dialog.setWindowModality(Qt::WindowModal);
 ### 三、推荐的Qt论坛+个人博客+网站+群
 | 名称 | 网址 |
 | ------ | ------ |
-|QQ学习群| Qt交流大会群 853086607(雨田哥) Qt技术交流群 46679801(3000人群) Qt进阶之路群 734623697(武威的涛哥)|
+|QQ学习群| Qt交流大会群 853086607 Qt技术交流群 46679801 Qt进阶之路群 734623697|
 |QtWidget开源demo集合|[https://gitee.com/feiyangqingyun/QWidgetDemo](https://gitee.com/feiyangqingyun/QWidgetDemo)|
 |QtQuick/Qml开源demo集合|[https://gitee.com/jaredtao/TaoQuick](https://gitee.com/jaredtao/TaoQuick)|
 |qtcn|[http://www.qtcn.org](http://www.qtcn.org)|

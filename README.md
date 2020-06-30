@@ -681,6 +681,16 @@ dialog.setWindowModality(Qt::WindowModal);
 - 有严格数据同步需求的场景还是放到多线程会好一些，不然你wait***就卡在那边了；
 - 多线程是需要占用系统资源的，理论上来说，如果线程数量超过了CPU的核心数量，其实多线程调度可能花费的时间更多，各位在使用过程中要权衡利弊；
 
+108. 在嵌入式linux上，如果设置了无边框窗体，而该窗体中又有文本框之类的，发现没法产生焦点进行输入，此时需要主动激活窗体才行。
+```c++
+//这种方式设置的无边框窗体在嵌入式设备上无法产生焦点
+setWindowFlags(Qt::WindowStaysOnTopHint | Qt::FramelessWindowHint | Qt::X11BypassWindowManagerHint);
+
+//需要在show以后主动激活窗体
+w->show();
+w->activateWindow();
+```
+
 ### 二、其他经验
 
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！

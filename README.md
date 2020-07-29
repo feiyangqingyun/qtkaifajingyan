@@ -208,7 +208,8 @@ contains(QT_ARCH, x86_64) {}
 
 33. Qt最小化后恢复界面假死冻结，加上代码
 ``` c++
-void showEvent(QShowEvent *e){
+void showEvent(QShowEvent *e)
+{
 setAttribute(Qt::WA_Mapped);
 QWidget::showEvent(e);
 }
@@ -503,9 +504,9 @@ writer->close();
 94. QWebEngineView控件由于使用了opengl，在某些电脑上可能由于opengl的驱动过低会导致花屏或者各种奇奇怪怪的问题，比如showfullscreen的情况下鼠标右键失效，需要在main函数启用软件opengl渲染。
 ```c++
 #if (QT_VERSION > QT_VERSION_CHECK(5,4,0))
-    //两种方法都可以,Qt默认采用的是AA_UseDesktopOpenGL
+    //下面两种方法都可以,Qt默认采用的是AA_UseDesktopOpenGL
     QCoreApplication::setAttribute(Qt::AA_UseOpenGLES);
-    QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
+    //QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
 #endif
     QApplication a(argc, argv);
 ```

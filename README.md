@@ -503,11 +503,13 @@ writer->close();
 94. QWebEngineView控件由于使用了opengl，在某些电脑上可能由于opengl的驱动过低会导致花屏或者各种奇奇怪怪的问题，比如showfullscreen的情况下鼠标右键失效，需要在main函数启用软件opengl渲染。
 ```c++
 #if (QT_VERSION > QT_VERSION_CHECK(5,4,0))
+    //两种方法都可以,Qt默认采用的是AA_UseDesktopOpenGL
+    QCoreApplication::setAttribute(Qt::AA_UseOpenGLES);
     QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
 #endif
     QApplication a(argc, argv);
 ```
-另外一个方法解决 全屏+QWebEngineView控件一起会产生右键菜单无法弹出的BUG,需要上移一个像素
+另外一个方法解决 全屏+QWebEngineView控件一起会产生右键菜单无法弹出的bug,需要上移一个像素
 ```c++
 QRect rect = qApp->desktop()->geometry();
 rect.setY(-1);
@@ -718,7 +720,7 @@ path = QDir::toNativeSeparators(path);
 
 5. 如果出现崩溃和段错误，80%都是因为要么越界，要么未初始化，死扣这两点，80%的问题解决了。
 
-6. Qt一共有几百个版本，关于如何选择Qt版本的问题，我一般保留四个版本，为了兼容Qt4用4.8.7，最后的支持XP的版本5.7.0，最新的长期支持版本比如5.12，最高的新版本比如5.14.2。强烈不建议使用5.0到5.3之间的版本，太多BUG和坑，稳定性和兼容性相比于之后的版本相当差，能换就换，不能换睡服领导也要换。
+6. Qt一共有几百个版本，关于如何选择Qt版本的问题，我一般保留四个版本，为了兼容Qt4用4.8.7，最后的支持XP的版本5.7.0，最新的长期支持版本比如5.12，最高的新版本比如5.14.2。强烈不建议使用5.0到5.3之间的版本，太多bug和坑，稳定性和兼容性相比于之后的版本相当差，能换就换，不能换睡服领导也要换。
 
 7. 终极秘籍：如果遇到问题搜索Qt方面找不到答案，试着将关键字用JAVA C# android打头，你会发现别有一番天地，其他人很可能做过！
 

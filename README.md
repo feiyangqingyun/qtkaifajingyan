@@ -210,8 +210,8 @@ contains(QT_ARCH, x86_64) {}
 ``` c++
 void showEvent(QShowEvent *e)
 {
-setAttribute(Qt::WA_Mapped);
-QWidget::showEvent(e);
+    setAttribute(Qt::WA_Mapped);
+    QWidget::showEvent(e);
 }
 ```
 
@@ -708,6 +708,10 @@ QString path = "C:\\temp\\test.txt";
 path = QDir::toNativeSeparators(path);
 //输出 C:/temp/test.txt
 ```
+
+112. 巧用QMetaObject::invokeMethod方法可以实现很多效果，包括同步和异步执行，比如有个应用场景是在回调中，需要异步调用一个public函数，如果直接调用的话会发现不成功，此时需要使用 QMetaObject::invokeMethod(obj, "fun", Qt::QueuedConnection); 这种方式来就可以。invokeMethod函数有很多重载参数，可以传入返回值和执行方法的参数等。
+
+113. Qt5中的信号是public的，可以在需要的地方直接emit即可，而在Qt4中信号是protected的，不能直接使用，需要定义一个public函数来emit。
 
 ### 二、其他经验
 

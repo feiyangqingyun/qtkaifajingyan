@@ -48,7 +48,17 @@ for (int i = 0; i < count; ++i) {
 ```
 
 12. Qt内置图标封装在QStyle中，大概七十多个图标，可以直接拿来用。
-QStyle::SP_TitleBarMenuButton
+``` c++
+SP_TitleBarMenuButton,
+SP_TitleBarMinButton,
+SP_TitleBarMaxButton,
+SP_TitleBarCloseButton,
+SP_MessageBoxInformation,
+SP_MessageBoxWarning,
+SP_MessageBoxCritical,
+SP_MessageBoxQuestion,
+...
+```
 
 13. 根据操作系统位数判断加载
 ``` c++
@@ -129,7 +139,7 @@ QMainWindow > .QWidget {
 
 29. Qtcreator软件的配置文件存放在：C:\Users\Administrator\AppData\Roaming\QtProject，有时候如果发现出问题了，将这个文件夹删除后打开creator自动重新生成即可。
 
-30. QMediaPlayer依赖本地解码器，WIN上下载k-lite或者LAV Filters安装即可。
+30. QMediaPlayer是个壳，依赖本地解码器，视频这块默认基本上就播放个MP4，如果要支持其他格式需要下载k-lite或者LAV Filters安装即可（WIN上，其他系统上自行搜索）。如果需要做功能强劲的播放器，初学者建议用vlc、mpv，终极大法用ffmpeg。
 
 31. 判断编译器类型、编译器版本、操作系统。
 ``` c++
@@ -725,11 +735,13 @@ path = QDir::toNativeSeparators(path);
 
 5. 如果出现崩溃和段错误，80%都是因为要么越界，要么未初始化，死扣这两点，80%的问题解决了。
 
-6. Qt一共有几百个版本，关于如何选择Qt版本的问题，我一般保留四个版本，为了兼容Qt4用4.8.7，最后的支持XP的版本5.7.0，最新的长期支持版本比如5.12，最高的新版本比如5.14.2。强烈不建议使用5.0到5.3之间的版本，太多bug和坑，稳定性和兼容性相比于之后的版本相当差，能换就换，不能换睡服领导也要换。
+6. Qt一共有几百个版本，关于如何选择Qt版本的问题，我一般保留四个版本，为了兼容Qt4用4.8.7，最后的支持XP的版本5.7.0，最新的长期支持版本比如5.12，最高的新版本比如5.14.2。强烈不建议使用4.7以前和5.0到5.3之间的版本，太多bug和坑，稳定性和兼容性相比于之后的版本相当差，能换就换，不能换睡服领导也要换。
 
 7. 终极秘籍：如果遇到问题搜索Qt方面找不到答案，试着将关键字用JAVA C# android打头，你会发现别有一番天地，其他人很可能做过！
 
-8. 最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
+8. 新版本Qt安装包安装的时候需要填写注册信息，如果不想填写，先禁用网卡，在运行安装包，可以直接跳过这一步进行安装。
+
+9. 最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
 
 ### 三、推荐的Qt论坛+个人博客+网站+群
 | 名称 | 网址 |

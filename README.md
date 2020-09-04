@@ -723,6 +723,8 @@ path = QDir::toNativeSeparators(path);
 
 113. Qt5中的信号是public的，可以在需要的地方直接emit即可，而在Qt4中信号是protected的，不能直接使用，需要定义一个public函数来emit。
 
+114. Qt5.15版本开始官方不再提供安装包，只提供源码，可以自行编译或者在线安装，估计每次编译各种版本太麻烦，更多的是为了统计收集用户使用信息比如通过在线安装，后期可能会逐步加大商业化力度。
+
 ### 二、其他经验
 
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！
@@ -748,7 +750,7 @@ path = QDir::toNativeSeparators(path);
 ### 三、推荐的Qt论坛+个人博客+网站+群
 | 名称 | 网址 |
 | ------ | ------ |
-|QQ学习群| Qt交流大会群 853086607 Qt技术交流群 46679801 Qt进阶之路群 734623697|
+|QQ学习群|Qt交流大会群 853086607 Qt技术交流群 46679801 Qt进阶之路群 734623697|
 |QtWidget开源demo集合|[https://gitee.com/feiyangqingyun/QWidgetDemo](https://gitee.com/feiyangqingyun/QWidgetDemo)|
 |QtQuick/Qml开源demo集合|[https://gitee.com/jaredtao/TaoQuick](https://gitee.com/jaredtao/TaoQuick)|
 |qtcn|[http://www.qtcn.org](http://www.qtcn.org)|
@@ -774,6 +776,7 @@ path = QDir::toNativeSeparators(path);
 |Qt官方下载地址|[https://download.qt.io](https://download.qt.io)|
 |Qt官方下载新地址|[https://download.qt.io/new_archive/qt/](https://download.qt.io/new_archive/qt/)|
 |Qt国内镜像下载地址|[https://mirrors.cloud.tencent.com/qt](https://mirrors.cloud.tencent.com/qt)|
+|Qt安装包下载地址|[http://qthub.com/download/](http://qthub.com/download/) (超过1000多个，由Qt君整理)|
 |精美图表控件QWT|[http://qwt.sourceforge.net/](http://qwt.sourceforge.net/)|
 |精美图表控件QCustomPlot|[https://www.qcustomplot.com/](https://www.qcustomplot.com/)|
 |免费图标下载|[http://www.easyicon.net/](http://www.easyicon.net/)|

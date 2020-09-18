@@ -725,6 +725,33 @@ path = QDir::toNativeSeparators(path);
 
 114. Qt5.15版本开始官方不再提供安装包，只提供源码，可以自行编译或者在线安装，估计每次编译各种版本太麻烦，更多的是为了统计收集用户使用信息比如通过在线安装，后期可能会逐步加大商业化力度。
 
+115. 有时候我们需要判断当前Qt版本有没有某个模块可以使用qtHaveModule（Qt5新引入的判断）来判断，如果要判断自己的项目中有没有 QT += 的方式添加的模块，可以用 contains来判断。
+```c++
+qtHaveModule(webenginewidgets) {
+    message("当前Qt库有找到 webenginewidgets 模块")
+}
+
+!qtHaveModule(webkit) {
+    message("当前Qt库没有找到 webkit 模块")
+}
+
+contains(QT, network) {
+message("当前项目已经引入 network 模块")
+}
+
+!contains(QT, widgets) {
+message("当前项目没有引入 widgets 模块")
+}
+```
+
+116. c++11新引入了原始字符串格式，用户避免在字符串中加入转义字符\，可以用于表示json字符串等场景。
+```c++
+QString s1 = R"(test\001.jpg)";
+s1.replace("\\", "#");
+qDebug()<< s1;
+//结果 test#001.jpg
+```
+
 ### 二、其他经验
 
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！

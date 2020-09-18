@@ -728,11 +728,11 @@ path = QDir::toNativeSeparators(path);
 115. 有时候我们需要判断当前Qt版本有没有某个模块可以使用qtHaveModule（Qt5新引入的判断）来判断，如果要判断自己的项目中有没有 QT += 的方式添加的模块，可以用 contains来判断。
 ```c++
 qtHaveModule(webenginewidgets) {
-    message("当前Qt库有找到 webenginewidgets 模块")
+message("当前Qt库有找到 webenginewidgets 模块")
 }
 
 !qtHaveModule(webkit) {
-    message("当前Qt库没有找到 webkit 模块")
+message("当前Qt库没有找到 webkit 模块")
 }
 
 contains(QT, network) {

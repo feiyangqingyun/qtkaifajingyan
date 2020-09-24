@@ -752,6 +752,14 @@ qDebug()<< s1;
 //结果 test#001.jpg
 ```
 
+117. 安卓上打印信息建议使用 qInfo() 而不是 qDebug() ，qInfo()才有效果。
+
+118. Qt的默认定时器精度不够高（当然我们所做的绝大部分项目也不需要精度非常高的定时器，毕竟精度越高，占用的系统资源可能越大），如果需要设置更高的精度可以设置 setTimerType(Qt::PreciseTimer)。Qt有两种定时器处理，一种是QTimer类，还有一种是QObject类就内置的timeevent事件，如果是QObject类的定时器要设置的话调用 startTimer(interval, Qt::PreciseTimer);
+- Qt::PreciseTimer 精确的定时器，尽量保持毫秒精度。
+- Qt::CoarseTimer 粗略的定时器，尽量保持精度在所需的时间间隔5%范围内。
+- Qt::VeryCoarseTimer 很粗略的定时器，只保留完整的第二精度。
+- 精度再高，也依赖对应的操作系统中断，假设中断需要 5ms，则定时器精度不可能高于5毫秒。
+
 ### 二、其他经验
 
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！

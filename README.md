@@ -501,7 +501,7 @@ writer->close();
 91. 数据库处理一般建议在主线程，如果非要在其他线程，务必记得打开数据库也要在那个线程，即在那个线程使用数据库就在那个线程打开，不能打开数据库在主线程，执行sql在子线程，很可能出问题。
 
 92. 新版的QTcpServer类在64位版本的Qt下很可能不会进入incomingConnection函数，那是因为Qt5对应的incomingConnection函数参数变了，由之前的int改成了qintptr，改成qintptr有个好处，在32位上自动是quint32而在64位上自动是quint64，如果在Qt5中继续写的参数是int则在32位上没有问题在64位上才有问题，所以为了兼容Qt4和Qt5，必须按照不一样的参数写。
-```c++
+```cpp
 #if (QT_VERSION > QT_VERSION_CHECK(5,0,0))
     void incomingConnection(qintptr handle);
 #else
@@ -512,7 +512,7 @@ writer->close();
 93. Qt支持所有的界面控件比如QPushButton、QLineEdit自动关联 on_控件名_信号(参数) 信号槽，比如按钮的单击信号 on_pushButton_clicked()，然后直接实现槽函数即可。
 
 94. QWebEngineView控件由于使用了opengl，在某些电脑上可能由于opengl的驱动过低会导致花屏或者各种奇奇怪怪的问题，比如showfullscreen的情况下鼠标右键失效，需要在main函数启用软件opengl渲染。
-```c++
+```cpp
 #if (QT_VERSION > QT_VERSION_CHECK(5,4,0))
     //下面两种方法都可以,Qt默认采用的是AA_UseDesktopOpenGL
     QCoreApplication::setAttribute(Qt::AA_UseOpenGLES);
@@ -521,7 +521,7 @@ writer->close();
     QApplication a(argc, argv);
 ```
 另外一个方法解决 全屏+QWebEngineView控件一起会产生右键菜单无法弹出的bug,需要上移一个像素
-```c++
+```cpp
 QRect rect = qApp->desktop()->geometry();
 rect.setY(-1);
 rect.setHeight(rect.height());
@@ -529,12 +529,12 @@ this->setGeometry(rect);
 ```
 
 95. QStyle内置了很多方法用处很大，比如精确获取滑动条鼠标按下处的值。
-```c++
+```cpp
 QStyle::sliderValueFromPosition(minimum(), maximum(), event->x(), width());
 ```
 
 96. 用QFile读写文件的时候，推荐用QTextStream文件流的方式来读写文件，速度快很多，基本上会有30%的提升，文件越大性能区别越大。
-```c++
+```cpp
 //从文件加载英文属性与中文属性对照表
 QFile file(":/propertyname.txt");
 if (file.open(QFile::ReadOnly)) {
@@ -556,7 +556,7 @@ if (file.open(QFile::ReadOnly)) {
 ```
 
 97. 用QFile.readAll()读取QSS文件默认是ANSI格式，不支持UTF8，如果在QtCreator中打开qss文件来编辑保存，这样很可能导致qss加载以后没有效果。
-```c++
+```cpp
 void frmMain::initStyle()
 {
     //加载样式表
@@ -590,7 +590,7 @@ void frmMain::initStyle()
 ```
 
 98. QString内置了很多转换函数，比如可以调用toDouble转为double数据，但是当你转完并打印的时候你会发现精确少了，只剩下三位了，其实原始数据还是完整的精确度的，只是打印的时候优化成了三位，如果要保证完整的精确度，可以调用 qSetRealNumberPrecision 函数设置精确度位数即可。
-```c++
+```cpp
 QString s1, s2;
 s1 = "666.5567124";
 s2.setNum(888.5632123, 'f', 7);
@@ -598,7 +598,7 @@ qDebug() << qSetRealNumberPrecision(10) << s1.toDouble() << s2.toDouble();
 ```
 
 99. 用QScriptValueIterator解析数据的时候，会发现总是会多一个节点内容，并且内容为空，如果需要跳过则增加一行代码。
-```c++
+```cpp
 while (it.hasNext()) {
     it.next();    
     if (it.flags() & QScriptValue::SkipInEnumeration)      
@@ -614,7 +614,7 @@ while (it.hasNext()) {
 102. 默认程序中获取焦点以后会有虚边框，如果看着觉得碍眼不舒服可以去掉，设置样式即可：setStyleSheet("*{outline:0px;}");
 
 103. Qt表格控件一些常用的设置封装，QTableWidget继承自QTableView，所以下面这个函数支持传入QTableWidget。
-```c++
+```cpp
 void QUIHelper::initTableView(QTableView *tableView, int rowHeight, bool headVisible, bool edit)
 {
     //奇数偶数行颜色交替
@@ -653,7 +653,7 @@ void QUIHelper::initTableView(QTableView *tableView, int rowHeight, bool headVis
 ```
 
 104. 在一些大的项目中，可能嵌套了很多子项目，有时候会遇到子项目依赖其他子项目的时候，比如一部分子项目用来生成动态库，一部分子项目依赖这个动态库进行编译，此时就需要子项目按照顺序编译。
-```c++
+```cpp
 TEMPLATE = subdirs
 #设置ordered参数以后会依次编译 demo designer examples
 CONFIG  += ordered
@@ -680,7 +680,7 @@ SUBDIRS += examples
 |amd64_arm|64位系统上编译在arm系统上运行|
 
 106. 很多时候用QDialog的时候会发现阻塞了消息，而有的时候我们希望是后台的一些消息继续运行不要终止，此时需要做个设置。
-```c++
+```cpp
 QDialog dialog;
 dialog.setWindowModality(Qt::WindowModal);
 ```
@@ -695,7 +695,7 @@ dialog.setWindowModality(Qt::WindowModal);
 - 多线程是需要占用系统资源的，理论上来说，如果线程数量超过了CPU的核心数量，其实多线程调度可能花费的时间更多，各位在使用过程中要权衡利弊；
 
 108. 在嵌入式linux上，如果设置了无边框窗体，而该窗体中又有文本框之类的，发现没法产生焦点进行输入，此时需要主动激活窗体才行。
-```c++
+```cpp
 //这种方式设置的无边框窗体在嵌入式设备上无法产生焦点
 setWindowFlags(Qt::WindowStaysOnTopHint | Qt::FramelessWindowHint | Qt::X11BypassWindowManagerHint);
 
@@ -709,7 +709,7 @@ w->activateWindow();
 110. QGraphicsEffect类的相关效果很炫，可以实现很多效果比如透明、渐变、阴影等，但是该类很耗CPU，如果不是特别需要一般不建议用，就算用也是要用在该部件后期不会发生频繁绘制的场景，不然会让你哭晕在厕所。
 
 111. 在不同的平台上文件路径的斜杠也是不一样的，比如linux系统一般都是 / 斜杠，而在windows上都是 \\ 两个反斜杠，Qt本身程序内部无论在win还是linux都支持 / 斜杠的路径，但是一些第三方库的话可能需要转换成对应系统的路径，这就需要用到斜杠转换，Qt当然内置类方法。
-```c++
+```cpp
 QString path = "C:/temp/test.txt";
 path = QDir::toNativeSeparators(path);
 //输出 C:\\temp\\test.txt
@@ -726,7 +726,7 @@ path = QDir::toNativeSeparators(path);
 114. Qt5.15版本开始官方不再提供安装包，只提供源码，可以自行编译或者在线安装，估计每次编译各种版本太麻烦，更多的是为了统计收集用户使用信息比如通过在线安装，后期可能会逐步加大商业化力度。
 
 115. 有时候我们需要判断当前Qt版本有没有某个模块可以使用qtHaveModule（Qt5新引入的判断）来判断，如果要判断自己的项目中有没有 QT += 的方式添加的模块，可以用 contains来判断。
-```c++
+```cpp
 qtHaveModule(webenginewidgets) {
 message("当前Qt库有找到 webenginewidgets 模块")
 }
@@ -745,7 +745,7 @@ message("当前项目没有引入 widgets 模块")
 ```
 
 116. c++11新引入了原始字符串格式，用户避免在字符串中加入转义字符\，可以用于表示json字符串等场景。
-```c++
+```cpp
 QString s1 = R"(test\001.jpg)";
 s1.replace("\\", "#");
 qDebug()<< s1;
@@ -761,6 +761,40 @@ qDebug()<< s1;
 - 精度再高，也依赖对应的操作系统中断，假设中断需要 5ms，则定时器精度不可能高于5毫秒。
 
 119. QGraphicsEffect相关类很耗CPU，甚至在绘制的时候和某些地方有冲突干扰，基本上不建议使用，情非得已只建议少量使用和非频繁触发绘制的地方使用。
+
+120. 用QSettings设置注册表，如果不是管理员身份运行会打印 QSettings: failed to set subkey "xxx" (拒绝访问。)，你需要手动鼠标右键管理员身份运行就可以。
+
+121. QLineEdit除了单纯的文本框以外，还可以做很多特殊的处理用途。
+- 限制输入只能输入IP地址。
+- 限制输入范围，强烈推荐使用 QRegExpValidator 正则表达式来处理。
+```cpp
+//正在表达式限制输入
+ui->lineEdit->setValidator(new QRegExpValidator(QRegExp("\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b")));
+//用于占位
+ui->lineEdit->setInputMask("000.000.000.000");
+
+#if 0
+//下面代码设置浮点数范围限制失败
+ui->lineEdit->setValidator(new QDoubleValidator(20, 50, 1));
+#else
+//下面代码设置浮点数范围限制成功
+QDoubleValidator *validator = new QDoubleValidator(20, 50, 1);
+validator->setNotation(QDoubleValidator::StandardNotation);
+ui->lineEdit->setValidator(validator);
+#end
+//下面代码设置整数范围限制成功
+ui->lineEdit->setValidator(new QIntValidator(10, 120));
+
+//其实上面的代码缺陷很多，只能限制只输入小数，无法设定数值范围，很操蛋
+//需要来个万能的牛逼的 QRegExpValidator
+
+//限制浮点数输入范围为[-180,180]
+QRegExp regexp("^-?(180|1?[0-7]?\\d(\\.\\d+)?)$");
+//限制浮点数输入范围为[-90,90]并限定为小数位后4位
+QRegExp regexp("^-?(90|[1-8]?\\d(\\.\\d{1,4})?)$");
+QRegExpValidator *validator = new QRegExpValidator(regexp, this);
+ui->lineEdit->setValidator(validator);
+```
 
 ### 二、其他经验
 

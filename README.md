@@ -769,7 +769,8 @@ qDebug()<< s1;
 - 限制输入范围，强烈推荐使用 QRegExpValidator 正则表达式来处理。
 ```cpp
 //正在表达式限制输入
-ui->lineEdit->setValidator(new QRegExpValidator(QRegExp("\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b")));
+QString str = "\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b";
+ui->lineEdit->setValidator(new QRegExpValidator(QRegExp(str)));
 //用于占位
 ui->lineEdit->setInputMask("000.000.000.000");
 
@@ -781,7 +782,7 @@ ui->lineEdit->setValidator(new QDoubleValidator(20, 50, 1));
 QDoubleValidator *validator = new QDoubleValidator(20, 50, 1);
 validator->setNotation(QDoubleValidator::StandardNotation);
 ui->lineEdit->setValidator(validator);
-#end
+#endif
 //下面代码设置整数范围限制成功
 ui->lineEdit->setValidator(new QIntValidator(10, 120));
 

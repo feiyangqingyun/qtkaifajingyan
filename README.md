@@ -797,6 +797,14 @@ QRegExpValidator *validator = new QRegExpValidator(regexp, this);
 ui->lineEdit->setValidator(validator);
 ```
 
+122. 在继承自QAbstractItemView的控件中，比如QTableView、QTableWidget，如果文本超过队列item的宽度，则会自动省略号显示，想要快速显示完整的文本，可以在该列和下一列分割线中间双击即可，会自动自适应显示最大宽度，如果是Qt5.14或者更高版本，你会发现显示省略号的计算规则变了，如果是rtsp、http之类的开头的英文字符串，同样的列宽下，会提前就显示省略号，比如字符串 rtmp://58.200.131.2:1935/livetv/cctv1，会显示成 rtmp://...  ，而在旧版本的Qt中会显示成 rtmp://58.200.131... ，很多时候我们并不想看到烦人的省略号，可以设置取消。
+```cpp
+//取消自动换行
+tableView->setWordWrap(false);
+//超出文本不显示省略号
+tableView->setTextElideMode(Qt::ElideNone);
+```
+
 ### 二、其他经验
 
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！

@@ -813,6 +813,31 @@ videoWidget->setAttribute(Qt::WA_OpaquePaintEvent);
 
 123. Qt bug成千上万，这个不用大惊小怪，也基本上遇不到，大部分都是特殊极端情况特定应用场景出现，甚至你会遇到有些是debug可以release报错，有些release可以debug却报错的情况，最神奇的还有先是debug报错，然后release正常，再返回去用debug又正常，需要用release激活一下！学习编程的路本来就是一条坑坑洼洼的路，不断填坑，尽量规避坑！很多时候很多看起来的坑其实是自己没有注意细节导致的。
 
+124. Qt试图中默认排序是按照字符串的ASCII排序的，如果是IP地址的话会出现192.168.1.117排在192.168.1.2前面的情况，如果要规避这种情况，一种做法是取末尾的地址转成整型再比较大小，缺点是跨网段就歇菜了，又会出现192.168.2.65出现在192.168.1.70前面，终极大法是将IP地址转成整型再比较大小。
+```cpp
+QString QUIHelper::ipv4IntToString(quint32 ip)
+{
+    QString result = QString("%1.%2.%3.%4").arg((ip >> 24) & 0xFF).arg((ip >> 16) & 0xFF).arg((ip >> 8) & 0xFF).arg(ip & 0xFF);
+    return result;
+}
+
+quint32 QUIHelper::ipv4StringToInt(const QString &ip)
+{
+    int result = 0;
+    if (isIP(ip)) {
+        QStringList list = ip.split(".");
+        int ip0 = list.at(0).toInt();
+        int ip1 = list.at(1).toInt();
+        int ip2 = list.at(2).toInt();
+        int ip3 = list.at(3).toInt();
+        result = ip3 | ip2 << 8 | ip1 << 16 | ip0 << 24;
+    }
+    return result;
+}
+```
+
+125. 在主QWidget窗体如果直接qss设置背景图片的话，预览是可见的，运行并没有效果，你需要在这个主widget上再放个widget，在新的widget上设置qss图片就行，而如果是Dialog或者QMainWindow窗体是支持直接设置qss背景图的，预览和运行效果一致。
+
 ### 二、其他经验
 
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！

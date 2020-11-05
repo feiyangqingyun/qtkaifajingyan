@@ -838,6 +838,28 @@ quint32 QUIHelper::ipv4StringToInt(const QString &ip)
 
 125. 在主QWidget窗体如果直接qss设置背景图片的话，预览是可见的，运行并没有效果，你需要在这个主widget上再放个widget，在新的widget上设置qss图片就行，而如果是Dialog或者QMainWindow窗体是支持直接设置qss背景图的，预览和运行效果一致。
 
+126. Qt提供了qDebug机制直接输出打印信息，这个大大弥补了QtCreator调试很鸡肋的缺点，而且无缝对接日志钩子，使得现场运行期间按照预定的打印信息输出到日志文件，有时候在开发阶段，又不想要看到一堆堆的打印信息，最笨的做法是一行行注释掉qdebug的地方，其实还可以直接pro中加上一行来禁用整个项目的qdebug输出。
+```cpp
+#禁用qdebug打印输出
+DEFINES     += QT_NO_DEBUG_OUTPUT
+
+#自定义define变量 可以在整个项目中使用
+#pro文件可以这样判断 contains(DEFINES, videovlc) {}
+#代码文件可以这样判断 #ifdef videovlc
+DEFINES     += videovlc1 videoffmpeg
+
+#关闭编译警告提示 眼不见为净
+CONFIG      += warn_off
+
+#指定编译生成的文件到temp目录 分门别类存储
+MOC_DIR     = temp/moc
+RCC_DIR     = temp/rcc
+UI_DIR      = temp/ui
+OBJECTS_DIR = temp/obj
+#指定编译生成的可执行文件到bin目录
+DESTDIR     = bin
+```
+
 ### 二、其他经验
 
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！

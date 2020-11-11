@@ -856,8 +856,40 @@ MOC_DIR     = temp/moc
 RCC_DIR     = temp/rcc
 UI_DIR      = temp/ui
 OBJECTS_DIR = temp/obj
+
 #指定编译生成的可执行文件到bin目录
 DESTDIR     = bin
+```
+
+127. Qt对操作系统层的消息也做了很多的封装，可以直接拿到进行处理（如果需要拦截处理要用对应操作系统的API才行比如鼠标键盘钩子），比如系统休眠和唤醒做一些处理。
+```cpp
+#ifdef Q_OS_WIN
+bool frmMain::winEvent(MSG *message, long *result)
+{
+    return nativeEvent("windows_generic_MSG", message, result);
+}
+#endif
+
+bool frmMain::nativeEvent(const QByteArray &eventType, void *message, long *result)
+{
+    if (eventType == "windows_generic_MSG") {
+#ifdef Q_OS_WIN
+        MSG *msg = static_cast<MSG *>(message);
+        //qDebug() << TIMEMS << msg->message;
+        if (msg->wParam == PBT_APMSUSPEND && msg->message == WM_POWERBROADCAST) {
+            //系统休眠的时候自动最小化可以规避程序可能出现的问题
+            this->showMinimized();
+        } else if (msg->wParam == PBT_APMRESUMEAUTOMATIC) {
+            //休眠唤醒后自动打开
+            this->showNormal();
+        }
+#endif
+    } else if (eventType == "NSEvent") {
+#ifdef Q_OS_MACOS
+#endif
+    }
+    return false;
+}
 ```
 
 ### 二、其他经验

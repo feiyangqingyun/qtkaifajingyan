@@ -892,6 +892,24 @@ bool frmMain::nativeEvent(const QByteArray &eventType, void *message, long *resu
 }
 ```
 
+128. Qt的pro项目管理配置文件中也可添加各种编译前后的操作及配置，主要通过 QMAKE_POST_LINK和QMAKE_PRE_LINK，他们支持的函数以及写法，可以在QtCreator的帮助中搜索 qmake Function Reference 查看详情说明。
+- QMAKE_PRE_LINK    表示编译前执行内容
+- QMAKE_POST_LINK   表示编译后执行内容
+```cpp
+srcFile1 = $$PWD/1.txt
+srcFile2 = $$PWD/2.txt
+dstDir = $$PWD/../bin
+#windows上需要转换路径斜杠 其他系统不需要
+srcFile1 = $$replace(srcFile1, /, \\);
+srcFile2 = $$replace(srcFile2, /, \\);
+dstDir = $$replace(dstDir, /, \\);
+
+#编译前执行拷贝 多个拷贝可以通过 && 符号隔开
+QMAKE_PRE_LINK += copy /Y $$srcFile1 $$dstDir && copy /Y $$srcFile2 $$dstDir
+#编译后执行拷贝 多个拷贝可以通过 && 符号隔开
+QMAKE_POST_LINK += copy /Y $$srcFile1 $$dstDir && copy /Y $$srcFile2 $$dstDir
+```
+
 ### 二、其他经验
 
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！

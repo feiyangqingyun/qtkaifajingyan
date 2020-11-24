@@ -871,6 +871,10 @@ protected:
 #endif
 
 //主窗体实现函数
+#ifdef Q_OS_WIN
+#include "Windows.h"
+#endif
+
 bool frmMain::nativeEvent(const QByteArray &eventType, void *message, long *result)
 {
     if (eventType == "windows_generic_MSG") {

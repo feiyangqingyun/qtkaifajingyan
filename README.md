@@ -863,13 +863,14 @@ DESTDIR     = bin
 
 127. Qt对操作系统层的消息也做了很多的封装，可以直接拿到进行处理（如果需要拦截处理要用对应操作系统的API才行比如鼠标键盘钩子），比如系统休眠和唤醒做一些处理。
 ```cpp
+//主窗体头文件
+protected:
+    bool nativeEvent(const QByteArray &eventType, void *message, long *result);
 #ifdef Q_OS_WIN
-bool frmMain::winEvent(MSG *message, long *result)
-{
-    return nativeEvent("windows_generic_MSG", message, result);
-}
+    bool winEvent(MSG *message, long *result);
 #endif
 
+//主窗体实现函数
 bool frmMain::nativeEvent(const QByteArray &eventType, void *message, long *result)
 {
     if (eventType == "windows_generic_MSG") {
@@ -890,6 +891,13 @@ bool frmMain::nativeEvent(const QByteArray &eventType, void *message, long *resu
     }
     return false;
 }
+
+#ifdef Q_OS_WIN
+bool frmMain::winEvent(MSG *message, long *result)
+{
+    return nativeEvent("windows_generic_MSG", message, result);
+}
+#endif
 ```
 
 128. Qt的pro项目管理配置文件中也可添加各种编译前后的操作及配置，主要通过 QMAKE_POST_LINK和QMAKE_PRE_LINK，他们支持的函数以及写法，可以在QtCreator的帮助中搜索 qmake Function Reference 查看详情说明。
@@ -922,7 +930,7 @@ QMAKE_POST_LINK += copy /Y $$srcFile1 $$dstDir && copy /Y $$srcFile2 $$dstDir
 
 5. 如果出现崩溃和段错误，80%都是因为要么越界，要么未初始化，死扣这两点，80%的问题解决了。
 
-6. Qt一共有几百个版本，关于如何选择Qt版本的问题，我一般保留四个版本，为了兼容Qt4用4.8.7，最后的支持XP的版本5.7.0，最新的长期支持版本比如5.12，最高的新版本比如5.14.2。强烈不建议使用4.7以前和5.0到5.3之间的版本，太多bug和坑，稳定性和兼容性相比于之后的版本相当差，能换就换，不能换睡服领导也要换。
+6. Qt一共有几百个版本，关于如何选择Qt版本的问题，我一般保留四个版本，为了兼容Qt4用4.8.7，最后的支持XP的版本5.7.0，最新的长期支持版本比如5.12，最高的新版本比如5.15.2。强烈不建议使用4.7以前和5.0到5.3之间的版本，太多bug和坑，稳定性和兼容性相比于之后的版本相当差，能换就换，不能换睡服领导也要换。
 
 7. Qt和msvc编译器常见搭配是Qt5.7+VS2013、Qt5.9+VS2015、Qt5.12+VS2017，按照这些搭配来，基本上常用的模块都会有，比如webengine模块，如果选用的Qt5.12+msvc2015，则很可能官方没有编译这个模块，只是编译了Qt5.12+msvc2017的。
 

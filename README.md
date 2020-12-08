@@ -841,6 +841,24 @@ quint32 QUIHelper::ipv4StringToInt(const QString &ip)
 126. Qt提供了qDebug机制直接输出打印信息，这个大大弥补了QtCreator调试很鸡肋的缺点，而且无缝对接日志钩子，使得现场运行期间按照预定的打印信息输出到日志文件，有时候在开发阶段，又不想要看到一堆堆的打印信息，最笨的做法是一行行注释掉qdebug的地方，其实还可以直接pro中加上一行来禁用整个项目的qdebug输出。
 ```cpp
 #禁用qdebug打印输出
+DEFINES += QT_NO_DEBUG_OUTPUT
+```
+
+127. 在使用QT_NO_DEBUG_OUTPUT关键字禁用了所有打印信息以后，可以节约不少的开销，有时候又想在禁用打印信息后，极少地方还需要看到打印信息，怎么办呢？其实QT_NO_DEBUG_OUTPUT禁用的qdebug的输出，Qt还有其他几种打印信息比如 qInfo、qWarning、qCritical，这些是不受影响的，也就是说在极少部分需要打印的地方用qInfo来输出信息就好。特别注意：qFatal打印完信息程序会自动结束。
+```cpp
+qDebug() << "qDebug";
+qInfo() << "qInfo";
+qWarning() << "qWarning";
+qCritical() << "qCritical";
+
+qDebug("qDebug");
+qWarning("qWarning");
+qCritical("qCritical");
+```
+
+128. Qt的pro文件可以添加各种处理来使得配置更方便，比如指定输出文件路径等，这样就不会全部在一堆编译生成的临时文件中找来找去。
+```cpp
+#禁用qdebug打印输出
 DEFINES     += QT_NO_DEBUG_OUTPUT
 
 #自定义define变量 可以在整个项目中使用
@@ -861,7 +879,7 @@ OBJECTS_DIR = temp/obj
 DESTDIR     = bin
 ```
 
-127. Qt对操作系统层的消息也做了很多的封装，可以直接拿到进行处理（如果需要拦截处理要用对应操作系统的API才行比如鼠标键盘钩子），比如系统休眠和唤醒做一些处理。
+129. Qt对操作系统层的消息也做了很多的封装，可以直接拿到进行处理（如果需要拦截处理要用对应操作系统的API才行比如鼠标键盘钩子），比如系统休眠和唤醒做一些处理。
 ```cpp
 //主窗体头文件
 protected:
@@ -904,7 +922,7 @@ bool frmMain::winEvent(MSG *message, long *result)
 #endif
 ```
 
-128. Qt的pro项目管理配置文件中也可添加各种编译前后的操作及配置，主要通过 QMAKE_POST_LINK和QMAKE_PRE_LINK，他们支持的函数以及写法，可以在QtCreator的帮助中搜索 qmake Function Reference 查看详情说明。
+130. Qt的pro项目管理配置文件中也可添加各种编译前后的操作及配置，主要通过 QMAKE_POST_LINK和QMAKE_PRE_LINK，他们支持的函数以及写法，可以在QtCreator的帮助中搜索 qmake Function Reference 查看详情说明。
 - QMAKE_PRE_LINK    表示编译前执行内容
 - QMAKE_POST_LINK   表示编译后执行内容
 ```cpp

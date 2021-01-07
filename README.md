@@ -953,6 +953,15 @@ qDebug() << s1;
 qDebug().noquote() << s1;
 ```
 
+134. 很多人有疑问为何qss对浏览器控件中的网页样式没法控制，其实用屁股想想也知道，那玩意是html css去控制的，和Qt一毛钱关系也没有，根本管不着，如果想要对滚动条样式设置，可以在网页代码中设置样式就行。
+```cpp
+<style type="text/css">
+::-webkit-scrollbar{width:0.8em;}
+::-webkit-scrollbar-track{background:rgb(241,241,241);}
+::-webkit-scrollbar-thumb{background:rgb(188,188,188);}
+</style>
+```
+
 ### 二、其他经验
 
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！

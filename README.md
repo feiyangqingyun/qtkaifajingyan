@@ -719,7 +719,28 @@ path = QDir::toNativeSeparators(path);
 //输出 C:/temp/test.txt
 ```
 
-112. 巧用QMetaObject::invokeMethod方法可以实现很多效果，包括同步和异步执行，比如有个应用场景是在回调中，需要异步调用一个public函数，如果直接调用的话会发现不成功，此时需要使用 QMetaObject::invokeMethod(obj, "fun", Qt::QueuedConnection); 这种方式来就可以。invokeMethod函数有很多重载参数，可以传入返回值和执行方法的参数等。
+112. 巧用QMetaObject::invokeMethod方法可以实现很多效果，包括同步和异步执行，很大程度上解决了跨线程处理信号槽的问题。比如有个应用场景是在回调中，需要异步调用一个public函数，如果直接调用的话会发现不成功，此时需要使用 QMetaObject::invokeMethod(obj, "fun", Qt::QueuedConnection); 这种方式来就可以。invokeMethod函数有很多重载参数，可以传入返回值和执行方法的参数等。
+```cpp
+//头文件声明信号和槽函数
+signals:
+    void sig_test(int type,double value);
+private slots:
+    void slot_test(int type, double value);
+
+//构造函数关联信号槽
+connect(this, SIGNAL(sig_test(int, double)), this, SLOT(slot_test(int, double)));
+//单击按钮触发信号和槽,这里是同时举例信号槽都可以
+void MainWindow::on_pushButton_clicked()
+{
+    QMetaObject::invokeMethod(this, "sig_test", Q_ARG(int, 66), Q_ARG(double, 66.66));
+    QMetaObject::invokeMethod(this, "slot_test", Q_ARG(int, 88), Q_ARG(double, 88.88));
+}
+//会打印 66 66.66 和 88 88.88
+void MainWindow::slot_test(int type, double value)
+{
+    qDebug() << type << value;
+}
+```
 
 113. Qt5中的信号是public的，可以在需要的地方直接emit即可，而在Qt4中信号是protected的，不能直接使用，需要定义一个public函数来emit。
 
@@ -956,9 +977,9 @@ qDebug().noquote() << s1;
 134. 很多人有疑问为何qss对浏览器控件中的网页样式没法控制，其实用屁股想想也知道，那玩意是html css去控制的，和Qt一毛钱关系也没有，根本管不着，如果想要对滚动条样式设置，可以在网页代码中设置样式就行。
 ```cpp
 <style type="text/css">
-::-webkit-scrollbar{width:0.8em;}
-::-webkit-scrollbar-track{background:rgb(241,241,241);}
-::-webkit-scrollbar-thumb{background:rgb(188,188,188);}
+  ::-webkit-scrollbar{width:0.8em;}
+  ::-webkit-scrollbar-track{background:rgb(241,241,241);}
+  ::-webkit-scrollbar-thumb{background:rgb(188,188,188);}
 </style>
 ```
 

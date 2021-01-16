@@ -983,6 +983,30 @@ qDebug().noquote() << s1;
 </style>
 ```
 
+135. Qt的ini配置文件默认不支持直接读写中文，需要手动设置下编码格式才行，强烈建议统一用utf-8编码，包括代码文件。
+```cpp
+//设置了编码以后配置文件内容为 Company=上海物联网技术研究中心
+//没有设置编码则配置文件内容为 Company=\xe4\xb8\x8a\xe6\xb5\xb7\xe7\x89\xa9\xe8\x81\x94\xe7\xbd\x91\xe6\x8a\x80\xe6\x9c\xaf\xe7\xa0\x94\xe7\xa9\xb6\xe4\xb8\xad\xe5\xbf\x83
+void App::readConfig()
+{
+    QSettings set(App::ConfigFile, QSettings::IniFormat);
+    set.setIniCodec("utf-8");
+
+    set.beginGroup("AppConfig1");
+    App::Company = set.value("Company", App::Company).toString();
+    set.endGroup();
+}
+void App::writeConfig()
+{
+    QSettings set(App::ConfigFile, QSettings::IniFormat);
+    set.setIniCodec("utf-8");
+
+    set.beginGroup("AppConfig1");
+    set.setValue("Company", App::Company);
+    set.endGroup();
+}
+```
+
 ### 二、其他经验
 
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！

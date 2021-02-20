@@ -12,7 +12,7 @@
 
 6. 可以在pro文件中写上标记版本号+ico图标（Qt5才支持）
 ``` c++
-VERSION  = 2020.10.25
+VERSION  = 2021.02.25
 RC_ICONS = main0.ico
 ```
 

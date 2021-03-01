@@ -12,7 +12,7 @@
 
 6. 可以在pro文件中写上标记版本号+ico图标（Qt5才支持）
 ``` c++
-VERSION  = 2021.02.25
+VERSION  = 2020.10.25
 RC_ICONS = main0.ico
 ```
 
@@ -1037,6 +1037,26 @@ int main(int argc, char *argv[])
 
     return a.exec();
 }
+```
+
+137. Qt重载qDebug输出自定义的信息。
+```cpp
+struct FunctionInfo {
+QString function;
+QString name;
+QString groupEnabled;
+QString action;
+QString group;
+
+friend QDebug operator << (QDebug debug, const FunctionInfo &functionInfo)
+{
+    QString info = QString("功能: %1  名称: %2  启用: %3  方法: %4  分组: %5")
+                    .arg(functionInfo.function).arg(functionInfo.name).arg(functionInfo.groupEnabled)
+                    .arg(functionInfo.action).arg(functionInfo.group);
+    debug << info;
+    return debug;
+}
+};
 ```
 
 ### 二、其他经验

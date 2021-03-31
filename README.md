@@ -1058,6 +1058,25 @@ struct FunctionInfo {
 };
 ```
 
+138. 对高分屏不同缩放比例的自适应处理方法。
+```cpp
+//方法1：在main函数的最前面加上下面这句
+#if (QT_VERSION > QT_VERSION_CHECK(5,6,0))
+    QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif
+
+//方法2：在可执行文件同目录下新建文件 qt.conf 填入下面内容
+[Platforms]
+WindowsArguments = dpiawareness=0
+
+//方法3：在main函数最前面设置Qt内部的环境变量
+qputenv("QT_AUTO_SCREEN_SCALE_FACTOR", "1.5");
+
+//方法4：新版本的Qt比如Qt5.14修正了对高分屏的处理支持不是整数的缩放
+qputenv("QT_ENABLE_HIGHDPI_SCALING", "1");
+QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
+```
+
 ### 二、其他经验
 
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！

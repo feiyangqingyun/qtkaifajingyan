@@ -1060,7 +1060,7 @@ struct FunctionInfo {
 
 138. 对高分屏不同缩放比例的自适应处理方法。
 ```cpp
-//方法1：在main函数的最前面加上下面这句
+//方法1：在main函数的最前面加上下面这句 5.6版本才开始有这个函数
 #if (QT_VERSION > QT_VERSION_CHECK(5,6,0))
     QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
@@ -1075,6 +1075,28 @@ qputenv("QT_AUTO_SCREEN_SCALE_FACTOR", "1.5");
 //方法4：新版本的Qt比如Qt5.14修正了对高分屏的处理支持不是整数的缩放
 qputenv("QT_ENABLE_HIGHDPI_SCALING", "1");
 QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
+```
+
+139. QTabWidget选项卡有个自动生成按钮切换选项卡的机制，有时候不想看到这个烦人的切换按钮，可以设置usesScrollButtons为假，其实QTabWidget的usesScrollButtons属性最终是应用到QTabWidget的QTabBar对象上，所以只要设置全局的QTabBar的这个属性关闭即可。为啥要设置全局的呢，因为如果只是对QTabWidget设置了该属性，而在QMainWindow窗体中QDockWidget合并自动形成的选项卡只有QTabBar对象导致依然是有切换按钮。
+```cpp
+//对tabWidget设置无切换按钮
+ui->tabWidget->setUsesScrollButtons(false);
+//对tabBar设置无切换按钮
+ui->tabWidget->tabBar()->setUsesScrollButtons(false);
+//对整个系统的选项卡设置无切换按钮
+QTabBar{qproperty-usesScrollButtons:false;}
+//设置选项卡自动拉伸 这玩意居然之前自动计算来设置原来内置了哇咔咔
+QTabBar{qproperty-expanding:false;}
+//设置选项卡关闭按钮可见
+QTabBar{qproperty-tabsClosable:true;}
+//还有其他属性参见QTabBar头文件有惊喜
+//依旧是万能大法所有可视化类的 Q_PROPERTY 包含的属性都可以这样设置
+```
+
+140. QMainWindow的分割线默认尺寸比较大，有时候想设置小一点或者不想要，最开始的时候以为是QSplitter，打印所有子元素找遍了也没找到影子，最后发现样式表中有对应设置的内容。
+```cpp
+//真的是做梦也没想到要这样设置
+QMainWindow::separator{width:1px;height:1px;margin:1px;padding:1px;background:#FF0000;}
 ```
 
 ### 二、其他经验

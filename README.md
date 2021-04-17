@@ -1099,6 +1099,48 @@ QTabBar{qproperty-tabsClosable:true;}
 QMainWindow::separator{width:1px;height:1px;margin:1px;padding:1px;background:#FF0000;}
 ```
 
+141. QImage支持xpm图标，查看Qt内置的QStyle风格的代码中可以发现大量的xpm图标定义，通过代码的形式来产生图标，哇咔咔好牛逼。
+```cpp
+static const char * const imgData[] = {
+    "15 11 6 1",
+    "   c None",
+    "+  c #979797",
+    "@  c #C9C9C9",
+    "$  c #C1C1C1",
+    "b  c None",
+    "d  c None",
+    " $++++++++$    ",
+    "$+bbbbbbbb+$   ",
+    "+b $$      +$  ",
+    "+b $@       +$ ",
+    "+b           +$",
+    "+b           d+",
+    "+b          d+$",
+    "+b $$      d+$ ",
+    "+b $@     d+$  ",
+    "$+dddddddd+$   ",
+    " $++++++++$    "};
+
+//这样就能直接显示一个箭头的图形
+QImage img(imgData);
+QLabel lab;
+lab.setPixmap(QPixmap::fromImage(img));
+lab.show();
+```
+
+142. 在停靠窗体QDockWidget和QOpenGLWidget同时使用的时候，从嵌入状态切换到浮动状态或者浮动状态切换到嵌入状态，QOpenGLWidget的上下文会被打乱导致白屏失效，需要在main函数中开头位置设置下共享OpenGL上下文。
+```cpp
+int main(int argc, char *argv[])
+{
+    //需要设置共享上下文不然停靠窗体从正常到浮动后QOpenGLWidget窗体会失效
+#if (QT_VERSION > QT_VERSION_CHECK(5,4,0))
+    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+#endif
+    QApplication a(argc, argv);
+    ...
+}
+```
+
 ### 二、其他经验
 
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！
@@ -1129,7 +1171,7 @@ QMainWindow::separator{width:1px;height:1px;margin:1px;padding:1px;background:#F
 
 12. 最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
 
-### 三、推荐的Qt论坛+个人博客+网站+群
+### 三、推荐的网址
 | 名称 | 网址 |
 | ------ | ------ |
 |QQ学习群|Qt交流大会群 853086607 Qt技术交流群 46679801 Qt进阶之路群 734623697|

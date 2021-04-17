@@ -1,10 +1,10 @@
-﻿### 一、开发经验总结
+﻿### 一、开发经验
 
 1. 当编译发现大量错误的时候，从第一个看起，一个一个的解决，不要急着去看下一个错误，往往后面的错误都是由于前面的错误引起的，第一个解决后很可能都解决了。
 
 2. 定时器是个好东西，学会好使用它，有时候用QTimer::singleShot可以解决意想不到的问题。
 
-3. 打开creator，在构建套件的环境中增加MAKEFLAGS=-j8，可以不用每次设置多线程编译。珍爱时间和生命。新版的QtCreator已经默认就是j8。
+3. 打开creator，在构建套件的环境中增加MAKEFLAGS=-j4（具体要看电脑的线程数量，现在很多电脑已经是16线程了就可以写成-j16），可以不用每次设置多线程编译。珍爱时间和生命。新版的QtCreator已经默认就是j4。
 
 4. 如果你想顺利用QtCreator部署安卓程序，首先你要在AndroidStudio 里面配置成功，把坑全部趟平。
 
@@ -70,7 +70,7 @@ win32 {
 
 14. Qt5增强了很多安全性验证，如果出现setGeometry: Unable to set geometry，请将该控件的可见移到加入布局之后。
 
-15. 可以将控件A添加到布局，然后控件B设置该布局，这种灵活性大大提高了控件的组合度，比如可以在文本框左侧右侧增加一个搜索按钮，按钮设置图标即可。
+15. 可以将控件A添加到布局，然后控件B设置该布局，这种灵活性提高了控件的组合度，比如可以在文本框左侧右侧增加一个搜索按钮，按钮设置图标即可。
 ``` c++
 QPushButton *btn = new QPushButton;
 btn->resize(30, ui->lineEdit->height());
@@ -85,11 +85,11 @@ layout->addWidget(btn);
 17. 巧妙的使用findChildren可以查找该控件下的所有子控件。findChild为查找单个。
 ``` c++
 //查找指定类名objectName的控件
-QList<QWidget *> widgets = parentWidget.findChildren<QWidget *>("widgetname");
+QList<QWidget *> widgets = fatherWidget.findChildren<QWidget *>("widgetname");
 //查找所有QPushButton
-QList<QPushButton *> allPButtons = parentWidget.findChildren<QPushButton *>();
+QList<QPushButton *> allPButtons = fatherWidget.findChildren<QPushButton *>();
 //查找一级子控件,不然会一直遍历所有子控件
-QList<QPushButton *> childButtons = parentWidget.findChildren<QPushButton *>(QString(), Qt::FindDirectChildrenOnly);
+QList<QPushButton *> childButtons = fatherWidget.findChildren<QPushButton *>(QString(), Qt::FindDirectChildrenOnly);
 ```
 
 18. 巧妙的使用inherits判断是否属于某种类。
@@ -354,7 +354,7 @@ setsockopt(fd, SOL_TCP, TCP_KEEPCNT, (void *)&keepCount, sizeof(keepCount));
 
 61. 很多人问Qt嵌入式平台用哪个好，这里统一回答（当前时间节点2018年）：imx6+335x比较稳定，性能高就用RK3288 RK3399，便宜的话就用全志H3，玩一玩可以用树莓派香橙派。
 
-62. 对于大段的注释代码，建议用 #if 0 #endif 将代码块包含起来，而不是将该段代码选中然后全部 // ，下次要打开这段代码的话，又需要重新选中一次取消，如果采用的是 #if 0则只要把0改成1即可，效率大大提升。
+62. 对于大段的注释代码，建议用 #if 0 #endif 将代码块包含起来，而不是将该段代码选中然后全部双斜杠注释，下次要打开这段代码的话，又需要重新选中一次取消，如果采用的是 #if 0则只要把0改成1即可，开发效率提升很多。
 
 63. Qt打包发布，有很多办法，Qt5以后提供了打包工具windeployqt（linux上为linuxdeployqt，mac上为macdeployqt）可以很方便的将应用程序打包，使用下来发现也不是万能的，有时候会多打包一些没有依赖的文件，有时候又会忘记打包一些插件尤其是用了qml的情况下，而且不能识别第三方库，比如程序依赖ffmpeg，则对应的库需要自行拷贝，终极大法就是将你的可执行文件复制到Qt安装目录下的bin目录，然后整个一起打包，挨个删除不大可能依赖的组件，直到删到正常运行为止。
 
@@ -405,7 +405,7 @@ dialog.exec();
 
 75. 将 QApplication::style() 对应的drawPrimitive、drawControl、drawItemText、drawItemPixmap等几个方法用熟悉了，再结合QStyleOption属性，可以玩转各种自定义委托，还可以直接使用paint函数中的painter进行各种绘制，各种牛逼的表格、树状列表、下拉框等，绝对屌炸天。QApplication::style()->drawControl 的第4个参数如果不设置，则绘制出来的控件不会应用样式表。
 
-76. 心中有坐标，万物皆painter，强烈建议在学习自定义控件绘制的时候，将qpainter.h头文件中的函数全部看一遍、试一遍、理解一遍，这里边包含了所有Qt内置的绘制的接口，对应的参数都试一遍，你会发现很多新大陆，会大大激发你的绘制的兴趣，犹如神笔马良一般，策马崩腾遨游代码绘制的世界。
+76. 心中有坐标，万物皆painter，强烈建议在学习自定义控件绘制的时候，将qpainter.h头文件中的函数全部看一遍、试一遍、理解一遍，这里边包含了所有Qt内置的绘制的接口，对应的参数都试一遍，你会发现很多新大陆，会一定程度上激发你的绘制的兴趣，犹如神笔马良一般，策马崩腾遨游代码绘制的世界。
 
 77. 在使用setItemWidget或者setCellWidget的过程中，有时候会发现设置的控件没有居中显示而是默认的左对齐，而且不会自动拉伸填充，对于追求完美的程序员来说，这个可不大好看，有个终极通用办法就是，将这个控件放到一个widget的布局中，然后将widget添加到item中，这样就完美解决了，而且这样可以组合多个控件产生复杂的控件。
 ``` c++
@@ -538,7 +538,7 @@ QStyle::sliderValueFromPosition(minimum(), maximum(), event->x(), width());
 //从文件加载英文属性与中文属性对照表
 QFile file(":/propertyname.txt");
 if (file.open(QFile::ReadOnly)) {
-    //QTextStream方法读取速度至少快30%
+    //QTextStream方法读取速度至少快百分之30
 #if 0
     while(!file.atEnd()) {
         QString line = file.readLine();
@@ -859,7 +859,7 @@ quint32 QUIHelper::ipv4StringToInt(const QString &ip)
 
 125. 在主QWidget窗体如果直接qss设置背景图片的话，预览是可见的，运行并没有效果，你需要在这个主widget上再放个widget，在新的widget上设置qss图片就行，而如果是Dialog或者QMainWindow窗体是支持直接设置qss背景图的，预览和运行效果一致。
 
-126. Qt提供了qDebug机制直接输出打印信息，这个大大弥补了QtCreator调试很鸡肋的缺点，而且无缝对接日志钩子，使得现场运行期间按照预定的打印信息输出到日志文件，有时候在开发阶段，又不想要看到一堆堆的打印信息，最笨的做法是一行行注释掉qdebug的地方，其实还可以直接pro中加上一行来禁用整个项目的qdebug输出。
+126. Qt提供了qDebug机制直接输出打印信息，这个弥补了QtCreator调试很鸡肋的缺点，而且无缝对接日志钩子，使得现场运行期间按照预定的打印信息输出到日志文件，有时候在开发阶段，又不想要看到一堆堆的打印信息，最笨的做法是一行行注释掉qdebug的地方，其实还可以直接pro中加上一行来禁用整个项目的qdebug输出。
 ```cpp
 #禁用qdebug打印输出
 DEFINES += QT_NO_DEBUG_OUTPUT
@@ -1165,13 +1165,14 @@ int main(int argc, char *argv[])
 
 11. 如果Qt能从下面几个方面努力，相信会更有发展前景。
 - QWidget支持CSS3，具有诸多的牛逼的效果，目前支持的是CSS2。
-- QWidget支持GPU绘制，可选切换CPU或者GPU，大大提升绘制效率，利用现在强大的硬件。
+- QWidget支持GPU绘制，可选切换CPU或者GPU，提升绘制效率，利用现在强大的硬件。
 - Qml无缝支持js，可以利用现在各种js轮子，指数级提升qml的项目范围。
 - 支持将程序转成web运行，比如转成cgi之类的程序，目前Qt for WebAssembly很鸡肋，功能极其有限，sql/network/本地访问等都不支持，首次加载速度超慢，大部分Qt类还不支持。
 
 12. 最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
 
-### 三、推荐的网址
+### 三、七七八八
+
 | 名称 | 网址 |
 | ------ | ------ |
 |QQ学习群|Qt交流大会群 853086607 Qt技术交流群 46679801 Qt进阶之路群 734623697|
@@ -1207,7 +1208,8 @@ int main(int argc, char *argv[])
 |图形字体下载|[https://www.iconfont.cn/](https://www.iconfont.cn/)|
 |漂亮界面网站|[https://www.ui.cn/](https://www.ui.cn/)|
 
-### 三、其他
+### 四、书籍推荐
+
 1. C++入门书籍推荐《C++ primer plus》，进阶书籍推荐《C++ primer》。
 2. Qt入门书籍推荐霍亚飞的《Qt Creator快速入门》，Qt进阶书籍推荐官方的《C++ GUI Qt4编程》，qml书籍推荐《Qt5编程入门》。
 3. 强烈推荐程序员自我修养和规划系列书《大话程序员》《程序员的成长课》《解忧程序员》，受益匪浅，受益终生！

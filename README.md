@@ -11,13 +11,13 @@
 5. 很多时候找到Qt对应封装的方法后，记得多看看该函数的重载，多个参数的，你会发现不一样的世界，有时候会恍然大悟，原来Qt已经帮我们封装好了。
 
 6. 可以在pro文件中写上标记版本号+ico图标（Qt5才支持）
-``` c++
+```cpp
 VERSION  = 2020.10.25
 RC_ICONS = main0.ico
 ```
 
 7. 管理员运行程序，限定在MSVC编译器。
-``` c++
+```cpp
 QMAKE_LFLAGS += /MANIFESTUAC:"level='requireAdministrator' uiAccess='false'" #以管理员运行
 QMAKE_LFLAGS += /SUBSYSTEM:WINDOWS,"5.01" #VS2013 在XP运行
 ```
@@ -28,7 +28,7 @@ CONFIG += console pro
 9. 绘制平铺背景QPainter::drawTiledPixmap,绘制圆角矩形QPainter::drawRoundedRect(),而不是QPainter::drawRoundRect();
 
 10. 移除旧的样式
-``` c++
+```cpp
 //移除原有样式
 style()->unpolish(ui->btn);
 //重新设置新的该控件的样式。
@@ -36,7 +36,7 @@ style()->polish(ui->btn);
 ```
 
 11. 获取类的属性
-``` c++
+```cpp
 const QMetaObject *metaobject = object->metaObject();
 int count = metaobject->propertyCount();
 for (int i = 0; i < count; ++i) {
@@ -48,7 +48,7 @@ for (int i = 0; i < count; ++i) {
 ```
 
 12. Qt内置图标封装在QStyle中，大概七十多个图标，可以直接拿来用。
-``` c++
+```cpp
 SP_TitleBarMenuButton,
 SP_TitleBarMinButton,
 SP_TitleBarMaxButton,
@@ -61,7 +61,7 @@ SP_MessageBoxQuestion,
 ```
 
 13. 根据操作系统位数判断加载
-``` c++
+```cpp
 win32 {
     contains(DEFINES, WIN64) { DESTDIR = $${PWD}/../../bin64
     } else { DESTDIR = $${PWD}/../../bin32 }
@@ -71,7 +71,7 @@ win32 {
 14. Qt5增强了很多安全性验证，如果出现setGeometry: Unable to set geometry，请将该控件的可见移到加入布局之后。
 
 15. 可以将控件A添加到布局，然后控件B设置该布局，这种灵活性提高了控件的组合度，比如可以在文本框左侧右侧增加一个搜索按钮，按钮设置图标即可。
-``` c++
+```cpp
 QPushButton *btn = new QPushButton;
 btn->resize(30, ui->lineEdit->height());
 QHBoxLayout *layout = new QHBoxLayout(ui->lineEdit);
@@ -82,8 +82,8 @@ layout->addWidget(btn);
 
 16. 对QLCDNumber控件设置样式，需要将QLCDNumber的segmentstyle设置为flat。
 
-17. 巧妙的使用findChildren可以查找该控件下的所有子控件。findChild为查找单个。
-``` c++
+17. 巧妙的使用 findChildren 可以查找该控件下的所有子控件。 findChild 为查找单个。
+```cpp
 //查找指定类名objectName的控件
 QList<QWidget *> widgets = fatherWidget.findChildren<QWidget *>("widgetname");
 //查找所有QPushButton
@@ -93,7 +93,7 @@ QList<QPushButton *> childButtons = fatherWidget.findChildren<QPushButton *>(QSt
 ```
 
 18. 巧妙的使用inherits判断是否属于某种类。
-``` c++
+```cpp
 QTimer *timer = new QTimer;         // QTimer inherits QObject
 timer->inherits("QTimer");          // returns true
 timer->inherits("QObject");         // returns true
@@ -113,7 +113,7 @@ timer->inherits("QAbstractButton"); // returns false
 24. 默认Qt是一个窗体一个句柄，如果要让每个控件都拥有独立的句柄，设置下 a.setAttribute(Qt::AA_NativeWindows);
 
 25. Qt+Android防止程序被关闭。
-``` c++
+```cpp
 #if defined(Q_OS_ANDROID)
 QAndroidService a(argc, argv);
 return a.exec()
@@ -126,7 +126,7 @@ return a.exec();
 26. 可以对整体的指示器设置样式，例如 *::down-arrow,*::menu-indicator{}  *::up-arrow:disabled,*::up-arrow:off{}。
 
 27. 可以执行位置设置背景图片。
-``` c++
+```cpp
 QMainWindow > .QWidget {
     background-color: gainsboro;
     background-image: url(:/images/pagefold.png);
@@ -142,10 +142,10 @@ QMainWindow > .QWidget {
 30. QMediaPlayer是个壳，依赖本地解码器，视频这块默认基本上就播放个MP4，如果要支持其他格式需要下载k-lite或者LAV Filters安装即可（WIN上，其他系统上自行搜索）。如果需要做功能强劲的播放器，初学者建议用vlc、mpv，终极大法用ffmpeg。
 
 31. 判断编译器类型、编译器版本、操作系统。
-``` c++
+```cpp
 //GCC编译器
 #ifdef __GNUC__
-#if __GNUC__ >= 3 // GCC3.0以上
+#if __GNUC__ >= 3   // GCC3.0以上
 
 //MSVC编译器
 #ifdef _MSC_VER
@@ -171,17 +171,19 @@ QMainWindow > .QWidget {
 #ifdef __MINGW32__
 
 //windows
-#ifdef _WIN32    //32bit
-#ifdef _WIN64    //64bit
-#ifdef _WINDOWS     //图形界面程序
-#ifdef _CONSOLE     //控制台程序
+#ifdef _WIN32           //32bit
+#ifdef _WIN64           //64bit
+#ifdef _WINDOWS         //图形界面程序
+#ifdef _CONSOLE         //控制台程序
+
 //Windows（95/98/Me/NT/2000/XP/Vista）和Windows CE都定义了
-#if (WINVER >= 0x030a)     // Windows 3.1以上
-#if (WINVER >= 0x0400)     // Windows 95/NT4.0以上
-#if (WINVER >= 0x0410)     // Windows 98以上
-#if (WINVER >= 0x0500)     // Windows Me/2000以上
-#if (WINVER >= 0x0501)     // Windows XP以上
-#if (WINVER >= 0x0600)     // Windows Vista以上
+#if (WINVER >= 0x030a)  // Windows 3.1以上
+#if (WINVER >= 0x0400)  // Windows 95/NT4.0以上
+#if (WINVER >= 0x0410)  // Windows 98以上
+#if (WINVER >= 0x0500)  // Windows Me/2000以上
+#if (WINVER >= 0x0501)  // Windows XP以上
+#if (WINVER >= 0x0600)  // Windows Vista以上
+
 //_WIN32_WINNT 内核版本
 #if (_WIN32_WINNT >= 0x0500) // Windows 2000以上
 #if (_WIN32_WINNT >= 0x0501) // Windows XP以上
@@ -190,7 +192,7 @@ QMainWindow > .QWidget {
 ```
 
 32. 在pro中判断Qt版本及构建套件位数
-``` c++
+```cpp
 #打印版本信息
 message(qt version: $$QT_VERSION)
 #判断当前qt版本号
@@ -217,7 +219,7 @@ contains(QT_ARCH, x86_64) {}
 ```
 
 33. Qt最小化后恢复界面假死冻结，加上代码
-``` c++
+```cpp
 void showEvent(QShowEvent *e)
 {
     setAttribute(Qt::WA_Mapped);
@@ -228,7 +230,7 @@ void showEvent(QShowEvent *e)
 34. 获取标题栏高度：style()->pixelMetric(QStyle::PM_TitleBarHeight); PM_TitleBarHeight点进去你会发现新大陆。
 
 35. 设置高分屏属性以便支持2K4K等高分辨率，尤其是手机app。必须写在main函数的QApplication a(argc, argv);的前面。
-``` c++
+```cpp
 #if (QT_VERSION > QT_VERSION_CHECK(5,6,0))
     QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
@@ -244,7 +246,7 @@ void showEvent(QShowEvent *e)
 39. 可以直接继承QSqlQueryModel实现自定义的QueryModel，比如某一列字体颜色，占位符，其他样式等，重写QVariant CustomSqlModel::data(const QModelIndex &index, int role) const。
 
 40. Qt5以后提供了类QScroller直接将控件滚动。
-``` c++
+```cpp
 //禁用横向滚动条
 ui->listWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 //禁用纵向滚动条
@@ -259,7 +261,7 @@ QScroller::grabGesture(ui->listWidget, QScroller::LeftMouseButtonGesture);
 ```
 
 41. 如果使用sqlite数据库不想产生数据库文件，可以创建内存数据库。
-``` c++
+```cpp
 QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
 db.setDatabaseName(":memory:");
 ```
@@ -267,7 +269,7 @@ db.setDatabaseName(":memory:");
 42. 清空数据表并重置自增ID，sql = truncate table table_name。
 
 43. Qtchart模块从Qt5.7开始自带，最低编译要求Qt5.4。在安装的时候记得勾选，默认不勾选。使用该模块需要引入命名空间。
-``` c++
+```cpp
 #include <QChartView>
 QT_CHARTS_USE_NAMESPACE
 class CustomChart : public QChartView
@@ -276,14 +278,14 @@ class CustomChart : public QChartView
 44. QPushButton左对齐文字，需要设置样式表QPushButton{text-align:left;}
 
 45. QLabel有三种设置文本的方法，掌握好Qt的属性系统，举一反三，可以做出很多效果。
-``` c++
+```cpp
 ui->label->setStyleSheet("qproperty-text:hello;");
 ui->label->setProperty("text", "hello");
 ui->label->setText("hello");
 ```
 
 46. 巧妙的用QEventLoop开启事件循环，可以使得很多同步获取返回结果而不阻塞界面。QEventLoop内部新建了线程执行。
-``` c++
+```cpp
 QEventLoop loop;
 connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
 loop.exec();
@@ -295,7 +297,7 @@ loop.exec();
 
 49. QSqlTableModel的rowCount方法，默认最大返回256，如果超过256，可以将表格拉到底部，会自动加载剩余的，每次最大加载256条数据，如果需要打印或者导出数据，记得最好采用sql语句去查询，而不是使用QSqlTableModel的rowCount方法。不然永远最大只会导出256条数据。
 如果数据量很小，也可以采用如下方法：
-``` c++
+```cpp
 //主动加载所有数据,不然获取到的行数<=256
 while(model->canFetchMore()) {
     model->fetchMore();
@@ -305,7 +307,7 @@ while(model->canFetchMore()) {
 50. 如果需要指定无边框窗体，但是又需要保留操作系统的边框特性，可以自由拉伸边框，可以使用 setWindowFlags(Qt::CustomizeWindowHint);
 
 51. 在某些http post数据的时候，如果采用的是&字符串连接的数据发送，中文解析乱码的话，需要将中文进行URL转码。
-``` c++
+```cpp
 QString content = "测试中文";
 QString note = content.toUtf8().toPercentEncoding();
 ```
@@ -317,7 +319,7 @@ CONFIG += resources_big
 - 方法一：设置属性 this->setAttribute(Qt::WA_StyledBackground, true);
 - 方法二：改成继承QFrame，因为QFrame自带paintEvent函数已做了实现，在使用样式表时会进行解析和绘制。
 - 方法三：重新实现QWidget的paintEvent函数时，使用QStylePainter绘制。
-``` c++
+```cpp
 void Widget::paintEvent(QPaintEvent *)
 {
     QStyleOption option;
@@ -332,7 +334,7 @@ void Widget::paintEvent(QPaintEvent *)
 55. 在使用QFile的过程中，不建议频繁的打开文件写入然后再关闭文件，比如间隔5ms输出日志，IO性能瓶颈很大，这种情况建议先打开文件不要关闭，等待合适的时机比如析构函数中或者日期变了需要重新变换日志文件的时候关闭文件。不然短时间内大量的打开关闭文件会很卡，文件越大越卡。
 
 56. 在很多网络应用程序，需要自定义心跳包来保持连接，不然断电或者非法关闭程序，对方识别不到，需要进行超时检测，但是有些程序没有提供心跳协议，此时需要启用系统层的保活程序，此方法适用于TCP连接。
-``` c++
+```cpp
 int fd = tcpSocket->socketDescriptor();
 int keepAlive = 1;      //开启keepalive属性,缺省值:0(关闭)
 int keepIdle = 5;       //如果在5秒内没有任何数据交互,则进行探测,缺省值:7200(s)
@@ -361,7 +363,7 @@ setsockopt(fd, SOL_TCP, TCP_KEEPCNT, (void *)&keepCount, sizeof(keepCount));
 64. Qt中的动画，底层用的是QElapsedTimer定时器来完成处理，比如产生一些指定规则算法的数据，然后对属性进行处理。
 
 65. 在绘制无背景颜色只有边框颜色的圆形时候，可以用绘制360度的圆弧替代，效果完全一致。
-``` c++
+```cpp
 QRect rect(-radius, -radius, radius * 2, radius * 2);
 //以下两种方法二选一,其实绘制360度的圆弧=绘制无背景的圆形
 painter->drawArc(rect, 0, 360 * 16);
@@ -377,7 +379,7 @@ painter->drawEllipse(rect);
 69. 有时候设置了鼠标跟踪setMouseTracking为真，如果该窗体上面还有其他控件，当鼠标移到其他控件上面的时候，父类的鼠标移动事件MouseMove识别不到了，此时需要用到HoverMove事件，需要先设置 setAttribute(Qt::WA_Hover, true);
 
 70. Qt封装的QDateTime日期时间类非常强大，可以字符串和日期时间相互转换，也可以毫秒数和日期时间相互转换，还可以1970经过的秒数和日期时间相互转换等。
-``` c++
+```cpp
 QDateTime dateTime;
 QString dateTime_str = dateTime.currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
 //从字符串转换为毫秒（需完整的年月日时分秒）
@@ -393,7 +395,7 @@ datetime.fromTime_t(1315193829).toString("yyyy-MM-dd hh:mm:ss[:zzz]");
 71. 在我们使用QList、QStringList、QByteArray等链表或者数组的过程中，如果只需要取值，而不是赋值，强烈建议使用 at() 取值而不是 [] 操作符，在官方书籍《C++ GUI Qt 4编程（第二版）》的书中有特别的强调说明，此教材的原作者据说是Qt开发的核心人员编写的，所以还是比较权威，至于使用 at() 与使用 [] 操作符速度效率的比较，网上也有网友做过此类对比。原文在书的212页，这样描述的：Qt对所有的容器和许多其他类都使用隐含共享，隐含共享是Qt对不希望修改的数据决不进行复制的保证，为了使隐含共享的作用发挥得最好，可以采用两个新的编程习惯。第一种习惯是对于一个（非常量的）向量或者列表进行只读存取时，使用 at() 函数而不用 [] 操作符，因为Qt的容器类不能辨别 [] 操作符是否将出现在一个赋值的左边还是右边，他假设最坏的情况出现并且强制执行深层赋值，而 at() 函数则不被允许出现在一个赋值的左边。
 
 72. 如果是dialog窗体，需要在exec以后还能让其他代码继续执行，请在dialog窗体exec前增加一行代码，否则会阻塞窗体消息。
-``` c++
+```cpp
 QDialog dialog;
 dialog.setWindowModality(Qt::WindowModal);
 dialog.exec();
@@ -408,7 +410,7 @@ dialog.exec();
 76. 心中有坐标，万物皆painter，强烈建议在学习自定义控件绘制的时候，将qpainter.h头文件中的函数全部看一遍、试一遍、理解一遍，这里边包含了所有Qt内置的绘制的接口，对应的参数都试一遍，你会发现很多新大陆，会一定程度上激发你的绘制的兴趣，犹如神笔马良一般，策马崩腾遨游代码绘制的世界。
 
 77. 在使用setItemWidget或者setCellWidget的过程中，有时候会发现设置的控件没有居中显示而是默认的左对齐，而且不会自动拉伸填充，对于追求完美的程序员来说，这个可不大好看，有个终极通用办法就是，将这个控件放到一个widget的布局中，然后将widget添加到item中，这样就完美解决了，而且这样可以组合多个控件产生复杂的控件。
-``` c++
+```cpp
 //实例化进度条控件
 QProgressBar *progress = new QProgressBar;
 //增加widget+布局巧妙实现居中
@@ -422,14 +424,14 @@ ui->tableWidget->setCellWidget(0, 0, widget);
 ```
 
 78. 很多时候需要在已知背景色的情况下，能够清晰的绘制文字，这个时候需要计算对应的文字颜色。
-``` c++
+```cpp
 //根据背景色自动计算合适的前景色
 double gray = (0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue()) / 255;
 QColor textColor = gray > 0.5 ? Qt::black : Qt::white;
 ```
 
 79. 对QTableView或者QTableWidget禁用列拖动。
-``` c++
+```cpp
 #if (QT_VERSION <= QT_VERSION_CHECK(5,0,0))
     ui->tableView->horizontalHeader()->setResizeMode(0, QHeaderView::Fixed);
 #else
@@ -440,14 +442,14 @@ QColor textColor = gray > 0.5 ? Qt::black : Qt::white;
 80. 从Qt4转到Qt5，有些类的方法已经废弃或者过时了，如果想要在Qt5中启用Qt4的方法，比如QHeadVew的setMovable，可以在你的pro或者pri文件中加上一行即可：DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0
 
 81. Qt中的QColor对颜色封装的很完美，支持各种转换，比如rgb、hsb、cmy、hsl，对应的是toRgb、toHsv、toCmyk、toHsl，还支持透明度设置，颜色值还能转成16进制格式显示。
-``` c++
+```cpp
 QColor color(255, 0, 0, 100);
 qDebug() << color.name() << color.name(QColor::HexArgb);
 //输出 #ff0000 #64ff0000
 ```
 
 82. QVariant类型异常的强大，可以说是万能的类型，在进行配置文件的存储的时候，经常会用到QVariant的转换，QVariant默认自带了toString、toFloat等各种转换，但是还是不够，比如有时候需要从QVariant转到QColor，而却没有提供toColor的函数，这个时候就要用到万能办法。
-``` c++
+```cpp
 if (variant.typeName() == "QColor") {
     QColor color = variant.value<QColor>();
     QFont font = variant.value<QFont>();
@@ -466,7 +468,7 @@ if (variant.typeName() == "QColor") {
 87. 在Qt5.10以后，表格控件QTableWidget或者QTableView的默认最小列宽改成了15，以前的版本是0，所以在新版的qt中，如果设置表格的列宽过小，不会应用，取的是最小的列宽。所以如果要设置更小的列宽需要重新设置ui->tableView->horizontalHeader()->setMinimumSectionSize(0);
 
 88. Qt源码中内置了一些未公开的不能直接使用的黑科技，都藏在对应模块的private中，比如gui-private widgets-private等，比如zip文件解压类QZipReader、压缩类QZipWriter就在gui-private模块中，需要在pro中引入QT += gui-private才能使用。
-``` c++
+```cpp
 #include "QtGui/private/qzipreader_p.h"
 #include "QtGui/private/qzipwriter_p.h"
 
@@ -1165,13 +1167,66 @@ void QUIHelper::setCode()
 ```
 
 144. 关于Qt众多版本（至少几百个）都不兼容的问题，在经过和Qt中国的林斌大神和其他大神（Qt非官方技术交流群）头脑风暴以后，最终得出以下的结论。
-- 1 Qt在二进制兼容这块，已经做了最大的努力，通过将各种代码细节隐藏，Q指针+D指针技巧，尽量保持了接口的统一；
-- 2 是否兼容最主要考虑编译器的因素，毕竟任何Qt版本都是需要通过编译器编译成对应的二进制文件，由他说了算。如果两个Qt版本采用的编译器版本一样，极大概率可执行文件是兼容的，比如 Qt5.10+msvc2015 32 位 和 Qt5.11+msvc2015 32位 编译出来的可执行文件，都用Qt5.11的库是可行的；
-- 3 mingw编译器的Qt版本也是如此，就是因为Qt官方安装包集成的mingw编译器一直在更新（极少附近版本没有更新mingw编译器版本除外），比如5.7用的mingw53，5.12用的mingw73，5.15用的mingw81，因为带的Qt库也是这个编译器编译出来的，所以导致看起来全部不兼容；
-- 4 如果想要完全兼容，还有一个注意要素，那就是对应代码使用的类的头文件接口是否变了，按道理原有的接口极少会变，一般都是新增加，或者大版本才会改变，比如Qt4-Qt5-Qt6这种肯定没法兼容的，接口和模块都变了；
-- 5 大胆的猜测：如果Qt5.6到Qt5.15你全部用一种编译器比如mingw73或者msvc2015重新编译生成对应的Qt运行库，然后在此基础上开发程序，最后生成的可执行文件用Qt5.15的库是都可以的，这样就轻松跨越了多个版本兼容；
-- 6 本人测试的是widget部分，qml未做测试，不清楚是否机制一样；
+- Qt在二进制兼容这块，已经做了最大的努力，通过将各种代码细节隐藏，Q指针+D指针技巧，尽量保持了接口的统一；
+- 是否兼容最主要考虑编译器的因素，毕竟任何Qt版本都是需要通过编译器编译成对应的二进制文件，由他说了算。如果两个Qt版本采用的编译器版本一样，极大概率可执行文件是兼容的，比如 Qt5.10+msvc2015 32 位 和 Qt5.11+msvc2015 32位 编译出来的可执行文件，都用Qt5.11的库是可行的；
+- mingw编译器的Qt版本也是如此，就是因为Qt官方安装包集成的mingw编译器一直在更新（极少附近版本没有更新mingw编译器版本除外），比如5.7用的mingw53，5.12用的mingw73，5.15用的mingw81，因为带的Qt库也是这个编译器编译出来的，所以导致看起来全部不兼容；
+- 如果想要完全兼容，还有一个注意要素，那就是对应代码使用的类的头文件接口是否变了，按道理原有的接口极少会变，一般都是新增加，或者大版本才会改变，比如Qt4-Qt5-Qt6这种肯定没法兼容的，接口和模块都变了；
+- 大胆的猜测：如果Qt5.6到Qt5.15你全部用一种编译器比如mingw73或者msvc2015重新编译生成对应的Qt运行库，然后在此基础上开发程序，最后生成的可执行文件用Qt5.15的库是都可以的，这样就轻松跨越了多个版本兼容；
+- 大胆的建议：在附近的几个版本统一编译器，比如5.6-5.12之间就统一用mingw53或者msvc2015,5.12-5.15统一用msvc2017，要尝鲜其他编译器的可以自行源码编译其他版本，这样最起码附近的一大段版本（大概2-3年的版本周期）默认就兼容了。
+- 本人测试的是widget部分，qml未做测试，不清楚是否机制一样；
 
+145. 通过酷码大哥（Qt开发者交流群）的指点，到今天才知道，Qt设置样式表支持直接传入样式表文件路径。
+```cpp
+//以前都是下面的方法
+QFile file(":/qss/psblack.css");
+if (file.open(QFile::ReadOnly)) {
+    QString qss = QLatin1String(file.readAll());
+    qApp->setStyleSheet(qss);
+    file.close();
+}
+
+//其实一行代码就行
+qApp->setStyleSheet("file:///:/qss/psblack.css");
+```
+
+146. Qt中自带的很多控件，其实都是由一堆基础控件（QLabel、QPushButton等）组成的，比如日历面板 QCalendarWidget 就是 QToolButton+QSpinBox+QTableView 等组成，妙用 findChildren 可以拿到父类对应的子控件集合，可以直接对封装的控件中的子控件进行样式的设置，其他参数的设置比如设置中文文本（默认可能是英文）等。
+```cpp
+//打印子类类名集合
+void printObjectChild(const QObject *obj, int spaceCount)
+{
+    qDebug() << QString("%1%2 : %3")
+             .arg("", spaceCount)
+             .arg(obj->metaObject()->className())
+             .arg(obj->objectName());
+
+    QObjectList childs = obj->children();
+    foreach (QObject *child, childs) {
+        printObjectChild(child, spaceCount + 2);
+    }
+}
+
+//拿到对话框进行设置和美化
+QFileDialog *fileDialog = new QFileDialog(this);
+fileDialog->setOption(QFileDialog::DontUseNativeDialog, true);
+QLabel *lookinLabel = fileDialog->findChild<QLabel*>("lookInLabel");
+lookinLabel->setText(QString::fromLocal8Bit("文件目录："));
+lookinLabel->setStyleSheet("color:red;");
+
+//设置日期框默认值为空
+QLineEdit *edit = ui->dateEdit->findChild<QLineEdit *>("qt_spinbox_lineedit");
+if (!edit->text().isEmpty()) {
+    edit->clear();
+}
+```
+
+147. Qt内置了各种对话框，比如文件对话框-QFileDialog ，颜色对话框-QColorDialog ，默认都会采用系统的对话框风格样式，这样可以保持和系统一致，如果不需要的话可以取消该特性，取消以后会采用Qt自身的对话框，这样才能进行美化和其他处理。
+```cpp
+QFileDialog *fileDialog = new QFileDialog(this);
+//不设置此属性根本查找不到任何子元素,因为默认采用的系统对话框
+fileDialog->setOption(QFileDialog::DontUseNativeDialog, true);
+qDebug() << fileDialog->findChildren<QLabel *>();
+//打印输出 QLabel(0x17e2ff68, name="lookInLabel"), QLabel(0x17e35f88, name="fileNameLabel"), QLabel(0x17e35e68, name="fileTypeLabel")
+```
 
 ### 二、其他经验
 

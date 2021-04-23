@@ -1175,7 +1175,7 @@ void QUIHelper::setCode()
 - 大胆的建议：在附近的几个版本统一编译器，比如5.6-5.12之间就统一用mingw53或者msvc2015,5.12-5.15统一用msvc2017，要尝鲜其他编译器的可以自行源码编译其他版本，这样最起码附近的一大段版本（大概2-3年的版本周期）默认就兼容了。
 - 本人测试的是widget部分，qml未做测试，不清楚是否机制一样；
 
-145. 通过酷码大哥（Qt开发者交流群）的指点，到今天才知道，Qt设置样式表支持直接传入样式表文件路径。
+145. 通过酷码大哥（Qt开发者交流群）的指点，到今天才知道，Qt设置样式表支持直接传入样式表文件路径，亲测4.7到5.15任意版本，通过查看对应函数的源码可以看到内部会检查是否是 'file:///' 开头，是的话则自动读取样式表文件进行设置，无需手动读取。
 ```cpp
 //以前都是下面的方法
 QFile file(":/qss/psblack.css");
@@ -1227,6 +1227,101 @@ fileDialog->setOption(QFileDialog::DontUseNativeDialog, true);
 qDebug() << fileDialog->findChildren<QLabel *>();
 //打印输出 QLabel(0x17e2ff68, name="lookInLabel"), QLabel(0x17e35f88, name="fileNameLabel"), QLabel(0x17e35e68, name="fileTypeLabel")
 ```
+
+148. QtCreator集成开发环境，也内置了对快速添加注释的支持，比如最常用的在头文件开头添加一大段通用模板的注释，标注文件创建者、时间等信息。
+- 菜单->工具->选项->文本编辑器->右侧tab页面片段(snippets)；
+- 组选择C++, 可以看到这里面已经内置了不少定义比如foreach，可以依葫芦画瓢；
+- 添加一个片段, 比如名字是fun, 触发种类是这个片段的简单描述；
+- 当我们在代码文件中键入fun时, 会自动弹出智能提醒, 选择我们的代码片段回车, 自动填充代码；
+- 按tab可以在变量间切换, 输入完成后回车, 完成编辑；
+```cpp
+/**
+  * @brief $name$
+  * @param $param$
+  * @author bailiang
+  * @date $date$
+  */
+$ret$ $name$($param$)
+{
+    $$
+}
+```
+
+149. Qt5时代对信号槽运行机制据说有了很大的改进。
+- 在Qt5之前，connect一般都只能这么写connect(sender, SIGNAL(signalFunc()), receiver, SLOT(receiveFunc()))，就是说在connect的时候，必须把信号用宏SIGNAL包裹起来，把槽函数用宏SLOT包裹起来，这样才能被Qt的Moc机制识别；
+- 在编译的时候即使信号或槽不存在或者参数不正确也不会报错，但是在执行的时候无效，会打印提示，对于C++这种静态语言来说，这是不友好的，不利于调试；
+- 但是Qt5之后更加推荐"取地址的写法"，采用这种写法，如果编译的时候信号或槽不存在是无法编译通过的，相当于编译时检查，不容易出错；
+- 如果没有历史遗留问题需要兼容Qt4还是推荐用新写法，有类型检查更严格，而且支持的写法多样非常灵活；
+- 一些简单的处理逻辑强烈推荐直接lambda表达式直接处理完；
+```cpp
+class MainWindow : public QMainWindow
+{
+    Q_OBJECT
+
+public: MainWindow(QWidget *parent = 0);
+    ~MainWindow();
+
+private:
+    Ui::MainWindow *ui;
+
+private:
+    void test_fun();
+
+private slots:
+    void test_slot();
+};
+
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)
+    , ui(new Ui::MainWindow)
+{
+    ui->setupUi(this);
+    //早期写法,通用Qt所有版本,只支持定义了slots关键字的函数
+    //connect(ui->pushButton, SIGNAL(clicked()), this, SLOT(test_fun()));
+    connect(ui->pushButton, SIGNAL(clicked()), this, SLOT(test_slot()));
+    //新写法,支持Qt5及后期所有版本,支持所有函数,无需定义slots关键字也行
+    connect(ui->pushButton, &QPushButton::clicked, this, &MainWindow::test_fun);
+    connect(ui->pushButton, &QPushButton::clicked, this, &MainWindow::test_slot);
+    //另类写法,支持lambda表达式,直接执行代码
+    connect(ui->pushButton, &QPushButton::clicked, [this] {test_fun();});
+    connect(ui->pushButton, &QPushButton::clicked, [this] {
+        qDebug() << "hello lambda";
+    });
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+
+void MainWindow::test_fun()
+{
+    qDebug() << "test_fun";
+}
+
+void MainWindow::test_slot()
+{
+    qDebug() << "test_slot";
+}
+```
+
+150. Qt样式表有多种运行机制，主要是考虑到各种需求场景，继承自QWidget的类和qApp类都支持setStyleSheet方法，还可以统一将样式表放在文件，或者将样式文件加入到资源文件。
+- 斗气：qss内容写得到处都是，哪里需要就写在哪里，各种控件调用 setStyleSheet方法传入样式表内容，或者直接控件鼠标右键改变样式表填入内容；
+- 斗者：qss内容放在文件，读取文件内容设置样式表，程序发布的时候带上qss文件；
+- 斗师：qss文件作为资源文件放到qrc文件，直接编译到可执行文件中，防止篡改；
+- 斗灵：在qss文件中自定义一些标志充当变量使用，读取以后替换对应的变量为颜色值，类似动态换肤；
+- 斗王：放在文件容易被篡改，集成到可执行文件不够灵活，一旦样式表更新需要重新编译文件，如何做到既能只更新样式表文件，又不需要重新编译可执行文件，又能防止被篡改，采用rcc命令将资源文件编译生成二进制，只需要替换该二进制文件即可；
+- 斗皇：继承qstyle类自己实现完成所有样式接口，统一整体风格，大名鼎鼎的UOS系统默认规则就是如此，不允许用样式表，全部painter绘制；
+
+151. 当Qt中编译资源文件太大时，效率很低，或者需要修改资源文件中的文件比如图片、样式表等，需要重新编译可执行文件，这样很不友好，当然Qt都给我们考虑好了策略，此时可以将资源文件转化为二进制的rcc文件，这样就将资源文件单独出来了，可在需要的时候动态加载。
+```cpp
+//Qt中使用二进制资源文件方法如下
+//将qrc编译为二进制文件rcc，在控制台执行下列命令 
+rcc -binary main.qrc -o main.rcc
+//在应用程序中注册资源，一般在main函数启动后就注册
+QResource::registerResource(qApp->applicationDirPath() + "/main.rcc");
+```
+
 
 ### 二、其他经验
 

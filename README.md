@@ -4,16 +4,20 @@
 
 2. 定时器是个好东西，学会好使用它，有时候用QTimer::singleShot可以解决意想不到的问题。
 
-3. 打开creator，在构建套件的环境中增加MAKEFLAGS=-j4（具体要看电脑的线程数量，现在很多电脑已经是16线程了就可以写成-j16），可以不用每次设置多线程编译。珍爱时间和生命。新版的QtCreator已经默认就是j4。
+3. 默认QtCreator是单线程编译，可能设计之初考虑到尽量不过多占用系统资源，而现在的电脑都是多核心的，默认msvc编译器是多线程编译的不需要手动设置，而对于其他编译器，需要手动设置才行。
+- 方法一：在每个项目的构建设置中（可以勾选一个shadow build的页面地方）的build步骤，make arguments增加一行 -j16 即可，此设置会保存在pro.user文件中，一旦删除就需要重新设置，不建议此方法；
+- 方法二：在构建套件的环境中增加，工具->选项->构建套件(kits)->选中一个构建套件->environment->右侧change按钮->打开的输入框中填入 MAKEFLAGS=-j4 ， 这样就可以不用每次设置多线程编译，只要是应用该构件套件的项目都会加上这个编译参数；
+- 注意：-j后面接的是电脑的核心数，写多了不会有效果，要自己看下电脑的参数，或者填个-j4就行，毕竟现在电脑4核心应该是最基本的；
+- 大概从2019年开始的新版本的QtCreator默认已经会根据电脑的核心自动设置多线程编译，比如识别到你的电脑是16核心的就会默认设置-j16参数进行编译；
 
 4. 如果你想顺利用QtCreator部署安卓程序，首先你要在AndroidStudio 里面配置成功，把坑全部趟平。
 
-5. 很多时候找到Qt对应封装的方法后，记得多看看该函数的重载，多个参数的，你会发现不一样的世界，有时候会恍然大悟，原来Qt已经帮我们封装好了。
+5. 很多时候找到Qt对应封装的方法后，记得多看看该函数的重载，多个参数的，你会发现不一样的世界，有时候会恍然大悟，原来Qt已经帮我们封装好了，比如QString、QColor的重载参数极其丰富。
 
-6. 可以在pro文件中写上标记版本号+ico图标（Qt5才支持）
+6. 可以在pro文件中写上标记版本号+ico图标（Qt5才支持），其实在windows上就是qmake的时候会自动将此信息转换成rc文件。
 ```cpp
-VERSION  = 2020.10.25
-RC_ICONS = main0.ico
+VERSION  = 2021.10.25
+RC_ICONS = main.ico
 ```
 
 7. 管理员运行程序，限定在MSVC编译器。
@@ -22,8 +26,16 @@ QMAKE_LFLAGS += /MANIFESTUAC:"level='requireAdministrator' uiAccess='false'" #�
 QMAKE_LFLAGS += /SUBSYSTEM:WINDOWS,"5.01" #VS2013 在XP运行
 ```
 
-8. 运行文件附带调试输出窗口
-CONFIG += console pro
+8. 运行文件附带调试输出窗口，这个非常有用，很多时候当我们发布程序阶段，我们会遇到程序双击无法运行也不报错提示（开发机器上一切正常），都不知道发生了什么，甚至任务管理器可以看到运行了但是没有界面弹出来，此时就需要在项目的pro文件中加上这个，带界面的程序也会自动弹出调试窗口打印输出信息，方便找问题，一般没法正常运行的程序都会打印一些提示信息缺啥之类的。
+```cpp
+TEMPLATE    = app
+MOC_DIR     = temp/moc
+RCC_DIR     = temp/rcc
+UI_DIR      = temp/ui
+OBJECTS_DIR = temp/obj
+#就是下面这行用来设置运行文件附带调试输出窗口
+CONFIG      += console pro
+```
 
 9. 绘制平铺背景QPainter::drawTiledPixmap,绘制圆角矩形QPainter::drawRoundedRect(),而不是QPainter::drawRoundRect();
 
@@ -58,13 +70,19 @@ SP_MessageBoxWarning,
 SP_MessageBoxCritical,
 SP_MessageBoxQuestion,
 ...
+//下面这样取出来使用就行
+QPixmap pixmap = this->style()->standardPixmap(QStyle::SP_TitleBarMenuButton);
+ui->label->setPixmap(pixmap);
 ```
 
 13. 根据操作系统位数判断加载
 ```cpp
 win32 {
-    contains(DEFINES, WIN64) { DESTDIR = $${PWD}/../../bin64
-    } else { DESTDIR = $${PWD}/../../bin32 }
+    contains(DEFINES, WIN64) {
+        DESTDIR = $$PWD/../bin64
+    } else { 
+        DESTDIR = $$PWD/../bin32
+    }
 }
 ```
 
@@ -80,7 +98,7 @@ layout->addStretch();
 layout->addWidget(btn);
 ```
 
-16. 对QLCDNumber控件设置样式，需要将QLCDNumber的segmentstyle设置为flat。
+16. 对QLCDNumber控件设置样式，需要将QLCDNumber的segmentstyle设置为flat，不然你会发现没效果。
 
 17. 巧妙的使用 findChildren 可以查找该控件下的所有子控件。 findChild 为查找单个。
 ```cpp
@@ -123,9 +141,15 @@ return a.exec();
 #endif
 ```
 
-26. 可以对整体的指示器设置样式，例如 *::down-arrow,*::menu-indicator{}  *::up-arrow:disabled,*::up-arrow:off{}。
+26. 可以对整体的指示器设置样式，而不需要单独对每个控件的指示器设置， 
+```cpp
+*::down-arrow{}
+*::menu-indicator{}
+*::up-arrow:disabled{}
+*::up-arrow:off{}
+```
 
-27. 可以执行位置设置背景图片。
+27. 可以指定位置设置背景图片。
 ```cpp
 QMainWindow > .QWidget {
     background-color: gainsboro;
@@ -145,20 +169,20 @@ QMainWindow > .QWidget {
 ```cpp
 //GCC编译器
 #ifdef __GNUC__
-#if __GNUC__ >= 3   // GCC3.0以上
+#if __GNUC__ >= 3   // GCC3.0  以上
 
 //MSVC编译器
 #ifdef _MSC_VER
-#if _MSC_VER >=1000 // VC++4.0以上
-#if _MSC_VER >=1100 // VC++5.0以上
-#if _MSC_VER >=1200 // VC++6.0以上
-#if _MSC_VER >=1300 // VC2003以上
-#if _MSC_VER >=1400 // VC2005以上
-#if _MSC_VER >=1500 // VC2008以上
-#if _MSC_VER >=1600 // VC2010以上
-#if _MSC_VER >=1700 // VC2012以上
-#if _MSC_VER >=1800 // VC2013以上
-#if _MSC_VER >=1900 // VC2015以上
+#if _MSC_VER >=1000 // VC++4.0 以上
+#if _MSC_VER >=1100 // VC++5.0 以上
+#if _MSC_VER >=1200 // VC++6.0 以上
+#if _MSC_VER >=1300 // VC2003  以上
+#if _MSC_VER >=1400 // VC2005  以上
+#if _MSC_VER >=1500 // VC2008  以上
+#if _MSC_VER >=1600 // VC2010  以上
+#if _MSC_VER >=1700 // VC2012  以上
+#if _MSC_VER >=1800 // VC2013  以上
+#if _MSC_VER >=1900 // VC2015  以上
 
 //Borland C++
 #ifdef __BORLANDC__
@@ -200,12 +224,11 @@ QT_VERSION = $$[QT_VERSION]
 QT_VERSION = $$split(QT_VERSION, ".")
 QT_VER_MAJ = $$member(QT_VERSION, 0)
 QT_VER_MIN = $$member(QT_VERSION, 1)
-#下面是表示 Qt5.5
+#下面是表示 Qt5.5及以上版本
 greaterThan(QT_VER_MAJ, 4) {
 greaterThan(QT_VER_MIN, 4) {
 #自己根据需要做一些处理
-}
-}
+}}
 
 #QT_ARCH是Qt5新增的,在Qt4上没效果
 #打印当前Qt构建套件的信息
@@ -234,12 +257,15 @@ void showEvent(QShowEvent *e)
 #if (QT_VERSION > QT_VERSION_CHECK(5,6,0))
     QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
+    QApplication a(argc, argv);
 ```
 
 36. 如果运行程序出现 Fault tolerant heap shim applied to current process. This is usually due to previous crashes. 错误。
-办法：打开注册表，找到HKEY_LOCAL_MACHINE\Software\Microsoft\Windows  NT\CurrentVersion\AppCompatFlags\Layers\，选中Layers键值，从右侧列表中删除自己的那个程序路径即可。
+- 第一步：输入命令 regedit 打开注册表；
+- 第二步：找到节点 HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers\；
+- 第三步：选中Layers键值，从右侧列表中删除自己的那个程序路径即可。
 
-37. Qt内置了QFormLayout表单布局用于自动生成标签+输入框的组合的表单界面。
+37. Qt内置了QFormLayout表单布局用于自动生成标签+输入框的组合的表单界面，设置布局用的很少，一般用的最多的是横向布局、垂直布局、表格布局。
 
 38. qml播放视频在linux需要安装 sudo apt-get install libpulse-dev。
 
@@ -279,12 +305,15 @@ class CustomChart : public QChartView
 
 45. QLabel有三种设置文本的方法，掌握好Qt的属性系统，举一反三，可以做出很多效果。
 ```cpp
-ui->label->setStyleSheet("qproperty-text:hello;");
-ui->label->setProperty("text", "hello");
+//常规办法
 ui->label->setText("hello");
+//取巧办法
+ui->label->setProperty("text", "hello");
+//属性大法
+ui->label->setStyleSheet("qproperty-text:hello;");
 ```
 
-46. 巧妙的用QEventLoop开启事件循环，可以使得很多同步获取返回结果而不阻塞界面。QEventLoop内部新建了线程执行。
+46. 巧妙的用QEventLoop开启事件循环，可以使得很多同步获取返回结果而不阻塞界面。查看源码得知，原来QEventLoop内部新建了线程执行。
 ```cpp
 QEventLoop loop;
 connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
@@ -695,6 +724,7 @@ dialog.setWindowModality(Qt::WindowModal);
 - 如果没有严格的数据同步需求，根本不需要调用wait***之类的函数来立即发送和接收数据，实际需求中大部分的应用场景其实异步收发数据就足够了；
 - 有严格数据同步需求的场景还是放到多线程会好一些，不然你wait***就卡在那边了；
 - 多线程是需要占用系统资源的，理论上来说，如果线程数量超过了CPU的核心数量，其实多线程调度可能花费的时间更多，各位在使用过程中要权衡利弊；
+- 再次强调，不要指望Qt的网络通信支持高并发，最多到1000个能正常工作就万事大吉，一般建议500以内的连接数。有大量高并发的需求请用第三方库比如swoole等。
 
 108. 在嵌入式linux上，如果设置了无边框窗体，而该窗体中又有文本框之类的，发现没法产生焦点进行输入，此时需要主动激活窗体才行。
 ```cpp
@@ -1238,7 +1268,7 @@ qDebug() << fileDialog->findChildren<QLabel *>();
 /**
   * @brief $name$
   * @param $param$
-  * @author bailiang
+  * @author feiyangqingyun
   * @date $date$
   */
 $ret$ $name$($param$)
@@ -1251,7 +1281,7 @@ $ret$ $name$($param$)
 - 在Qt5之前，connect一般都只能这么写connect(sender, SIGNAL(signalFunc()), receiver, SLOT(receiveFunc()))，就是说在connect的时候，必须把信号用宏SIGNAL包裹起来，把槽函数用宏SLOT包裹起来，这样才能被Qt的Moc机制识别；
 - 在编译的时候即使信号或槽不存在或者参数不正确也不会报错，但是在执行的时候无效，会打印提示，对于C++这种静态语言来说，这是不友好的，不利于调试；
 - 但是Qt5之后更加推荐"取地址的写法"，采用这种写法，如果编译的时候信号或槽不存在是无法编译通过的，相当于编译时检查，不容易出错；
-- 如果没有历史遗留问题需要兼容Qt4还是推荐用新写法，有类型检查更严格，而且支持的写法多样非常灵活；
+- 如果没有历史遗留问题需要兼容Qt4的话，还是推荐用新写法，有类型检查更严格，而且支持的写法多样非常灵活；
 - 一些简单的处理逻辑强烈推荐直接lambda表达式直接处理完；
 ```cpp
 class MainWindow : public QMainWindow
@@ -1306,11 +1336,11 @@ void MainWindow::test_slot()
 ```
 
 150. Qt样式表有多种运行机制，主要是考虑到各种需求场景，继承自QWidget的类和qApp类都支持setStyleSheet方法，还可以统一将样式表放在文件，或者将样式文件加入到资源文件。
-- 斗气：qss内容写得到处都是，哪里需要就写在哪里，各种控件调用 setStyleSheet方法传入样式表内容，或者直接控件鼠标右键改变样式表填入内容；
+- 斗气：qss内容写得到处都是，哪里需要就写在哪里，各种控件调用 setStyleSheet方法传入样式表内容，或者直接对应控件鼠标右键弹出菜单选择改变样式表填入内容；
 - 斗者：qss内容放在文件，读取文件内容设置样式表，程序发布的时候带上qss文件；
 - 斗师：qss文件作为资源文件放到qrc文件，直接编译到可执行文件中，防止篡改；
 - 斗灵：在qss文件中自定义一些标志充当变量使用，读取以后替换对应的变量为颜色值，类似动态换肤；
-- 斗王：放在文件容易被篡改，集成到可执行文件不够灵活，一旦样式表更新需要重新编译文件，如何做到既能只更新样式表文件，又不需要重新编译可执行文件，又能防止被篡改，采用rcc命令将资源文件编译生成二进制，只需要替换该二进制文件即可；
+- 斗王：放在文件容易被篡改，集成到可执行文件不够灵活，一旦样式表更新需要重新编译文件，如何做到既能只更新样式表文件，又不需要重新编译可执行文件，又能防止被篡改：采用rcc命令将资源文件编译生成二进制，只需要替换该二进制文件即可；
 - 斗皇：继承qstyle类自己实现完成所有样式接口，统一整体风格，大名鼎鼎的UOS系统默认规则就是如此，不允许用样式表，全部painter绘制；
 
 151. 当Qt中编译资源文件太大时，效率很低，或者需要修改资源文件中的文件比如图片、样式表等，需要重新编译可执行文件，这样很不友好，当然Qt都给我们考虑好了策略，此时可以将资源文件转化为二进制的rcc文件，这样就将资源文件单独出来了，可在需要的时候动态加载。
@@ -1320,6 +1350,28 @@ void MainWindow::test_slot()
 rcc -binary main.qrc -o main.rcc
 //在应用程序中注册资源，一般在main函数启动后就注册
 QResource::registerResource(qApp->applicationDirPath() + "/main.rcc");
+```
+
+152. 关于设置字体，大概都会经历一个误区，本来是打算设置整个窗体包括子控件的字体大小的，结果发现只有主窗体自己应用了字体而子控件没有。
+```cpp
+//假设窗体中有子控件，默认字体12px，父类类型是QWidget，父类类名是Widget
+
+//下面几种方法只会设置主窗体的字体，子控件不会应用，需要按个调用setFont
+QFont font;
+font.setPixelSize(20);
+this->setFont(font);
+this->setStyleSheet("{font:26px;}");
+this->setStyleSheet("QWidget{font:26px;}");
+this->setStyleSheet("Widget{font:26px;}");
+
+//下面才是通过样式表设置整个控件+子控件的字体
+this->setStyleSheet("font:26px;");
+this->setStyleSheet("*{font:26px;}");
+this->setStyleSheet("QWidget>*{font:26px;}");
+this->setStyleSheet("Widget>*{font:26px;}");
+
+//下面设置全局字体
+qApp->setFont(font);
 ```
 
 

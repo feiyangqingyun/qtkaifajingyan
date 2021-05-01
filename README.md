@@ -1374,6 +1374,36 @@ this->setStyleSheet("Widget>*{font:26px;}");
 qApp->setFont(font);
 ```
 
+153. Qt中封装的QImage异常的强大，提供了各种图片格式的转换，还可以对每个像素的颜色值进行替换，有时候我们需要将单色的图片换成另外一种颜色，要注意的是如果带有透明值的颜色需要进行格式转化，比如转成Format_ARGB32或者Format_RGBA8888。
+```cpp   
+//pixel      函数获取像素点的颜色 setPixel      函数设置像素点的颜色 此函数任意Qt版本都有
+//pixelColor 函数获取像素点的颜色 setPixelColor 函数设置像素点的颜色 此函数Qt5.6以后才有
+//pixel函数取出来的是QRgb格式需要用 qRed qGreen qBlue qAlpha 进行转换
+QImage image("1.png");
+image = image.convertToFormat(QImage::Format_ARGB32);
+int width = image.width();
+int height = image.height();
+//遍历图像的每一个像素
+for (int x = 0; x < width; ++x) {
+    for (int y = 0; y < height; ++y) {
+        QString name = image.pixelColor(x, y).name();
+        //将白色以外的颜色全部替换成红色
+        if (name != "#ffffff") {
+            image.setPixelColor(x, y, Qt::red);
+        }
+    }
+}
+
+//保存文件
+image.save("2.png");
+```
+
+154. 在数据库相关的应用中，如果没有特别的需要（比如领导指定），强烈建议使用sqlite数据库，这是本人经过无数次的对比测试和N个商业项目应用得出的结论。
+- Qt天生内置了sqlite数据库，只需要发布的时候带上插件就行（可以看到插件动态库文件比其他几种都要大，那是因为直接将数据库的源码都编译进去了，而其他只编译了中间通信交互的插件源码），其他数据库要么还要带上动态库，要么还需要创建数据源；
+- 速度上，绝对无与伦比的出类拔萃，同样的数据库结构（表结构、索引等完全一致），查询速度和批量更新速度、数据库事务等，速度都是其他几种的至少3倍以上，而且随着数据量的增大对比越发明显；
+- 几千万的数据量完全没问题，而且速度和性能都还可以，不要以讹传讹网上部分菜鸡说的不支持百万以上的数据量，本人亲测亿级别，数据量建议千万级别以下；
+- 其他数据库还要注意版本的区别，ODBC数据源形式还容易出错和执行失败；
+- 以上都是在Qt环境中测试得出的结论，其他编程环境比如C#、JAVA请忽略，也许差别可能在中间通信的效率造成的；
 
 ### 二、其他经验
 

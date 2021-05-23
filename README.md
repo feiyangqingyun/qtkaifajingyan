@@ -43,6 +43,8 @@ CONFIG      += console pro
 ```cpp
 //移除原有样式
 style()->unpolish(ui->btn);
+//必须要有下面这行不然还是不会卸载
+ui->btn->setStyleSheet("");
 //重新设置新的该控件的样式。
 style()->polish(ui->btn);
 ```
@@ -683,14 +685,18 @@ void QUIHelper::initTableView(QTableView *tableView, int rowHeight, bool headVis
 }
 ```
 
-104. 在一些大的项目中，可能嵌套了很多子项目，有时候会遇到子项目依赖其他子项目的时候，比如一部分子项目用来生成动态库，一部分子项目依赖这个动态库进行编译，此时就需要子项目按照顺序编译。
+104. 在一些大的项目中，可能嵌套了很多子项目，有时候会遇到子项目依赖其他子项目的时候，比如一部分子项目用来生成动态库，一部分子项目依赖这个动态库进行编译，此时就需要子项目按照顺序编译或者设置好依赖规则。
 ```cpp
 TEMPLATE = subdirs
-#设置ordered参数以后会依次编译 demo designer examples
+#设置ordered参数以后会依次编译 projA projB projC
 CONFIG  += ordered
-SUBDIRS += demo
-SUBDIRS += designer
-SUBDIRS += examples
+SUBDIRS += projA
+SUBDIRS += projB
+SUBDIRS += projC
+#还可以通过设置depends指定某个项目依赖 比如下面指定projB依赖projA
+projB.depends = projA
+projC.depends = projA
+projD.depends = projC
 ```
 
 105. MSVC编译器的选择说明
@@ -1217,6 +1223,7 @@ if (file.open(QFile::ReadOnly)) {
 
 //其实一行代码就行
 qApp->setStyleSheet("file:///:/qss/psblack.css");
+//特别说明，只支持qApp->setStyleSheet 不支持其他比如widget->setStyleSheet
 ```
 
 146. Qt中自带的很多控件，其实都是由一堆基础控件（QLabel、QPushButton等）组成的，比如日历面板 QCalendarWidget 就是 QToolButton+QSpinBox+QTableView 等组成，妙用 findChildren 可以拿到父类对应的子控件集合，可以直接对封装的控件中的子控件进行样式的设置，其他参数的设置比如设置中文文本（默认可能是英文）等。
@@ -1398,12 +1405,34 @@ for (int x = 0; x < width; ++x) {
 image.save("2.png");
 ```
 
-154. 在数据库相关的应用中，如果没有特别的需要（比如领导指定），强烈建议使用sqlite数据库，这是本人经过无数次的对比测试和N个商业项目应用得出的结论。
+154. 在数据库相关的应用中，如果仅仅是单机版本，没有特别的需要（比如领导指定，或者需要远程存放数据），强烈建议使用sqlite数据库，这是本人经过无数次的对比测试和N个商业项目应用得出的结论。
 - Qt天生内置了sqlite数据库，只需要发布的时候带上插件就行（可以看到插件动态库文件比其他几种都要大，那是因为直接将数据库的源码都编译进去了，而其他只编译了中间通信交互的插件源码），其他数据库要么还要带上动态库，要么还需要创建数据源；
 - 速度上，绝对无与伦比的出类拔萃，同样的数据库结构（表结构、索引等完全一致），查询速度和批量更新速度、数据库事务等，速度都是其他几种的至少3倍以上，而且随着数据量的增大对比越发明显；
-- 几千万的数据量完全没问题，而且速度和性能都还可以，不要以讹传讹网上部分菜鸡说的不支持百万以上的数据量，本人亲测亿级别，数据量建议千万级别以下；
+- 几千万的数据量完全没问题，而且速度和性能都还可以，不要以讹传讹网上部分菜鸡说的不支持百万以上的数据量，本人亲测亿级别，数据量建议千万级别以下，着重注意数据库表和索引的设计；
 - 其他数据库还要注意版本的区别，ODBC数据源形式还容易出错和执行失败；
-- 以上都是在Qt环境中测试得出的结论，其他编程环境比如C#、JAVA请忽略，也许差别可能在中间通信的效率造成的；
+- sqlite数据库也有几个重大缺点：不支持加密，不支持网络访问，不支持部分数据库高级特性，不支持海量数据（亿级别以上），但是对于绝大部分Qt项目还是足够；
+- 数据库支持友好度大致是 sqlite > postgresql > mysql > odbc ;
+- 以上都是在Qt环境中个人测试得出的结论，结果未必正确，作为参考即可，其他编程环境比如C#、JAVA请忽略，也许差别可能在中间通信的效率造成的；
+
+155. Qt5.10以后提供了新的类 QRandomGenerator QRandomGenerator64 管理随机数，使用更方便，尤其是取某个区间的随机数。
+```cpp
+//早期处理办法 先初始化随机数种子然后取随机数
+qsrand(QTime::currentTime().msec());
+//取 0-10 之间的随机数
+qrand()%10;
+//取 0-1 之间的浮点数
+qrand()/double(RAND_MAX);
+
+//新版处理办法 支持5.10以后的所有版本包括qt6
+QRandomGenerator::global()->bounded(10);      //生成一个0和10之间的整数
+QRandomGenerator::global()->bounded(10.123);  //生成一个0和10.123之间的浮点数
+QRandomGenerator::global()->bounded(10, 15);  //生成一个10和15之间的整数
+
+//兼容qt4-qt6及以后所有版本的方法 就是用标准c++的随机数函数
+srand(QTime::currentTime().msec());
+rand()%10;
+rand()/double(RAND_MAX);
+```
 
 ### 二、其他经验
 

@@ -161,7 +161,15 @@ QMainWindow > .QWidget {
 }
 ```
 
-28. 嵌入式linux运行Qt程序  Qt4写法：./HelloQt -qws &   Qt5写法：./HelloQt --platform xcb
+28. 嵌入式linux运行Qt程序
+```cpp
+//Qt4写法
+./HelloQt -qws &
+
+//Qt5写法 xcb 可以改成 eglfs vnc wayland 等,有哪个就用哪个挨个测试
+./HelloQt --platform xcb
+./HelloQt --platform wayland
+```
 
 29. Qtcreator软件的配置文件存放在：C:\Users\Administrator\AppData\Roaming\QtProject，有时候如果发现出问题了，将这个文件夹删除后打开creator自动重新生成即可。
 
@@ -1419,9 +1427,9 @@ image.save("2.png");
 //早期处理办法 先初始化随机数种子然后取随机数
 qsrand(QTime::currentTime().msec());
 //取 0-10 之间的随机数
-qrand()%10;
+qrand() % 10;
 //取 0-1 之间的浮点数
-qrand()/double(RAND_MAX);
+qrand() / double(RAND_MAX);
 
 //新版处理办法 支持5.10以后的所有版本包括qt6
 QRandomGenerator::global()->bounded(10);      //生成一个0和10之间的整数
@@ -1430,8 +1438,83 @@ QRandomGenerator::global()->bounded(10, 15);  //生成一个10和15之间的整�
 
 //兼容qt4-qt6及以后所有版本的方法 就是用标准c++的随机数函数
 srand(QTime::currentTime().msec());
-rand()%10;
-rand()/double(RAND_MAX);
+rand() % 10;
+rand() / double(RAND_MAX);
+
+//[min, max)的随机数
+int value = (rand() % (max - min)) + min;
+//(min, max]的随机数
+int value = (rand() % (max - min)) + min + 1;
+//[min, max]的随机数
+int value = (rand() % (max - min + 1)) + min;
+//(min, max)的随机数
+int value = (rand() % (max - min + 1)) + min + 1;
+
+//通用公式 a是起始值,n是整数的范围
+int value = a + rand() % n;
+```
+
+156. Qt的UI界面在resize以后有个BUG，悬停样式没有取消掉，需要主动模拟鼠标动一下。
+```cpp
+void frmMain::on_btnMenu_Max_clicked()
+{
+    ......
+
+    //最大化以后有个BUG,悬停样式没有取消掉,需要主动模拟鼠标动一下    
+    QEvent event(QEvent::Leave);
+    QApplication::sendEvent(ui->btnMenu_Max, &event);    
+}
+```
+
+157. 项目中启用c++11语法支持。
+```cpp
+greaterThan(QT_MAJOR_VERSION, 4): CONFIG += c++11
+lessThan(QT_MAJOR_VERSION, 5): QMAKE_CXXFLAGS += -std=c++11
+```
+
+158. Qt的文本控件比如QTextEdit默认加载大文本比如10MB的文本，很容易卡死甚至崩溃，那是因为默认一个属性开启了，需要屏蔽掉就好很多。
+```cpp
+ui->textEdit->setUndoRedoEnabled(false)
+```
+
+159. 其他几点常规小经验，本人在这几个地方摔跤过很多次。
+- 有返回值的函数，一定要主动return返回值，有部分编译器在没有返回值的情况下也能正常编译通过，但是运行的时候会出问题，得不到想要的结果，因为没有return对应的值。
+- 定义的局部变量，主动给定个初始值，是个必须养成的好习惯，不然编译器给的初始值很可能不是你想要的，比如int变量默认0，有时候随机变成一个很大的数值，bool变量的初始值不同编译器不同值，有些是true有些是false，主动给一个初始值更可靠。
+- 某些函数参数很多，而且后期可能还会修改和增加，这就导致了源头修改以后，关联信号槽的地方也要修改，参数类型和位置必须保持完全一致，对应槽函数处理也要修改等，改动的工作量非常大而且极不友好，所以对于非固定参数的函数，建议用结构体，这样非常容易增加其他的参数，而且不用修改信号槽关联和信号槽函数定义等，比如学生信息表、商品信息表作为参数传输，最佳方案就是结构体。
+
+160. QTabWidget选项卡控件，生成的tabbar选项卡宽度是按照文本自动设置的，文本越长选项卡的宽度越大，很多时候，我们需要的是一样的宽度或者等分填充，
+```cpp
+//方法1：字符串空格填充
+ui->tabWidget->addTab(httpClient1, "测    试");
+ui->tabWidget->addTab(httpClient1, "人员管理");
+ui->tabWidget->addTab(httpClient1, "系统设置");
+
+//方法2：识别尺寸改变事件自动设置最小宽度
+void MainWindow::resizeEvent(QResizeEvent *e)
+{
+    int count = ui->tabWidget->tabBar()->count();
+    int width = this->width() - 30;
+    QString qss = QString("QTabBar::tab{min-width:%1px;}").arg(width / count);
+    this->setStyleSheet(qss);
+}
+
+//方法3：设置全局样式，不同选项卡个数的设置不同的宽度
+QStringList list;
+list << QString("QTabWidget[tabCount=\"2\"]>QTabBar::tab{min-width:%1px;}").arg(100);
+list << QString("QTabWidget[tabCount=\"3\"]>QTabBar::tab{min-width:%1px;}").arg(70);
+qApp->setStyleSheet(list.join(""));
+//设置了tabCount弱属性自动去找对应的宽度设置
+ui->tabWidget->setProperty("tabCount", 2);
+ui->tabWidget->setProperty("tabCount", 3);
+
+//方法4：强烈推荐-》使用内置的方法 setExpanding setDocumentMode 两个属性都必须设置
+//Qt4的tabBar()是propected的，所以建议还是通过样式表设置
+ui->tabWidget->tabBar()->setDocumentMode(true);
+ui->tabWidget->tabBar()->setExpanding(true);
+//样式表一步到位不用每个都单独设置
+QString("QTabBar{qproperty-usesScrollButtons:false;qproperty-documentMode:true;qproperty-expanding:true;}");
+//在5.9以前开启这个设置后，貌似选项卡个数按照真实个数+1计算宽度，也就是永远会留空一个tab的占位。
+//5.9以后貌似修复了这个BUG，按照理想中的拉伸填充等分设置tab的宽度。
 ```
 
 ### 二、其他经验
@@ -1485,9 +1568,9 @@ rand()/double(RAND_MAX);
 |郑天佐|[https://blog.csdn.net/zhengtianzuo06](https://blog.csdn.net/zhengtianzuo06)|
 |寒山-居士|[https://blog.csdn.net/esonpo](https://blog.csdn.net/esonpo)|
 |feiyangqingyun|[https://blog.csdn.net/feiyangqingyun](https://blog.csdn.net/feiyangqingyun)|
-|前行中小猪|[http://blog.csdn.net/goforwardtostep](http://blog.csdn.net/goforwardtostep)|  
+|前行中小猪|[http://blog.csdn.net/goforwardtostep](http://blog.csdn.net/goforwardtostep)|
 |涛哥的知乎专栏|[https://zhuanlan.zhihu.com/TaoQt](https://zhuanlan.zhihu.com/TaoQt)|
-|Qt君|[https://blog.csdn.net/nicai_xiaoqinxi](https://blog.csdn.net/nicai_xiaoqinxi)|  
+|Qt君|[https://blog.csdn.net/nicai_xiaoqinxi](https://blog.csdn.net/nicai_xiaoqinxi)|
 |Qt老外视频教程|[http://space.bilibili.com/2592237/#!/index](http://space.bilibili.com/2592237/#!/index)|
 |Qt维基补充文档|[https://wiki.qt.io/Main](https://wiki.qt.io/Main)|
 |Qt源码查看网站|[https://code.woboq.org/qt5](https://code.woboq.org/qt5)|

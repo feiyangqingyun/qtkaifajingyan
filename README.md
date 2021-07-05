@@ -34,7 +34,7 @@ RCC_DIR     = temp/rcc
 UI_DIR      = temp/ui
 OBJECTS_DIR = temp/obj
 #就是下面这行用来设置运行文件附带调试输出窗口
-CONFIG      += console pro
+CONFIG      += console
 ```
 
 9. 绘制平铺背景QPainter::drawTiledPixmap,绘制圆角矩形QPainter::drawRoundedRect(),而不是QPainter::drawRoundRect();
@@ -1452,6 +1452,12 @@ int value = (rand() % (max - min + 1)) + min + 1;
 
 //通用公式 a是起始值,n是整数的范围
 int value = a + rand() % n;
+
+//如果在线程中取随机数，线程启动的时间几乎一样，很可能出现取到的随机数一样的问题，就算设置随机数为当前时间啥的也没用，电脑太快很可能还是一样的时间，同一个毫秒。
+//取巧办法就是在run函数之前最前面将当前线程的id作为种子设置。时间不可靠，线程的id才是唯一的。
+//切记 void * 转换到数值必须用 long long，在32位是可以int但是在64位必须long，确保万一直接用quint64最大
+srand((long long)currentThreadId());
+qrand((long long)currentThreadId());
 ```
 
 156. Qt的UI界面在resize以后有个BUG，悬停样式没有取消掉，需要主动模拟鼠标动一下。
@@ -1517,10 +1523,219 @@ QString("QTabBar{qproperty-usesScrollButtons:false;qproperty-documentMode:true;q
 //5.9以后貌似修复了这个BUG，按照理想中的拉伸填充等分设置tab的宽度。
 ```
 
-161. 经常有人说Qt垃圾，说用Qt在1毫秒绘制几千个数据点卡成屎。其实显示器最高刷新频率一般才60帧，1毫秒就绘制一次有意义吗？不仅显示器没刷新过来，人肉眼也看不过来，程序中要做的应该是尽量降低程序的绘制刷新频率到显示器的频率（其实一秒钟30帧都足够），一次搞多一点的数据一次性绘制（数据量很大还可以考虑重采样，比如平均值法等，毕竟要考虑显示器的分辨率就那么大，搞个几十万的数据点挤一块没啥意思，可以将一整块区域内的数据点换成一个点），而不是绘制多次，尽管两种办法都可以将收到的数据绘制完成，但是效率相差的不是一点点，信号也是如此，不建议太频繁的发送信号，Qt内部1秒钟处理信号的个数也是有限制的，太频繁高并发的信号，很可能会丢失或者合并一部分，比如网络请求接收到的学生信息表，应该是在该应答数据内的所有学生信息解析完一次性发送，而不是解析一条发送一条。
+161. 经常有人说Qt垃圾，说用Qt在1毫秒绘制几千个数据点卡成屎。其实显示器最高刷新频率一般才60帧，1毫秒就绘制一次有意义吗？不仅显示器没刷新过来，人肉眼也看不过来（有人可能又要抬杠说这是老板要求的，显示归显示，至于人看不看那是另外一回事，我想说的是显示不就是给人看的吗？给程序看可以直接后台绘制图片让程序识别啊没必要显示的），程序中要做的应该是尽量降低程序的绘制刷新频率到显示器的频率（其实一秒钟30帧都足够），一次搞多一点的数据一次性绘制（数据量很大还可以考虑重采样，比如平均值法等，毕竟要考虑显示器的分辨率就那么大，搞个几十万的数据点挤一块没啥意思，可以将一整块区域内的数据点换成一个点），而不是绘制多次，尽管两种办法都可以将收到的数据绘制完成，但是效率相差的不是一点点，信号也是如此，不建议太频繁的发送信号，Qt内部1秒钟处理信号的个数也是有限制的，太频繁高并发的信号，很可能会丢失或者合并一部分，比如网络请求接收到的学生信息表，应该是在该应答数据内的所有学生信息解析完一次性发送，而不是解析一条发送一条。
 
+162. Qt提供了N种窗体属性比如无边框属性FramelessWindowHint、不在任务栏显示属性Tool等，有时候我们需要对窗口的属性进行动态设置，比如增加一个属性或者移除一个属性，Qt5.9以前需要拿到原有的窗体属性做运算，后面可以用新的方法。
+```cpp
+//增加一个无边框属性
+setWindowFlags(windowFlags() | Qt::FramelessWindowHint);
+//移除无边框属性
+setWindowFlags(windowFlags() & ~Qt::FramelessWindowHint);
 
-### 二、其他经验
+//下面是5.9以后新增的方法
+//增加一个无边框属性到窗体属性链表
+setWindowFlag(Qt::FramelessWindowHint, true);
+//从窗体属性链表中移除无边框属性
+setWindowFlag(Qt::FramelessWindowHint, false);
+```
+
+### 二、升级到Qt6
+**直观总结**
+
+1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
+2. 把一些过度封装的东西移除了（比如同样的功能有多个函数），保证了只有一个函数执行该功能。
+3. 把一些Qt5中兼容Qt4的方法废弃了，必须用Qt5中对应的新的函数。
+4. 跟随时代脚步，增加了不少新特性以满足日益增长的客户需求。
+5. 对某些模块和类型及处理进行了革命性的重写，运行效率提高不少。
+6. 有参数类型的变化，比如 long * 到 qintptr * 等，更加适应后续的拓展以及同时对32 64位不同系统的兼容。
+7. 源码中的double数据类型全部换成了qreal，和Qt内部数据类型高度一致和统一。
+8. 我测试的都是QWidget部分，quick部分没有测试，估计quick部分更新可能会更多。
+9. 强烈建议暂时不要用Qt6.0到Qt6.2之间的版本，一些模块还缺失，相对来说BUG也比较多，推荐6.2版本开始正式迁移。
+
+**经验总结**
+
+1. 万能方法：安装5.15版本，定位到报错的函数，切换到源码头文件，可以看到对应提示字样 QT_DEPRECATED_X("Use sizeInBytes") 和新函数。按照这个提示类修改就没错，一些函数是从Qt5.7 5.9 5.10等版本新增加的，可能你的项目还用的Qt4的方法，但是Qt6以前都兼容这些旧方法，到了Qt6就彻底需要用新方法了。
+
+2. Qt6对core这个核心类进行了拆分，多出来core5compat，因此你需要在pro增加对应的模块已经代码中引入对应的头文件。
+```cpp
+//pro文件引入模块
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+greaterThan(QT_MAJOR_VERSION, 5): QT += core5compat
+
+//代码中引入头文件
+#if (QT_VERSION >= QT_VERSION_CHECK(5,0,0))
+#include <QtWidgets>
+#endif
+#if (QT_VERSION >= QT_VERSION_CHECK(6,0,0))
+#include <QtCore5Compat>
+#endif
+```
+
+3. 默认Qt6开启了高分屏支持，界面会变得很大，甚至字体发虚，很多人会不习惯，因为这种模式如果程序很多坐标计算没有采用devicePixelRatio进行运算的话，100%会出现奇奇怪怪的问题，因为坐标不准确了。要取消这种效果可以设置高分屏缩放因子。
+```cpp
+#if (QT_VERSION >= QT_VERSION_CHECK(6,0,0))
+    QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Floor);
+#endif
+```
+
+4. 原有的随机数函数提示用QRandomGenerator替代，为了兼容所有qt版本，改动最小的办法是直接用c++中的随机数，比如qsrand函数换成srand，qrand函数换成rand，查看过源代码，其实封装的就是c++中的随机数，很多类似的封装比如qSin封装的sin。
+
+5. QColor的 light 改成 lighter ，dark 改成 darker，其实 lighter、darker 这两个方法以前一直有。
+
+6. QFontMetricsF 中的 fm.width 换成 fm.horizontalAdvance ，从5.11开始用新函数。
+
+7. QPalette调色板枚举值，Foreground = WindowText, Background = Window，其中 Foreground 和 Background 没有了，要用 WindowText 和 Window 替代，以前就有。类似的还有 setTextColor 改成了 setForeground 。
+
+8. QWheelEvent的 delta() 改成 angleDelta().y()，pos() 改成 position() 。
+
+9. svg模块拆分出来了svgwidgets，如果用到了该模块则需要在pro增加 QT += svgwidgets 。
+
+10. qlayout中的 margin() 函数换成 contentsMargins().left()，查看源码得知以前的 margin() 返回的就是 contentsMargins().left()，在四个数值一样的时候，默认四个数值就是一样。类似的还有setMargin移除了，统统用setContentsMargins。
+
+11. 之前 QChar c = 0xf105 全部要改成强制转换 QChar c = (QChar)0xf105，不再有隐式转换，不然编译报错提示error: conversion from 'int' to 'QChar' is ambiguous 。
+
+12. qSort等一些函数用回c++的 std::sort 。
+```cpp
+#if (QT_VERSION >= QT_VERSION_CHECK(6,0,0))
+    std::sort(ipv4s.begin(), ipv4s.end());
+#else
+    qSort(ipv4s);
+#endif
+```
+
+13. Qt::WA_NoBackground 改成 Qt::WA_OpaquePaintEvent 。
+
+14. QMatrix 类废弃了没有了，换成 QTransform ，函数功能基本一致，QTransform 类在Qt4就一直有。
+
+15. QTime 计时去掉了，需要改成 QElapsedTimer ，QElapsedTimer 类在Qt4就一直有。
+
+16. QApplication::desktop()废弃了， 换成了 QApplication::primaryScreen()。
+```cpp
+#if (QT_VERSION > QT_VERSION_CHECK(5,0,0))
+#include "qscreen.h"
+#define deskGeometry qApp->primaryScreen()->geometry()
+#define deskGeometry2 qApp->primaryScreen()->availableGeometry()
+#else
+#include "qdesktopwidget.h"
+#define deskGeometry qApp->desktop()->geometry()
+#define deskGeometry2 qApp->desktop()->availableGeometry()
+#endif
+```
+
+17. 获取当前屏幕索引以及尺寸需要分别处理。
+```cpp
+//获取当前屏幕索引
+int QUIHelper::getScreenIndex()
+{
+    //需要对多个屏幕进行处理
+    int screenIndex = 0;
+#if (QT_VERSION >= QT_VERSION_CHECK(5,0,0))
+    int screenCount = qApp->screens().count();
+#else
+    int screenCount = qApp->desktop()->screenCount();
+#endif
+
+    if (screenCount > 1) {
+        //找到当前鼠标所在屏幕
+        QPoint pos = QCursor::pos();
+        for (int i = 0; i < screenCount; ++i) {
+#if (QT_VERSION >= QT_VERSION_CHECK(5,0,0))
+            if (qApp->screens().at(i)->geometry().contains(pos)) {
+#else
+            if (qApp->desktop()->screenGeometry(i).contains(pos)) {
+#endif
+                screenIndex = i;
+                break;
+            }
+        }
+    }
+    return screenIndex;
+}
+
+//获取当前屏幕尺寸区域
+QRect QUIHelper::getScreenRect(bool available)
+{
+    QRect rect;
+    int screenIndex = QUIHelper::getScreenIndex();
+    if (available) {
+#if (QT_VERSION >= QT_VERSION_CHECK(5,0,0))
+        rect = qApp->screens().at(screenIndex)->availableGeometry();
+#else
+        rect = qApp->desktop()->availableGeometry(screenIndex);
+#endif
+    } else {
+#if (QT_VERSION >= QT_VERSION_CHECK(5,0,0))
+        rect = qApp->screens().at(screenIndex)->geometry();
+#else
+        rect = qApp->desktop()->screenGeometry(screenIndex);
+#endif
+    }
+    return rect;
+}
+```
+
+18. QRegExp类移到了core5compat模块，需要主动引入头文件 #include <QRegExp>。
+
+19. QWheelEvent构造参数和对应的计算方位函数变了。
+```cpp
+//模拟鼠标滚轮
+#if (QT_VERSION < QT_VERSION_CHECK(6,0,0))
+QWheelEvent wheelEvent(QPoint(0, 0), -scal, Qt::LeftButton, Qt::NoModifier);
+#else
+QWheelEvent wheelEvent(QPointF(0, 0), QPointF(0, 0), QPoint(0, 0), QPoint(0, -scal), Qt::LeftButton, Qt::NoModifier, Qt::ScrollBegin, false);
+#endif
+QApplication::sendEvent(widget, &wheelEvent);
+
+//鼠标滚轮直接修改值
+QWheelEvent *whellEvent = (QWheelEvent *)event;
+//滚动的角度,*8就是鼠标滚动的距离
+#if (QT_VERSION < QT_VERSION_CHECK(6,0,0))
+int degrees = whellEvent->delta() / 8;
+#else
+int degrees = whellEvent->angleDelta().x() / 8;
+#endif
+//滚动的步数,*15就是鼠标滚动的角度
+int steps = degrees / 15;
+```
+
+20. qVariantValue 改成 qvariant_cast ，qVariantSetValue(v, value) 改成了 v.setValue(val)。相当于退回到最原始的方法，查看qVariantValue源码封装的就是qvariant_cast。
+
+21. QStyleOption的init改成了initFrom。
+
+22. QVariant::Type 换成了 QMetaType::Type ，本身以前的 QVariant::Type 封装的就是 QMetaType::Type 。
+
+23. QStyleOptionViewItemV2 V3 V4 之类的全部没有了，暂时可以用 QStyleOptionViewItem 替代。
+
+24. QFont的 resolve 的一个重载函数换成了 resolveMask。
+
+25. QSettings的 setIniCodec 方法移除了，默认就是utf8，不需要设置。
+
+26. qcombobox 的 activated(QString) 和 currentIndexChanged(QString) 信号删除了，用int索引参数的那个，然后自己通过索引获取值。个人觉得这个没必要删除。
+
+27. qtscript模块彻底没有了，尽管从Qt5时代的后期版本就提示为废弃模块，一致坚持到Qt6才正式废弃，各种json数据解析全部换成qjson类解析。
+
+28. QByteArray 的 append indexOf lastIndexOf 等众多方法的QString参数重载函数废弃了，要直接传 QByteArray，就在原来参数基础上加上 .toUtf8() 。查看源码也看得到以前的QString参数也是转成.toUtf8()再去比较。
+
+29. QDateTime的时间转换函数 toTime_t + setTime_t 名字改了，对应改成了 toSecsSinceEpoch + setSecsSinceEpoch ，这两个方法在Qt5.8时候新增加的。
+
+30. QLabel的 pixmap 函数之前是指针 *pixmap() 现在换成了引用 pixmap()。
+
+31. QTableWidget的 sortByColumn 方法移除了默认升序的方法，必须要填入第二个参数表示升序还是降序。
+
+32. qtnetwork中的错误信号error换成了errorOccurred。
+
+33. XmlPatterns模块木有了，全部用xml模块重新解析。
+
+34. nativeEvent的参数类型变了。
+```cpp
+#if (QT_VERSION >= QT_VERSION_CHECK(6,0,0))
+bool nativeEvent(const QByteArray &eventType, void *message, qintptr *result);
+#else
+bool nativeEvent(const QByteArray &eventType, void *message, long *result);
+#endif
+```
+
+### 三、其他经验
 
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！
 
@@ -1532,7 +1747,7 @@ QString("QTabBar{qproperty-usesScrollButtons:false;qproperty-documentMode:true;q
 
 5. 如果出现崩溃和段错误，80%都是因为要么越界，要么未初始化，死扣这两点，80%的问题解决了。
 
-6. Qt一共有几百个版本，关于如何选择Qt版本的问题，我一般保留四个版本，为了兼容Qt4用4.8.7，最后的支持XP的版本5.7.0，最新的长期支持版本比如5.15，最高的新版本比如5.15.2。强烈不建议使用4.7以前和5.0到5.3之间的版本，太多bug和坑，稳定性和兼容性相比于之后的版本相当差，能换就换，不能换睡服领导也要换。目前新推出的6.0版本也强烈不建议使用，官方还在整合当中，好多类和模块暂时没有整合，需要等到6.2版本再用。
+6. Qt一共有几百个版本，关于如何选择Qt版本的问题，我一般保留四个版本，为了兼容Qt4用4.8.7，最后的支持XP的版本5.7.0，最新的长期支持版本比如5.15，最高的新版本比如5.15.2。强烈不建议使用4.7以前和5.0到5.3之间的版本（Qt6.0到Qt6.2之间、不含6.2的版本也不建议，很多模块还没有集成），太多bug和坑，稳定性和兼容性相比于之后的版本相当差，能换就换，不能换睡服领导也要换。目前新推出的6.0版本也强烈不建议使用，官方还在整合当中，好多类和模块暂时没有整合，需要等到6.2版本再用。
 
 7. Qt和msvc编译器常见搭配是Qt5.7+VS2013、Qt5.9+VS2015、Qt5.12+VS2017，按照这些搭配来，基本上常用的模块都会有，比如webengine模块，如果选用的Qt5.12+msvc2015，则很可能官方没有编译这个模块，只是编译了Qt5.12+msvc2017的。
 
@@ -1550,7 +1765,7 @@ QString("QTabBar{qproperty-usesScrollButtons:false;qproperty-documentMode:true;q
 
 12. 最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
 
-### 三、七七八八
+### 四、七七八八
 
 | 名称 | 网址 |
 | :------ | :------ |
@@ -1571,9 +1786,9 @@ QString("QTabBar{qproperty-usesScrollButtons:false;qproperty-documentMode:true;q
 |郑天佐|[https://blog.csdn.net/zhengtianzuo06](https://blog.csdn.net/zhengtianzuo06)|
 |寒山-居士|[https://blog.csdn.net/esonpo](https://blog.csdn.net/esonpo)|
 |feiyangqingyun|[https://blog.csdn.net/feiyangqingyun](https://blog.csdn.net/feiyangqingyun)|
-|前行中小猪|[http://blog.csdn.net/goforwardtostep](http://blog.csdn.net/goforwardtostep)|
+|前行中小猪|[http://blog.csdn.net/goforwardtostep](http://blog.csdn.net/goforwardtostep)|  
 |涛哥的知乎专栏|[https://zhuanlan.zhihu.com/TaoQt](https://zhuanlan.zhihu.com/TaoQt)|
-|Qt君|[https://blog.csdn.net/nicai_xiaoqinxi](https://blog.csdn.net/nicai_xiaoqinxi)|
+|Qt君|[https://blog.csdn.net/nicai_xiaoqinxi](https://blog.csdn.net/nicai_xiaoqinxi)|  
 |Qt老外视频教程|[http://space.bilibili.com/2592237/#!/index](http://space.bilibili.com/2592237/#!/index)|
 |Qt维基补充文档|[https://wiki.qt.io/Main](https://wiki.qt.io/Main)|
 |Qt源码查看网站|[https://code.woboq.org/qt5](https://code.woboq.org/qt5)|
@@ -1586,9 +1801,9 @@ QString("QTabBar{qproperty-usesScrollButtons:false;qproperty-documentMode:true;q
 |免费图标下载|[http://www.easyicon.net/](http://www.easyicon.net/)|
 |图形字体下载|[https://www.iconfont.cn/](https://www.iconfont.cn/)|
 |漂亮界面网站|[https://www.ui.cn/](https://www.ui.cn/)|
-|微信公众号|官方公众号：Qt软件  亮哥公众号：高效程序员|
+|微信公众号|官方公众号：Qt软件    亮哥公众号：高效程序员|
 
-### 四、书籍推荐
+### 五、书籍推荐
 
 1. C++入门书籍推荐《C++ primer plus》，进阶书籍推荐《C++ primer》。
 2. Qt入门书籍推荐霍亚飞的《Qt Creator快速入门》，Qt进阶书籍推荐官方的《C++ GUI Qt4编程》，qml书籍推荐《Qt5编程入门》。

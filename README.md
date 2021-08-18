@@ -173,7 +173,7 @@ QMainWindow > .QWidget {
 
 29. Qtcreator软件的配置文件存放在：C:\Users\Administrator\AppData\Roaming\QtProject，有时候如果发现出问题了，将这个文件夹删除后打开creator自动重新生成即可。
 
-30. QMediaPlayer是个壳，依赖本地解码器，视频这块默认基本上就播放个MP4，如果要支持其他格式需要下载k-lite或者LAV Filters安装即可（WIN上，其他系统上自行搜索）。如果需要做功能强劲的播放器，初学者建议用vlc、mpv，终极大法用ffmpeg。
+30. QMediaPlayer是个壳（也可以叫框架），依赖本地解码器，视频这块默认基本上就播放个MP4，如果要支持其他格式需要下载k-lite或者LAV Filters安装即可（k-lite或者LAV Filters是指windows上的，其他系统上自行搜索，貌似嵌入式linux上依赖GStreamer，并未完整验证）。如果需要做功能强劲的播放器，初学者建议用vlc、mpv，终极万能大法用ffmpeg（解码出来的视频可以用QOpenGLWidget走GPU绘制或者转成QImage绘制，音频数据可以用QAudioOutput播放）。
 
 31. 判断编译器类型、编译器版本、操作系统。
 ```cpp
@@ -523,7 +523,7 @@ if (variant.typeName() == "QColor") {
 
 85. QTextEdit右键菜单默认英文的，如果想要中文显示，加载widgets.qm文件即可，一个Qt程序中可以安装多个翻译文件，不冲突。
 
-86. Qt中有个全局的焦点切换信号focusChanged，可以用它做自定义的输入法。Qt4中默认会安装输入法上下文，比如在main函数打印a.inputContext会显示值，这个默认安装的输入法上下文，会拦截两个牛逼的信号QEvent::RequestSoftwareInputPanel和QEvent::CloseSoftwareInputPanel，以至于就算你安装了全局的事件过滤器依然识别不到这两个信号，你只需要在main函数执行a.setInputContext(0)即可，意思是安装输入法上下文为空。
+86. Qt中有个全局的焦点切换信号focusChanged，可以用它做自定义的输入法。Qt4中默认会安装输入法上下文，比如在main函数打印a.inputContext会显示值，这个默认安装的输入法上下文，会拦截两个牛逼的信号QEvent::RequestSoftwareInputPanel和QEvent::CloseSoftwareInputPanel，以至于就算你安装了全局的事件过滤器依然识别不到这两个信号，你只需要在main函数执行a.setInputContext(0)即可，意思是安装输入法上下文为空。Qt5.7以后提供了内置的输入法，可以通过在main函数最前面加上 qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard")); 来启用。
 
 87. 在Qt5.10以后，表格控件QTableWidget或者QTableView的默认最小列宽改成了15，以前的版本是0，所以在新版的qt中，如果设置表格的列宽过小，不会应用，取的是最小的列宽。所以如果要设置更小的列宽需要重新设置ui->tableView->horizontalHeader()->setMinimumSectionSize(0);
 
@@ -1130,6 +1130,8 @@ struct FunctionInfo {
 //方法1：在main函数的最前面加上下面这句 5.6版本才开始有这个函数
 #if (QT_VERSION > QT_VERSION_CHECK(5,6,0))
     QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    //开启高缩放支持以后图片可能发虚还要开启下面这个属性
+    QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 #endif
 
 //方法2：在可执行文件同目录下新建文件 qt.conf 填入下面内容
@@ -1592,6 +1594,40 @@ QGuiApplication::setDesktopSettingsAware(bool on);
 QApplication app(argc, argv);
 
 //更多的全局对象属性等可以查阅 qguiapplication.h 头文件，你会发现新大陆。
+```
+
+165. Qt对区分不同的编译器也做了非常细致的处理。
+```cpp
+#pro文件可以这样判断
+msvc{}
+
+//代码中可以这样判断
+#ifdef Q_CC_MINGW
+//mingw编译器
+#elif Q_CC_MSVC
+//msvc编译器
+#endif
+
+//判断编译器和编译器版本
+#if defined Q_CC_MSVC && _MSC_VER < 1300
+#if defined(Q_CC_GNU) && (__GNUC__ < 4)
+
+//代码中判断ARM平台
+#ifdef QT_ARCH_ARM
+//多个条件判断
+#if defined(QT_ARCH_ARM) || defined(QT_ARCH_WINDOWSCE)
+```
+
+166. 有时候需要暂时停止某个控件发射信号（比如下拉框combobox添加数据的时候会触发当前元素改变信号），有多种处理，推荐用 blockSignals 方法。
+```cpp
+//方法1：先 disconnect 掉信号，处理好以后再 connect 信号，缺点很明显，很傻，如果信号很多，每个型号都要这么来一次。
+//方法2：先调用 blockSignals(true) 阻塞信号，处理号以后再调用 blockSignals(false) 恢复所有信号。
+//如果需要指定某个信号进行断开那就只能用 disconnect 来处理。
+ui->cbox->blockSignals(true);
+for (int i = 0; i <= 100; i++) {
+    ui->cbox->addItem(QString::number(i));
+}
+ui->cbox->blockSignals(false);
 ```
 
 ### 二、升级到Qt6

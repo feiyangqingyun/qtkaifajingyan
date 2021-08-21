@@ -1621,6 +1621,12 @@ msvc{}
 166. 有时候需要暂时停止某个控件发射信号（比如下拉框combobox添加数据的时候会触发当前元素改变信号），有多种处理，推荐用 blockSignals 方法。
 ```cpp
 //方法1：先 disconnect 掉信号，处理好以后再 connect 信号，缺点很明显，很傻，如果信号很多，每个型号都要这么来一次。
+disconnect(ui->cbox, SIGNAL(currentIndexChanged(int)), this, SLOT(on_cbox_currentIndexChanged(int)));
+for (int i = 0; i <= 100; i++) {
+    ui->cbox->addItem(QString::number(i));
+}
+connect(ui->cbox, SIGNAL(currentIndexChanged(int)), this, SLOT(on_cbox_currentIndexChanged(int)));
+
 //方法2：先调用 blockSignals(true) 阻塞信号，处理号以后再调用 blockSignals(false) 恢复所有信号。
 //如果需要指定某个信号进行断开那就只能用 disconnect 来处理。
 ui->cbox->blockSignals(true);
@@ -1642,6 +1648,46 @@ include($$PWD/ui/ui.pri)
 INCLUDEPATH += $$PWD/ui
 //加上上面这行，在使用头文件的时候可以直接 include "form.h"，没有加则需要 include "ui/form.h"。
 ```
+
+168. 在网络通信中，无论是tcp客户端还是udp客户端，其实都是可以绑定网卡IP和端口的，很多人只知道服务端可以指定网卡监听端口。客户端如果没有绑定通信端口则由客户端所在的操作系统随机递增分配的，这里为啥这么强调，因为无数人，甚至不乏一些多年经验的新时代农名工，以为客户端的端口是服务端分配的，因为他们看到在服务端建立连接后可以打印出不同的端口号。网络通信的双方自己决定自己要用什么端口，服务器端只能决定自己监听的是哪个端口，不能决定客户端的端口，同理客户端也只能决定自己的端口。端口随机分配一般是按照顺序递增的，比如先是45110端口，连接重新建立就用45111端口，只要端口没被占用就这样递增下去，所以很多人会问是否可以复用一些端口，不然端口一直这样频繁的分配下去不妥，甚至有些特定的场景和需求也是会要求客户端绑定网卡和端口来和服务器通信的。
+```cpp
+//tcp客户端
+QTcpSocket *socket = new QTcpSocket(this);
+//断开所有连接和操作
+socket->abort();
+//绑定网卡和端口
+socket->bind(QHostAddress("192.168.1.2"), 6005);
+//连接服务器
+socket->connectToHost("192.168.1.3", 6000);
+
+//打印通信用的本地绑定地址和端口
+qDebug() << socket->localAddress() << socket->localPort();
+//打印通信服务器对方的地址和端口
+qDebug() << socket->peerAddress() << socket->peerPort() << socket->peerName();
+
+//udp客户端
+QUdpSocket *socket = new QUdpSocket(this);
+//绑定网卡和端口,没有绑定过才需要绑定
+//采用端口是否一样来判断是为了方便可以直接动态绑定切换端口
+if (socket->localPort() != 6005) {
+    socket->abort();
+    socket->bind(QHostAddress("192.168.1.2"), 6005);
+}
+//指定地址和端口发送数据
+socket->writeDatagram(buffer, QHostAddress("192.168.1.3"), 6000);
+
+//上面是Qt5可以使用bind，Qt4中的QTcpSocket的对应接口是protected的没法直接使用，需要继承类重新实现把接口放出来。
+//Qt4中的QUdpSocket有bind函数是开放的，奇怪了，为何Qt4中独独QTcpSocket不开放。
+TcpSocket *socket = new TcpSocket(this);
+socket->setLocalAddress(QHostAddress("192.168.1.2"));
+socket->setLocalPort(6005);
+```
+
+169. 关于网络通信，tcp和udp是两种不同的底层的网络通信协议，两者监听和通信的端口互不相干的，不同的协议或者不同的网卡IP地址可以用相同的端口。之前有个人说他的电脑居然可以监听一样的端口进行通信，颠覆了他以前的认知，书上说的明明是不可以相同端口的，后面远程一看原来选择的不同的网卡IP地址，当然可以的咯。
+- tcp对网卡1监听了端口6000，还可以对网卡2监听端口6000。
+- tcp对网卡1监听了端口6000，udp对网卡1还可以继续监听端口6000。
+- tcp对网卡1监听了端口6000，在网卡1上其他tcp只能监听6000以外的端口。
+- udp协议也是上面的逻辑。
 
 ### 二、升级到Qt6
 #### 2.1 直观总结

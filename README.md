@@ -173,7 +173,7 @@ QMainWindow > .QWidget {
 
 29. Qtcreator软件的配置文件存放在：C:\Users\Administrator\AppData\Roaming\QtProject，有时候如果发现出问题了，将这个文件夹删除后打开creator自动重新生成即可。
 
-30. QMediaPlayer是个壳（也可以叫框架），依赖本地解码器，视频这块默认基本上就播放个MP4，如果要支持其他格式需要下载k-lite或者LAV Filters安装即可（k-lite或者LAV Filters是指windows上的，其他系统上自行搜索，貌似嵌入式linux上依赖GStreamer，并未完整验证）。如果需要做功能强劲的播放器，初学者建议用vlc、mpv，终极万能大法用ffmpeg（解码出来的视频可以用QOpenGLWidget走GPU绘制或者转成QImage绘制，音频数据可以用QAudioOutput播放）。
+30. QMediaPlayer是个壳（也可以叫框架），依赖本地解码器，视频这块默认基本上就播放个MP4甚至连MP4都不能播放，如果要支持其他格式需要下载k-lite或者LAV Filters安装即可（k-lite或者LAV Filters是指windows上的，其他系统上自行搜索，貌似嵌入式linux上依赖GStreamer，并未完整验证）。如果需要做功能强劲的播放器，初学者建议用vlc、mpv，终极万能大法用ffmpeg（解码出来的视频可以用QOpenGLWidget走GPU绘制或者转成QImage绘制，音频数据可以用QAudioOutput播放）。
 
 31. 判断编译器类型、编译器版本、操作系统。
 ```cpp
@@ -1693,6 +1693,104 @@ socket->setLocalPort(6005);
 - tcp对网卡1监听了端口6000，udp对网卡1还可以继续监听端口6000。
 - tcp对网卡1监听了端口6000，在网卡1上其他tcp只能监听6000以外的端口。
 - udp协议也是上面的逻辑。
+
+170. 开源的图表控件QCustomPlot很经典，在曲线数据展示这块性能彪悍，总结了一些容易忽略的经验要点。
+- 可以将XY轴对调，然后形成横向的效果，无论是曲线图还是柱状图，分组图、堆积图等，都支持这个特性。
+- 不需要的提示图例可以调用 legend->removeItem 进行移除。
+- 两条曲线可以调用 setChannelFillGraph 设置合并为一个面积区域。
+- 可以关闭抗锯齿 setAntialiased 加快绘制速度。
+- 可以设置不同的线条样式（setLineStyle）、数据样式（setScatterStyle）。
+- 坐标轴的箭头样式可更换 setUpperEnding。
+- 可以用 QCPBarsGroup 实现柱状分组图，这个类在官方demo中没有，所以非常容易忽略。
+
+```cpp
+//对调XY轴，在最前面设置
+QCPAxis *yAxis = customPlot->yAxis;
+QCPAxis *xAxis = customPlot->xAxis;
+customPlot->xAxis = yAxis;
+customPlot->yAxis = xAxis;
+
+//移除图例
+customPlot->legend->removeItem(1);
+
+//合并两个曲线画布形成封闭区域
+customPlot->graph(0)->setChannelFillGraph(customPlot->graph(1));
+
+//关闭抗锯齿以及设置拖动的时候不启用抗锯齿
+customPlot->graph()->setAntialiased(false);
+customPlot->setNoAntialiasingOnDrag(true);
+
+//多种设置数据的方法
+customPlot->graph(0)->setData();
+customPlot->graph(0)->data()->set();
+
+//设置不同的线条样式、数据样式
+customPlot->graph()->setLineStyle(QCPGraph::lsLine);
+customPlot->graph()->setScatterStyle(QCPScatterStyle::ssDot);
+customPlot->graph()->setScatterStyle(QCPScatterStyle(shapes.at(i), 10));
+
+//还可以设置为图片或者自定义形状
+customPlot->graph()->setScatterStyle(QCPScatterStyle(QPixmap("./sun.png")));
+QPainterPath customScatterPath;
+for (int i = 0; i < 3; ++i) {
+    customScatterPath.cubicTo(qCos(2 * M_PI * i / 3.0) * 9, qSin(2 * M_PI * i / 3.0) * 9, qCos(2 * M_PI * (i + 0.9) / 3.0) * 9, qSin(2 * M_PI * (i + 0.9) / 3.0) * 9, 0, 0);
+}
+customPlot->graph()->setScatterStyle(QCPScatterStyle(customScatterPath, QPen(Qt::black, 0), QColor(40, 70, 255, 50), 10));
+
+//更换坐标轴的箭头样式
+customPlot->xAxis->setUpperEnding(QCPLineEnding::esSpikeArrow);
+customPlot->yAxis->setUpperEnding(QCPLineEnding::esSpikeArrow);
+
+//设置背景图片
+customPlot->axisRect()->setBackground(QPixmap("./solarpanels.jpg"));
+//画布也可以设置背景图片
+customPlot->graph(0)->setBrush(QBrush(QPixmap("./balboa.jpg")));
+//整体可以设置填充颜色或者图片
+customPlot->setBackground(QBrush(gradient));
+//设置零点线条颜色
+customPlot->xAxis->grid()->setZeroLinePen(Qt::NoPen);
+//控制是否鼠标滚轮缩放拖动等交互形式
+customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
+
+//柱状分组图
+QCPBarsGroup *group = new QCPBarsGroup(customPlot);
+QList<QCPBars*> bars;
+bars << fossil << nuclear << regen;
+foreach (QCPBars *bar, bars) {
+    //设置柱状图的宽度大小
+    bar->setWidth(bar->width() / bars.size());
+    group->append(bar);
+}
+//设置分组之间的间隔
+group->setSpacing(2);
+```
+
+171. 在Qt编程中经常会遇到编码的问题，由于跨平台的考虑兼容各种系统，而windows系统默认是gbk或者gb2312编码，当然后期可能msvc编译器都支持utf8编码，所以在部分程序中传入中文目录文件名称的时候会发现失败，因为可能对应的接口用了早期的fopen函数而不是fopen_s函数，比如fmod中也是这个情况。这个时候就需要转码处理。
+```cpp
+QString fileName = "c:/测试目录/1.txt";
+//如果应用程序main函数中没有设置编码则默认采用系统的编码，可以直接通过toLocal8Bit转成正确的数据
+const char *name = fileName.toLocal8Bit().constData();
+
+//如果设置过了下面两句则需要主动转码
+QTextCodec *codec = QTextCodec::codecForName("utf-8");
+QTextCodec::setCodecForLocale(codec);
+
+QTextCodec *code = QTextCodec::codecForName("gbk");
+const char *name = code->fromUnicode(fileName).constData();
+//推荐方式2以防万一保证绝对的正确，哪怕是设置过主程序的编码
+
+//有时候可能还有下面这种情况
+#ifdef Q_OS_WIN
+#if defined(_MSC_VER) && (_MSC_VER >= 1400)
+    QTextCodec *code = QTextCodec::codecForName("utf-8");
+#else
+    QTextCodec *code = QTextCodec::codecForName("gbk");
+#endif
+    const char *name = code->fromUnicode(fileName).constData();
+#else
+    const char *name = fileName.toUtf8().constData();
+#endif
+```
 
 ### 二、升级到Qt6
 #### 2.1 直观总结

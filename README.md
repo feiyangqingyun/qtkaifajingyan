@@ -1777,7 +1777,9 @@ QTextCodec::setCodecForLocale(codec);
 
 QTextCodec *code = QTextCodec::codecForName("gbk");
 const char *name = code->fromUnicode(fileName).constData();
+
 //推荐方式2以防万一保证绝对的正确，哪怕是设置过主程序的编码
+//切记一旦设置过QTextCodec::setCodecForLocale会影响toLocal8Bit
 
 //有时候可能还有下面这种情况
 #ifdef Q_OS_WIN
@@ -1790,6 +1792,90 @@ const char *name = code->fromUnicode(fileName).constData();
 #else
     const char *name = fileName.toUtf8().constData();
 #endif
+```
+
+172. 在查阅和学习Qt源码的过程中，发现了一些趋势和改变。
+- 数据类型这块尽量用Qt内部的数据类型，哪怕是重定义过的比如quint8其实unsigned char，qreal就是double，以前翻看源码的时候可能还有些是double，现在慢慢改成了qreal。
+- 循环结构用 for(;;) 替代 while(1)，因为转成汇编指令后 for(;;) 只有一条指令而 while(1) 确有4条，指令少不占用寄存器而且不用跳转，理论上速度要更快。
+- 其实Qt中就重定义了 forever 关键字表示 for(;;) ，我的乖乖，想的真周到。
+- 自动c++11以及后续的标准都支持auto万能数据类型，发现Qt的源码中也慢慢的改成了auto，这样加快了编写代码的效率，不用自己去指定数据类型而是让编译器自己推导数据类型。而且其实也不影响编译器编译的速度，因为无论指定和没有指定数据类型，编译器都要推导右侧的数据类型进行判断。不过有个缺点就是影响了阅读代码的成本，很多时候需要自己去理解推导。
+- 
+
+173. Qt中设置或者打开加载本地文件需要用到QUrl类，本地文件建议加上 file:/// 前缀。
+```cpp
+QString url = "file:///c:/1.html";
+//浏览器控件打开本地网页文件
+webView->setUrl(QUrl(url));
+//打开本地网页文件，下面两种方法都可以
+QDesktopServices::openUrl(QUrl::fromLocalFile(url));
+QDesktopServices::openUrl(QUrl(url, QUrl::TolerantMode));
+```
+
+174. 在网络请求中经常涉及到超时时间的问题，因为默认是30秒钟，一旦遇到网络故障的时候要等好久才能反应过来，所以需要主动设置下超时时间，超过了就直接中断结束请求。从Qt5.15开始内置了setTransferTimeout来设置超时时间，非常好用。
+```cpp
+//局部的事件循环,不卡主界面
+QEventLoop eventLoop;
+
+//设置超时 5.15开始自带了超时时间函数 默认30秒
+#if (QT_VERSION >= QT_VERSION_CHECK(5,15,0))
+manager->setTransferTimeout(timeout);
+#else
+QTimer timer;
+connect(&timer, SIGNAL(timeout()), &eventLoop, SLOT(quit()));
+timer.setSingleShot(true);
+timer.start(timeout);
+#endif
+
+QNetworkReply *reply = manager->get(QNetworkRequest(QUrl(url)));
+connect(reply, SIGNAL(finished()), &eventLoop, SLOT(quit()));
+eventLoop.exec();
+
+if (reply->bytesAvailable() > 0 && reply->error() == QNetworkReply::NoError) {
+    //读取所有数据保存成文件
+    QByteArray data = reply->readAll();
+    QFile file(dirName + fileName);
+    if (file.open(QFile::WriteOnly | QFile::Truncate)) {
+        file.write(data);
+        file.close();
+    }
+}
+```
+
+175. Qt中基本上有三大类型的项目，控制台项目对应QCoreApplication、传统QWidget界面程序对应QApplication、quick/qml项目程序对应QGuiApplication。有很多属性的开启需要在main函数的最前面执行才有效果，比如开启高分屏支持、设置opengl模式等。不同类型的项目需要对应的QApplication。
+```cpp
+//如果是控制台程序则下面的QApplication换成QCoreApplication
+//如果是quick/qml程序则下面的QApplication换成QGuiApplication
+int main(int argc, char *argv[])
+{
+    //可以用下面这行测试Qt自带的输入法 qtvirtualkeyboard
+    qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
+    
+    //设置不应用操作系统设置比如字体
+    QApplication::setDesktopSettingsAware(false);
+
+#if (QT_VERSION >= QT_VERSION_CHECK(6,0,0))
+    //设置高分屏缩放舍入策略
+    QApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Floor);
+#endif
+#if (QT_VERSION > QT_VERSION_CHECK(5,6,0))
+    //设置启用高分屏缩放支持
+    //要注意开启后计算到的控件或界面宽度高度可能都不对,全部需要用缩放比例运算下
+    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    //设置启用高分屏图片支持
+    QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+#endif
+#if (QT_VERSION > QT_VERSION_CHECK(5,4,0))
+    //设置opengl模式 AA_UseDesktopOpenGL(默认) AA_UseSoftwareOpenGL AA_UseOpenGLES
+    //QApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
+    //设置opengl共享上下文
+    QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+#endif
+
+    QApplication a(argc, argv);
+    QWidget w;
+    w.show();
+    return a.exec();
+}
 ```
 
 ### 二、升级到Qt6

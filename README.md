@@ -1469,17 +1469,16 @@ srand(QTime::currentTime().msec());
 rand() % 10;
 rand() / double(RAND_MAX);
 
-//[min, max)的随机数
-int value = (rand() % (max - min)) + min;
-//(min, max]的随机数
-int value = (rand() % (max - min)) + min + 1;
-//[min, max]的随机数
-int value = (rand() % (max - min + 1)) + min;
-//(min, max)的随机数
-int value = (rand() % (max - min + 1)) + min + 1;
-
 //通用公式 a是起始值,n是整数的范围
 int value = a + rand() % n;
+//(min, max)的随机数
+int value = min + 1 + (rand() % (max - min - 1));
+//(min, max]的随机数
+int value = min + 1 + (rand() % (max - min + 0));
+//[min, max)的随机数
+int value = min + 0 + (rand() % (max - min + 0));
+//[min, max]的随机数
+int value = min + 0 + (rand() % (max - min + 1));
 
 //如果在线程中取随机数，线程启动的时间几乎一样，很可能出现取到的随机数一样的问题，就算设置随机数为当前时间啥的也没用，电脑太快很可能还是一样的时间，同一个毫秒。
 //取巧办法就是在run函数之前最前面将当前线程的id作为种子设置。时间不可靠，线程的id才是唯一的。
@@ -1875,6 +1874,57 @@ int main(int argc, char *argv[])
     QWidget w;
     w.show();
     return a.exec();
+}
+```
+
+176. QCamera中获取设备的配置参数比如支持的分辨率集合等，需要先调用load后才能正确获取，或者关联stateChanged信号中判断状态是否是ActiveState，然后再读取。
+```cpp
+//方法1：调用load后获取
+camera = new QCamera(this);
+//先需要载入才能获取到对应参数
+camera->load();
+//输出当前设备支持的分辨率
+QList<QSize> sizes = camera->supportedViewfinderResolutions();
+emit resolutions(sizes);
+//重新设置分辨率
+QCameraViewfinderSettings set;
+set.setResolution(cameraWidth, cameraHeight);
+camera->setViewfinderSettings(set);
+//获取完成后卸载
+camera->unload();
+
+//方法2：通过事件信号获取
+camera = new QCamera(this);
+connect(camera, SIGNAL(stateChanged(QCamera::State)), this, SLOT(stateChanged(QCamera::State)));
+void CameraThread::stateChanged(QCamera::State state)
+{
+    if (state == QCamera::ActiveState) {
+        //输出当前设备支持的分辨率
+        QList<QSize> sizes = camera->supportedViewfinderResolutions();
+        emit resolutions(sizes);
+        //重新设置分辨率
+        QCameraViewfinderSettings set;
+        set.setResolution(cameraWidth, cameraHeight);
+        camera->setViewfinderSettings(set);
+    }
+}
+
+//QCamera没有指定设备名称的时候则采用默认的摄像机
+camera = new QCamera(this);
+//cameraName = @device:pnp:\\\\?\\usb#vid_046d&pid_0825&mi_00#6&212eebd3&0&0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\\global
+//可以通过设备描述符来查找设备名称(唯一标识)
+camera = new QCamera(cameraName.toUtf8(), this);
+```
+
+177. 很多时候需要在窗体首次显示的时候加载一些东西，而且只加载一次，当窗体再次显示的时候不加载。为什么不是在构造函数呢？因为很多玩意都是要在显示后才能确定，比如控件的尺寸，部分样式表的应用。
+```cpp
+void Widget::showEvent(QShowEvent *)
+{
+    static bool isLoad = false;
+    if (!isLoad) {
+        isLoad = true;
+        //执行对应的处理
+    }
 }
 ```
 

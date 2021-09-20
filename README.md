@@ -14,7 +14,7 @@
 
 6. 可以在pro文件中写上标记版本号+ico图标（Qt5才支持），其实在windows上就是qmake的时候会自动将此信息转换成rc文件。
 ```cpp
-VERSION  = 2021.10.25
+VERSION  = 2022.10.25
 RC_ICONS = main.ico
 ```
 
@@ -1943,6 +1943,45 @@ void Widget::showEvent(QShowEvent *)
 }
 ```
 
+178. Qt获取当前所用的Qt版本、编译器、位数等信息。
+```cpp
+//详细的Qt版本+编译器+位数
+QString compilerString = "<unknown>";
+{
+#if defined(Q_CC_CLANG)
+    QString isAppleString;
+#if defined(__apple_build_version__)
+    isAppleString = QLatin1String(" (Apple)");
+#endif
+    compilerString = QLatin1String("Clang ") + QString::number(__clang_major__) + QLatin1Char('.') + QString::number(__clang_minor__) + isAppleString;
+#elif defined(Q_CC_GNU)
+    compilerString = QLatin1String("GCC ") + QLatin1String(__VERSION__);
+#elif defined(Q_CC_MSVC)
+    if (_MSC_VER > 1999) {
+        compilerString = QLatin1String("MSVC <unknown>");
+    } else if (_MSC_VER >= 1920) {
+        compilerString = QLatin1String("MSVC 2019");
+    } else if (_MSC_VER >= 1910) {
+        compilerString = QLatin1String("MSVC 2017");
+    } else if (_MSC_VER >= 1900) {
+        compilerString = QLatin1String("MSVC 2015");
+    } else if (_MSC_VER >= 1800) {
+        compilerString = QLatin1String("MSVC 2013");
+    } else if (_MSC_VER >= 1700) {
+        compilerString = QLatin1String("MSVC 2012");
+    } else if (_MSC_VER >= 1600) {
+        compilerString = QLatin1String("MSVC 2010");
+    } else {
+        compilerString = QLatin1String("MSVC <old>");
+    }
+#endif
+}
+
+//拓展知识 查看 QSysInfo 类下面有很多好东西
+// qVersion() = QT_VERSION_STR
+QString version = QString("%1 %2 %3").arg(qVersion()).arg(compilerString).arg(QString::number(QSysInfo::WordSize));
+```
+
 ### 二、升级到Qt6
 #### 2.1 直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
@@ -2137,6 +2176,16 @@ bool nativeEvent(const QByteArray &eventType, void *message, long *result);
 #endif
 ```
 
+35. QButtonGroup的buttonClicked信号中int参数的函数全部改名字叫idClicked。
+```cpp
+    QButtonGroup *btnGroup = new QButtonGroup(this);
+#if (QT_VERSION >= QT_VERSION_CHECK(6,0,0))
+    connect(btnGroup, SIGNAL(idClicked(int)), ui->xstackWidget, SLOT(setCurrentIndex(int)));
+#else
+    connect(btnGroup, SIGNAL(buttonClicked(int)), ui->xstackWidget, SLOT(setCurrentIndex(int)));
+#endif
+```
+
 ### 三、其他经验
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！
 
@@ -2144,11 +2193,11 @@ bool nativeEvent(const QByteArray &eventType, void *message, long *result);
 
 3. Qt安装目录下的Examples目录下的例子，看完学完，月薪20K起步；Qt常用类的头文件的函数看完学完使用一遍并加以融会贯通，月薪30K起步。
 
-4. Qt在开发阶段不支持中文目录，切记，这是无数人可能犯的错误，在安装Qt集成开发环境以及编译器的时候，务必记得目录必须英文，否则很可能不正常，建议尽量用默认的安装位置。
+4. Qt在开发阶段不支持中文目录，切记，这是无数人可能犯的错误，在安装Qt集成开发环境以及编译器的时候，务必记得目录必须英文，Qt项目源码也必须是英文目录，否则很可能不正常，建议尽量用默认的安装位置。
 
 5. 如果出现崩溃和段错误，80%都是因为要么越界，要么未初始化，死扣这两点，80%的问题解决了。
 
-6. Qt一共有几百个版本，关于如何选择Qt版本的问题，我一般保留四个版本，为了兼容Qt4用4.8.7，最后的支持XP的版本5.7.0，最新的长期支持版本比如5.15，最高的新版本比如5.15.2。强烈不建议使用4.7以前和5.0到5.3之间的版本（Qt6.0到Qt6.2之间、不含6.2的版本也不建议，很多模块还没有集成），太多bug和坑，稳定性和兼容性相比于之后的版本相当差，能换就换，不能换睡服领导也要换。目前新推出的6.0版本也强烈不建议使用，官方还在整合当中，好多类和模块暂时没有整合，需要等到6.2版本再用。
+6. Qt一共有几百个版本，关于如何选择Qt版本的问题，我一般保留四个版本，为了兼容Qt4用4.8.7，最后的支持XP的版本5.7.0，最新的长期支持版本比如5.15，最高的新版本比如5.15.2。强烈不建议使用4.7以前和5.0到5.3之间的版本（Qt6.0到Qt6.2之间、不含6.2的版本也不建议，很多模块还没有集成），太多bug和坑，稳定性和兼容性相比于之后的版本相当差，能换就换，不能换睡服领导也要换。如果没有历史包袱建议用5.15.2，目前新推出的6.0版本也强烈不建议使用，官方还在整合当中，好多类和模块暂时没有整合，需要等到6.2版本再用。
 
 7. Qt和msvc编译器常见搭配是Qt5.7+VS2013、Qt5.9+VS2015、Qt5.12+VS2017、Qt5.15+VS2019、Qt6.2+VS2019，按照这些搭配来，基本上常用的模块都会有，比如webengine模块，如果选用的Qt5.12+msvc2015，则很可能官方没有编译这个模块，只是编译了Qt5.12+msvc2017的。
 
@@ -2176,7 +2225,8 @@ bool nativeEvent(const QByteArray &eventType, void *message, long *result);
 - 总之，无论qml还是widget，和找老婆一样，适合自己的就是最好的，自己擅长哪个就用哪个。
 - 如果还不知道擅长哪个，有空就两个都学，学习过程中自己就会有切身感受和对比，能者多劳多多益善。能够顺利的最快的完成老板的任务给老板赚钱才是王道。
 
-13. 最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
+13. 写程序过程中发现问题，比如有些问题是极端特殊情况下出现，最好找到问题的根源，有时候肯定多多少少会怀疑是不是Qt本身的问题，怀疑是对的，但是99.9%的问题最终证实下来还是自己的代码写的不够好导致的，如果为了赶时间老板催的急，实在不行再用重启或者复位大法，比如搞个定时器、线程、网络通信啥的去检测程序是否正常，程序中某个模块或者功能是否正常，不正常就复位程序或者重启程序，在嵌入式上还可以更暴力一点就是系统重启和断电重启。
+14. 最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
 
 ### 四、七七八八
 
@@ -2185,6 +2235,7 @@ bool nativeEvent(const QByteArray &eventType, void *message, long *result);
 |QQ学习群|Qt交流大会群 853086607 Qt技术交流群 46679801 Qt进阶之路群 734623697|
 |QtWidget开源demo集合|[https://gitee.com/feiyangqingyun/QWidgetDemo](https://gitee.com/feiyangqingyun/QWidgetDemo)|
 |QtQuick/Qml开源demo集合|[https://gitee.com/jaredtao/TaoQuick](https://gitee.com/jaredtao/TaoQuick)|
+|QtQuick/Qml开源demo集合|[https://gitee.com/zhengtianzuo/QtQuickExamples](https://gitee.com/zhengtianzuo/QtQuickExamples)|
 |qtcn|[http://www.qtcn.org](http://www.qtcn.org)|
 |豆子的空间|[https://www.devbean.net](https://www.devbean.net)|
 |yafeilinux|[http://www.qter.org](http://www.qter.org)|

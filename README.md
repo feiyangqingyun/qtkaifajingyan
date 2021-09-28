@@ -1982,6 +1982,35 @@ QString compilerString = "<unknown>";
 QString version = QString("%1 %2 %3").arg(qVersion()).arg(compilerString).arg(QString::number(QSysInfo::WordSize));
 ```
 
+179. QDateTime可以直接格式化输出星期几周几，Qt6默认按照英文输出比如 ddd = 周二 Tue  dddd = 星期二 Tuesday ，此时如果只想永远是中文就需要用到QLocale进行转换。
+```cpp
+//格式化输出受到本地操作系统语言的影响
+
+//英文操作系统
+//这样获取到的是Mon到Sun，英文星期的3个字母的缩写。
+QDateTime::currentDateTime().toString("ddd");
+//这样获取到的是Monday到Sunday，英文星期完整单词。
+QDateTime::currentDateTime().toString("dddd");
+
+//中文操作系统
+//这样获取到的是周一到周日。
+QDateTime::currentDateTime().toString("ddd");
+//这样获取到的是星期一到星期日。
+QDateTime::currentDateTime().toString("dddd");
+
+//主动指定语言转换
+//如果没有指定本地语言则默认采用系统的语言环境。
+QLocale locale;
+//QLocale locale = QLocale::Chinese;
+//QLocale locale = QLocale::English;
+//QLocale locale = QLocale::Japanese;
+
+//下面永远输出中文的周一到周日
+locale.toString(QDateTime::currentDateTime(), "ddd");
+//下面永远输出中文的星期一到星期日
+locale.toString(QDateTime::currentDateTime(), "dddd");
+```
+
 ### 二、升级到Qt6
 #### 2.1 直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
@@ -2186,7 +2215,14 @@ bool nativeEvent(const QByteArray &eventType, void *message, long *result);
 #endif
 ```
 
-### 三、其他经验
+### 三、酷码专区
+**酷码大佬（微信Kuma-NPC）**
+1. 关于Qt事件传递的一个说明：
+- 通常写win32程序，鼠标消息应该是直接发给指定窗口句柄的，指定窗口没有处理就会转化成透传消息，交给父窗口处理。你在一个普通文字label上点击，父窗口也能收到鼠标事件。
+- Qt应该是所有消息都发给了顶层窗口，所以事件分发逻辑是自己处理，主窗口收到鼠标事件然后Qt自己分发给指定子控件，QEvent会有ignore或者accept表示自己处理了没有，例如鼠标点击事件，事件分发器发现没有被处理，数据重新计算然后分发给父窗口。这样父窗口收到的事件坐标就是基于自己窗口内的。用eventFilter就需要自己计算坐标。
+- 再比如，当使用QDialog，放一个QLineEdit并设置焦点，按Esc时QDialog也会自动关闭，本质上就是因为QLineEdit并不处理Esc的按键事件，透传给了QDialog。
+
+### 四、其他经验
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！
 
 2. 在Qt的学习过程中，学会查看对应类的头文件是一个好习惯，如果在该类的头文件没有找到对应的函数，可以去他的父类中找找，实在不行还有爷爷类，肯定能找到的。通过头文件你会发现很多函数接口其实Qt已经帮我们封装好了，有空还可以阅读下他的实现代码。
@@ -2228,7 +2264,7 @@ bool nativeEvent(const QByteArray &eventType, void *message, long *result);
 13. 写程序过程中发现问题，比如有些问题是极端特殊情况下出现，最好找到问题的根源，有时候肯定多多少少会怀疑是不是Qt本身的问题，怀疑是对的，但是99.9%的问题最终证实下来还是自己的代码写的不够好导致的，如果为了赶时间老板催的急，实在不行再用重启或者复位大法，比如搞个定时器、线程、网络通信啥的去检测程序是否正常，程序中某个模块或者功能是否正常，不正常就复位程序或者重启程序，在嵌入式上还可以更暴力一点就是系统重启和断电重启。
 14. 最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
 
-### 四、七七八八
+### 五、七七八八
 
 | 名称 | 网址 |
 | :------ | :------ |
@@ -2267,7 +2303,7 @@ bool nativeEvent(const QByteArray &eventType, void *message, long *result);
 |漂亮界面网站|[https://www.ui.cn/](https://www.ui.cn/)|
 |微信公众号|官方公众号：Qt软件    亮哥公众号：高效程序员|
 
-### 五、书籍推荐
+### 六、书籍推荐
 
 1. C++入门书籍推荐《C++ primer plus》，进阶书籍推荐《C++ primer》。
 2. Qt入门书籍推荐霍亚飞的《Qt Creator快速入门》，Qt进阶书籍推荐官方的《C++ GUI Qt4编程》，qml书籍推荐《Qt5编程入门》。

@@ -2145,6 +2145,22 @@ QRect QUIHelper::getScreenRect(bool available)
 ```
 
 18. QRegExp类移到了core5compat模块，需要主动引入头文件 #include <QRegExp>。
+```cpp
+    //设置限制只能输入数字+小数位
+    QString pattern = "^-?[0-9]+([.]{1}[0-9]+){0,1}$";
+    //设置IP地址校验过滤
+    QString pattern = "(2[0-5]{2}|2[0-4][0-9]|1?[0-9]{1,2})";
+
+    //确切的说 QRegularExpression QRegularExpressionValidator 从5.0 5.1开始就有
+#if (QT_VERSION >= QT_VERSION_CHECK(6,0,0))
+    QRegularExpression regExp(pattern);
+    QRegularExpressionValidator *validator = new QRegularExpressionValidator(regExp, this);
+#else
+    QRegExp regExp(pattern);
+    QRegExpValidator *validator = new QRegExpValidator(regExp, this);
+#endif
+    lineEdit->setValidator(validator);
+```
 
 19. QWheelEvent构造参数和对应的计算方位函数变了。
 ```cpp
@@ -2193,6 +2209,13 @@ int steps = degrees / 15;
 31. QTableWidget的 sortByColumn 方法移除了默认升序的方法，必须要填入第二个参数表示升序还是降序。
 
 32. qtnetwork中的错误信号error换成了errorOccurred。
+```cpp
+#if (QT_VERSION >= QT_VERSION_CHECK(6,0,0))
+    connect(tcpSocket, SIGNAL(errorOccurred(QAbstractSocket::SocketError)), this, SLOT(error()));
+#else
+    connect(tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(error()));
+#endif
+```
 
 33. XmlPatterns模块木有了，全部用xml模块重新解析。
 
@@ -2212,6 +2235,15 @@ bool nativeEvent(const QByteArray &eventType, void *message, long *result);
     connect(btnGroup, SIGNAL(idClicked(int)), ui->xstackWidget, SLOT(setCurrentIndex(int)));
 #else
     connect(btnGroup, SIGNAL(buttonClicked(int)), ui->xstackWidget, SLOT(setCurrentIndex(int)));
+#endif
+```
+
+36. QWebEngineSettings之前是QWebEngineSettings::defaultSettings();现在改成了QWebEngineProfile::defaultProfile()->settings();通过查看之前的源码得知QWebEngineSettings::defaultSettings();封装的就是QWebEngineProfile::defaultProfile()->settings();因为Qt6去除了N多过度封装的函数。
+```cpp
+#if (QT_VERSION >= QT_VERSION_CHECK(6,0,0))
+    QWebEngineSettings *webSetting = QWebEngineProfile::defaultProfile()->settings();
+#else
+    QWebEngineSettings *webSetting = QWebEngineSettings::defaultSettings();
 #endif
 ```
 
@@ -2262,7 +2294,22 @@ bool nativeEvent(const QByteArray &eventType, void *message, long *result);
 - 如果还不知道擅长哪个，有空就两个都学，学习过程中自己就会有切身感受和对比，能者多劳多多益善。能够顺利的最快的完成老板的任务给老板赚钱才是王道。
 
 13. 写程序过程中发现问题，比如有些问题是极端特殊情况下出现，最好找到问题的根源，有时候肯定多多少少会怀疑是不是Qt本身的问题，怀疑是对的，但是99.9%的问题最终证实下来还是自己的代码写的不够好导致的，如果为了赶时间老板催的急，实在不行再用重启或者复位大法，比如搞个定时器、线程、网络通信啥的去检测程序是否正常，程序中某个模块或者功能是否正常，不正常就复位程序或者重启程序，在嵌入式上还可以更暴力一点就是系统重启和断电重启。
-14. 最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
+
+14. 写程序过程中尤其要注意32位的库和64位的库互不兼容，比如32位的程序引用64位的库，64位的程序引用32位的库，都是编译通不过的，而在windows64位系统中是能够运行32位程序的，因为64位的系统提供了32位的运行环境，一般目录在Program Files(x86)，32位的程序在64位的环境中最终引用的还是32位的库。关于如何判断自己的Qt库是多少位，有个误区就是很多人要么看成了QtCreator的关于信息中列出的位数，要么以为自己是64位的系统就认为是64位的Qt，最终要在Qt构建套件中查看具体位数，大概从Qt5.14开始基本上很少提供32位的库，尤其是Qt6.0以后基本上默认就是只有64位的库了，这也是顺应时代潮流，毕竟不久的将来（个人预计2030年以前）基本上32位的系统占比不超过1%，放心大胆的用64位的库吧，抛弃烦人的32位以及XP系统。
+
+15. 关于动态和静态的一点个人理解：
+- 在Qt程序中，分动态库版本的Qt和静态库版本的Qt。
+- 官方默认提供的二进制包就是动态库版本的Qt，如果自行编译则编译的时候对应参数 -shared。
+- 静态库版本的Qt需要自行编译，编译的时候对应参数 -static，（理论上个人用静态库的Qt也需要收费，因为静态编译后都看不到Qt的相关库文件）。
+- 使用动态库的Qt支持编译生成动态库和静态库（CONFIG += staticlib）的程序。
+- 使用动态库的Qt程序支持动态库的引用（引用的时候 LIB += ，运行的时候需要动态库文件比如.dll .so 支持）。
+- 使用动态库的Qt程序支持静态库的引用（引用的时候 LIB += ，运行的时候无需库文件支持，可以理解为该文件已经和可执行文件合二为一，缺点是可执行文件体积变大）。
+- 上述动态库的规则也通用于静态库。
+- 此规则应该是通用于其他语言框架。
+- 很多人有个误区包括几年前的我，以为要用Qt编写静态库，前提是Qt库必须静态的。
+- 如果要将Qt程序编译成静态的可执行文件（单个文件无依赖），前提是所用的Qt库必须静态的。
+
+16. 最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
 
 ### 五、七七八八
 

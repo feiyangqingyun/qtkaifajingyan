@@ -2011,6 +2011,161 @@ locale.toString(QDateTime::currentDateTime(), "ddd");
 locale.toString(QDateTime::currentDateTime(), "dddd");
 ```
 
+180. QSqlTableModel大大简化了对数据库表的显示、添加、删除、修改等，唯独对数据库分页操作有点绕弯。
+```cpp
+//实例化数据库表模型
+QSqlTableModel *model = new QSqlTableModel(this);
+//指定表名
+model->setTable("table");
+//设置列排序
+model->setSort(0, Qt::AscendingOrder);
+//设置提交模式
+model->setEditStrategy(QSqlTableModel::OnManualSubmit);
+//立即查询一次
+model->select();
+//将数据库表模型设置到表格上
+ui->tableView->setModel(model);
+
+//测试发现过滤条件中除了可以带where语句还可以带排序及limit等
+model->setFilter("1=1 order by id desc limit 100");
+
+//如果在过滤条件中设置了排序语句则不可以再使用setSort方法
+//下面的代码结果是执行出错，可能因为setSort又重新增加了order by语句导致多个order by语句冲突了。
+model->setSort(0, Qt::AscendingOrder);
+model->setFilter("1=1 order by id desc limit 100");
+
+//通过setFilter设置单纯的where语句可以不用加1=1
+model->setFilter("name='张三'");
+//如果还有其他语句比如排序或者limit等则需要最前面加上1=1
+//下面表示按照id升序排序，查询结果显示第5-15条记录。
+model->setFilter("1=1 order by id asc limit 5,10");
+
+//多个条件用and连接
+//建议任何时候用了setFilter则最前面写1=1最末尾加上 ; 防止有些地方无法正确执行。
+model->setFilter("1=1 and name='张三' and result>=70;");
+
+//下面表示查询姓名是张三的记录，按照id字段降序排序，结果从第10条开始100条，相当于从第10条到110条记录。
+model->setFilter("1=1 and name='张三' order by id desc limit 10,100;");
+
+//在第3行开始添加一条记录
+model->insertRow(2);
+//立即填充刚刚新增加的行，默认为空需要用户手动在表格中输入。
+model->setData(model->index(2, 0), 100);
+model->setData(model->index(2, 1), "张三");
+//提交更新
+model->submitAll();
+
+//删除第4行
+model->removeRow(3);
+model->submitAll();
+
+//总之有增删改操作后都需要调用model->submitAll();来真正执行，否则仅仅是数据模型更新了数据，并不会更新到数据库中。
+
+//撤销更改
+model->revertAll();
+```
+
+#### 19：181-190
+181. Qt天生就是linux的，从linux开始发展起来的，所以不少Qt程序员经常的开发环境是linux，比如常用的ubuntu等系统，整理了一点常用的linux命令。
+
+| 命令 | 功能 |
+| :------ | :------ |
+| sudo -s | 切换到管理员，如果是 sudo -i 切换后会改变当前目录。 |
+| apt install g++ | 安装软件包（要管理员权限），另一个派系的是 yum install |
+| cd /home | 进入home目录 |
+| ls | 罗列当前所在目录所有目录和文件 |
+| ifconfig | 查看网卡信息包括IP地址，windows上是 ipconfig。 |
+| tar -zxvf bin.tar.gz | 解压文件到当前目录 |
+| tar -jxvf bin.tar.xz | 解压文件到当前目录 |
+| tar -zxvf bin.tar.gz -C /home | 解压文件到/home目录，记住是大写的C。 |
+| tar -zcvf bin.tar.gz bin | 将bin目录压缩成tar.gz格式文件（压缩比一般） |
+| tar -jcvf bin.tar.xz bin | 将bin目录压缩成tar.xz格式文件（压缩比高，推荐） |
+| tar -... | j z 表示不同的压缩方法，x表示解压，c表示压缩。 |
+| gedit 1.txt | 用记事本打开文本文件 |
+| vim 1.txt | 用vim打开文件，很多时候可以缩写用vi。 |
+| ./configure  make -j4  make install | 通用编译源码命令， 第一步./configure执行配置脚本，第二步make -j4启用多线程编译，第三步make install安装编译好的文件。|
+| ./configure -prefix /home/liu/Qt-5.9.3-static -static -sql-sqlite -qt-zlib -qt-xcb -qt-libpng -qt-libjpeg -fontconfig -system-freetype -iconv -nomake tests -nomake examples -skip qt3d -skip qtdoc | Qt通用编译命令 |
+| ./configure -prefix /home/liu/Qt-5.9.3-static -static -release -nomake examples -nomake tests -skip qt3d |  精简编译命令 |
+| ./configure --prefix=host --enable-static --disable-shared --disable-doc | ffmpeg编译命令 |
+
+182. Qt自带的日志重定向机制非常简单好用，自从用了以后再也不用什么断点调试啥的了，在需要的地方支持qdebug输出对应的信息，而且发布程序以后也可以开启调试日志将其输出查看等。
+```cpp
+//Qt5开始提供了日志上下文信息输出，比如输出当前打印消息所在的代码文件、行号、函数名等。
+//如果是release还需要在pro中加上 DEFINES += QT_MESSAGELOGCONTEXT 才能输出上下文，默认release关闭的。
+//切记不要在日志钩子函数中再写qdebug之类的，那样就死循环了。
+//日志重定向一般就三种处理
+//1: 输出到日志文件比如txt文本文件。
+//2: 存储到数据库，可以分类存储，以便相关人员查询分析。
+//3: 重定向到网络，对方用小工具连接程序后，所有打印信息通过tcp发过去。
+
+//日志重定向
+#if (QT_VERSION >= QT_VERSION_CHECK(5,0,0))
+void Log(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+#else
+void Log(QtMsgType type, const char *msg)
+#endif
+{
+    //加锁,防止多线程中qdebug太频繁导致崩溃
+    static QMutex mutex;
+    QMutexLocker locker(&mutex);
+    QString content;
+
+    //这里可以根据不同的类型加上不同的头部用于区分
+    switch (type) {
+        case QtDebugMsg:
+            content = QString("%1").arg(msg);
+            break;
+
+        case QtWarningMsg:
+            content = QString("%1").arg(msg);
+            break;
+
+        case QtCriticalMsg:
+            content = QString("%1").arg(msg);
+            break;
+
+        case QtFatalMsg:
+            content = QString("%1").arg(msg);
+            break;
+    }
+
+    //加上打印代码所在代码文件、行号、函数名
+#if (QT_VERSION >= QT_VERSION_CHECK(5,0,0))
+    if (SaveLog::Instance()->getUseContext()) {
+        int line = context.line;
+        QString file = context.file;
+        QString function = context.function;
+        if (line > 0) {
+            content = QString("行号: %1  文件: %2  函数: %3\n%4").arg(line).arg(file).arg(function).arg(content);
+        }
+    }
+#endif
+
+    //将内容传给函数进行处理
+    SaveLog::Instance()->save(content);
+}
+
+//安装日志钩子,输出调试信息到文件,便于调试
+void SaveLog::start()
+{
+#if (QT_VERSION >= QT_VERSION_CHECK(5,0,0))
+    qInstallMessageHandler(Log);
+#else
+    qInstallMsgHandler(Log);
+#endif
+}
+
+//卸载日志钩子
+void SaveLog::stop()
+{
+#if (QT_VERSION >= QT_VERSION_CHECK(5,0,0))
+    qInstallMessageHandler(0);
+#else
+    qInstallMsgHandler(0);
+#endif
+}
+```
+
 ### 二、升级到Qt6
 #### 2.1 直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。

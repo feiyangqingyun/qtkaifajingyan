@@ -947,7 +947,7 @@ quint32 QUIHelper::ipv4StringToInt(const QString &ip)
 DEFINES += QT_NO_DEBUG_OUTPUT
 ```
 
-127. 在使用QT_NO_DEBUG_OUTPUT关键字禁用了所有打印信息以后，可以节约不少的开销，有时候又想在禁用打印信息后，极少地方还需要看到打印信息，怎么办呢？其实QT_NO_DEBUG_OUTPUT禁用的qdebug的输出，Qt还有其他几种打印信息比如 qInfo、qWarning、qCritical，这些是不受影响的，也就是说在极少部分需要打印的地方用qInfo来输出信息就好。特别注意：qFatal打印完信息程序会自动结束。
+127. 在使用 QT_NO_DEBUG_OUTPUT 关键字禁用了所有打印信息以后，可以节约不少的开销，有时候又想在禁用打印信息后，极少地方还需要看到打印信息，怎么办呢？其实 QT_NO_DEBUG_OUTPUT 禁用的 qdebug 的输出，Qt还有其他几种打印信息比如 qInfo、qWarning、qCritical，这些是不受影响的，也就是说在极少部分需要打印的地方用 qInfo 来输出信息就好。特别注意：qFatal 打印完信息程序会自动结束。
 ```cpp
 qDebug() << "qDebug";
 qInfo() << "qInfo";
@@ -1364,14 +1364,27 @@ MainWindow::MainWindow(QWidget *parent)
     //早期写法,通用Qt所有版本,只支持定义了slots关键字的函数
     //connect(ui->pushButton, SIGNAL(clicked()), this, SLOT(test_fun()));
     connect(ui->pushButton, SIGNAL(clicked()), this, SLOT(test_slot()));
+
     //新写法,支持Qt5及后期所有版本,支持所有函数,无需定义slots关键字也行
     connect(ui->pushButton, &QPushButton::clicked, this, &MainWindow::test_fun);
     connect(ui->pushButton, &QPushButton::clicked, this, &MainWindow::test_slot);
+
     //另类写法,支持lambda表达式,直接执行代码
     connect(ui->pushButton, &QPushButton::clicked, [this] {test_fun();});
     connect(ui->pushButton, &QPushButton::clicked, [this] {
         qDebug() << "hello lambda";
     });
+
+    //lambda带参数
+    connect(ui->pushButton, &QPushButton::clicked, [&] (bool isCheck) {
+        qDebug() << "hello lambda" << isCheck;
+    });
+
+    //头文件 signals:void sig_test(int i);
+    connect(this, &MainWindow::sig_test, [] (int i) {
+        qDebug() << "hello lambda" << i;
+    });
+    emit sig_test(5);
 }
 
 MainWindow::~MainWindow()
@@ -2166,6 +2179,48 @@ void SaveLog::stop()
 }
 ```
 
+183. 自从c++11标准以后，各种语法糖层出不穷，其中lambda表达式用的最广，基本上从Qt5以后就支持lambda表达式。对于习惯了c99的老一辈的程序员来说，这玩意是个新鲜事物，这里特意做个小理解笔记。
+- 代码格式：[capture](parameters) mutable ->return-type {statement}
+- [capture]：捕捉列表，捕捉列表总是出现在Lambda函数的开始处，实际上，[]是Lambda引出符，编译器根据该引出符判断接下来的代码是否是Lambda函数，捕捉列表能够捕捉上下文中的变量以供Lambda函数使用。
+- (parameters)：参数列表，与普通函数的参数列表一致，如果不需要参数传递，则可以连同括号 () 一起省略。
+- mutable：mutable修饰符，默认情况下，Lambda函数总是一个const函数，mutable可以取消其常量性。在使用该修饰符时，参数列表不可省略（即使参数为空）。
+- ->return-type：返回类型，用追踪返回类型形式声明函数的返回类型，我们可以在不需要返回值的时候也可以连同符号 -> 一起省略。此外，在返回类型明确的情况下，也可以省略该部分，让编译器对返回类型进行推导。
+- {statement}：函数体，内容与普通函数一样，不过除了可以使用参数之外，还可以使用所有捕获的变量。
+
+捕捉列表有以下几种形式：
+- [var]表示值传递方式捕捉变量var。
+- [=]表示值传递方式捕捉所有父作用域的变量（包括this）。
+- [&var]表示引用传递捕捉变量var。
+- [&]表示引用传递方式捕捉所有父作用域的变量（包括this）。
+- [this]表示值传递方式捕捉当前的this指针。
+
+```cpp
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)
+    , ui(new Ui::MainWindow)
+{
+    ui->setupUi(this);
+
+    //按钮单击不带参数
+    connect(ui->pushButton, &QPushButton::clicked, [] {
+        qDebug() << "hello lambda";
+    });
+
+    //按钮单击带参数
+    connect(ui->pushButton, &QPushButton::clicked, [] (bool isCheck) {
+        qDebug() << "hello lambda" << isCheck;
+    });
+
+    //自定义信号带参数
+    connect(this, &MainWindow::sig_test, [] (int i, int j) {
+        qDebug() << "hello lambda" << i << j;
+    });
+
+    emit sig_test(5, 8);
+}
+```
+
+
 ### 二、升级到Qt6
 #### 2.1 直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
@@ -2213,7 +2268,7 @@ greaterThan(QT_MAJOR_VERSION, 5): QT += core5compat
 
 8. QWheelEvent的 delta() 改成 angleDelta().y()，pos() 改成 position() 。
 
-9. svg模块拆分出来了svgwidgets，如果用到了该模块则需要在pro增加 QT += svgwidgets 。
+9. svg模块拆分出来了svgwidgets，如果用到了该模块则需要在pro增加 QT += svgwidgets ，同理opengl模块拆分出来了openglwidgets。
 
 10. qlayout中的 margin() 函数换成 contentsMargins().left()，查看源码得知以前的 margin() 返回的就是 contentsMargins().left()，在四个数值一样的时候，默认四个数值就是一样。类似的还有setMargin移除了，统统用setContentsMargins。
 

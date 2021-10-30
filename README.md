@@ -1533,7 +1533,7 @@ lessThan(QT_MAJOR_VERSION, 5): QMAKE_CXXFLAGS += -std=c++11
 
 158. Qt的文本控件比如QTextEdit默认加载大文本比如10MB的文本，很容易卡死甚至崩溃，那是因为默认一个属性开启了，需要屏蔽掉就好很多。
 ```cpp
-ui->textEdit->setUndoRedoEnabled(false)
+ui->textEdit->setUndoRedoEnabled(false);
 ```
 
 159. 其他几点常规小经验，本人在这几个地方摔跤过很多次。
@@ -2218,6 +2218,33 @@ MainWindow::MainWindow(QWidget *parent)
 
     emit sig_test(5, 8);
 }
+```
+
+184. 由于Qt版本众多，有时候为了兼容多个版本甚至跨度Qt4/Qt5/Qt6的兼容，有些头文件或者类名等变了或者新增了，需要用到Qt版本的判断。需要注意的是如果在头文件中使用 QT_VERSION_CHECK 需要先引入#include "qglobal.h"不然编译失败，因为 QT_VERSION_CHECK 这个函数在 qglobal.h 头文件中。
+```cpp
+//至少要包含 qglobal.h，理论上Qt所有的类都包含了这个头文件，所以你引入Qt的其他头文件也行比如 qobject.h
+#include "qglobal.h"
+#if (QT_VERSION >= QT_VERSION_CHECK(5,0,0))
+#include "qscreen.h"
+#else
+#include "qdesktopwidget.h"
+#endif
+```
+
+185. 在使用QString转换到char *或者const char *的时候，务必记得分两步来完成，血的教训，在一个场景中，就因为没有分两步走，现象是msvc的debug异常release正常，mingw和gcc的debug和release都正常，这就很无语了，找问题找半天，对比法排除法按道理要么都有问题才对。
+- 转换前QString的内容无关中文还是英文，要出问题都一样。
+- 转换中QByteArray无关具体类型，toUtf8、toLatin1、toLocal8Bit等方法，要出问题都一样。
+- 转换后无关char *还是const char *，要出问题都一样。
+- 出问题的随机性的，概率出现，理论上debug的概率更大。
+- 根据酷码大佬分析msvc为了方便调试，debug会在内存释放后做填充，release则不会。
+```cpp
+QString text = "xxxxx";
+//下面这样转换很可能会有问题
+char *data = text.toUtf8().data();
+//分两步转换肯定不会有问题
+QByteArray buffer = text.toUtf8();
+char *data = buffer.data();
+const char *data = buffer.constData();
 ```
 
 

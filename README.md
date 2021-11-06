@@ -799,25 +799,38 @@ path = QDir::toNativeSeparators(path);
 - invokeMethod函数有很多重载参数，可以传入返回值和执行方法的参数等。
 - invokeMethod函数不仅支持槽函数还支持信号，而且这逼居然是线程安全的，可以在线程中放心使用，牛逼！
 - 测试下来发现只能执行signals或者slots标识的方法。
-- 可以执行private(protected/public) slots下的函数，但是不能执行private(protected/public)下的函数。
+- 默认可以执行private(protected/public) slots下的函数，但是不能执行private(protected/public)下的函数。
 - 毛总补充：前提必须是slots或者signals标注的函数，不是标注的函数不在元信息导致无法查找，执行之后会提示No such method。
+- 2021-11-06补充：如果要执行private(protected/public)下的函数，需要函数前面加上 Q_INVOKABLE 关键字，今天又学到了，必须加鸡腿。
+- 其实这样看下来，就是任何方法函数都能执行了，这就超越了private(protected/public)的权限限定了，相当于一个类的私有函数用了 Q_INVOKABLE 关键字修饰也可以被 invokeMethod 执行，哇咔咔。
 ```cpp
 //头文件声明信号和槽函数
 signals:
     void sig_test(int type,double value);
 private slots:
     void slot_test(int type, double value);
+private:
+    Q_INVOKABLE void fun_test(int type, double value);
 
 //构造函数关联信号槽
 connect(this, SIGNAL(sig_test(int, double)), this, SLOT(slot_test(int, double)));
+
 //单击按钮触发信号和槽,这里是同时举例信号槽都可以
 void MainWindow::on_pushButton_clicked()
 {
     QMetaObject::invokeMethod(this, "sig_test", Q_ARG(int, 66), Q_ARG(double, 66.66));
     QMetaObject::invokeMethod(this, "slot_test", Q_ARG(int, 88), Q_ARG(double, 88.88));
+    QMetaObject::invokeMethod(this, "fun_test", Q_ARG(int, 99), Q_ARG(double, 99.99));
 }
-//会打印 66 66.66 和 88 88.88
+
+//会打印 66 66.66、88 88.88
 void MainWindow::slot_test(int type, double value)
+{
+    qDebug() << type << value;
+}
+
+//会打印 99.99
+void MainWindow::fun_test(int type, double value)
 {
     qDebug() << type << value;
 }
@@ -2236,7 +2249,7 @@ MainWindow::MainWindow(QWidget *parent)
 - 转换中QByteArray无关具体类型，toUtf8、toLatin1、toLocal8Bit等方法，要出问题都一样。
 - 转换后无关char *还是const char *，要出问题都一样。
 - 出问题的随机性的，概率出现，理论上debug的概率更大。
-- 根据酷码大佬分析msvc为了方便调试，debug会在内存释放后做填充，release则不会。
+- 根据酷码大佬分析可能的原因(不确定)是msvc为了方便调试，debug会在内存释放后做填充，release则不会。
 ```cpp
 QString text = "xxxxx";
 //下面这样转换很可能会有问题
@@ -2491,7 +2504,37 @@ bool nativeEvent(const QByteArray &eventType, void *message, long *result);
 - Qt应该是所有消息都发给了顶层窗口，所以事件分发逻辑是自己处理，主窗口收到鼠标事件然后Qt自己分发给指定子控件，QEvent会有ignore或者accept表示自己处理了没有，例如鼠标点击事件，事件分发器发现没有被处理，数据重新计算然后分发给父窗口。这样父窗口收到的事件坐标就是基于自己窗口内的。用eventFilter就需要自己计算坐标。
 - 再比如，当使用QDialog，放一个QLineEdit并设置焦点，按Esc时QDialog也会自动关闭，本质上就是因为QLineEdit并不处理Esc的按键事件，透传给了QDialog。
 
-### 四、其他经验
+### 四、Qt设计模式
+**读《c++ Qt设计模式》书籍整理的一点经验。此书和官方的《C++ GUI Qt4编程》一起的。**
+1. 通常而言，好的做法是在包含了Qt头文件之后再包含非Qt头文件，由于Qt（为编译器和预处理器）定义了许多符号，这使得避免名称冲突变得更容易，也更容易找到文件。
+```cpp
+#include "frminput2019.h"
+#include "ui_frminput2019.h"
+
+#include "qdatetime.h"
+#include "qdebug.h"
+
+#include "input2019.h"
+#include "inputnumber.h"
+```
+
+2. 一种好的编程实践是在代码中使用const实体而不是嵌入数字型常量（有时称他们为“幻数”）。如果以后需要修改他的值时，就可以获得这种灵活性。一般而言，将常量“孤立”出来，可提高程序的可维护性。
+```cpp
+//不推荐写法
+for (int i = 0; i < 100; ++i) {
+    ...
+}
+
+//推荐下面的写法
+const int count = 100;
+for (int i = 0; i < count; ++i) {
+    ...
+}
+```
+
+3. 内存管理使程序员获得了强大的能力，但是，“权力越大，责任越大”。
+
+### 五、其他经验
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！
 
 2. 在Qt的学习过程中，学会查看对应类的头文件是一个好习惯，如果在该类的头文件没有找到对应的函数，可以去他的父类中找找，实在不行还有爷爷类，肯定能找到的。通过头文件你会发现很多函数接口其实Qt已经帮我们封装好了，有空还可以阅读下他的实现代码。
@@ -2548,17 +2591,25 @@ bool nativeEvent(const QByteArray &eventType, void *message, long *result);
 
 16. 最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
 
-### 五、七七八八
-
+### 六、七七八八
+#### 6.1 推荐开源主页
 | 名称 | 网址 |
 | :------ | :------ |
-|QQ学习群|Qt交流大会群 853086607 Qt技术交流群 46679801 Qt进阶之路群 734623697|
+|Qt交流大会群|群号：853086607|
+|Qt技术交流群|群号：46679801|
+|Qt进阶之路群|群号：734623697|
 |QtWidget开源demo集合|[https://gitee.com/feiyangqingyun/QWidgetDemo](https://gitee.com/feiyangqingyun/QWidgetDemo)|
 |QtQuick/Qml开源demo集合|[https://gitee.com/jaredtao/TaoQuick](https://gitee.com/jaredtao/TaoQuick)|
 |QtQuick/Qml开源demo集合|[https://gitee.com/zhengtianzuo/QtQuickExamples](https://gitee.com/zhengtianzuo/QtQuickExamples)|
+
+#### 6.2 推荐网站主页
+| 名称 | 网址 |
+| :------ | :------ |
 |qtcn|[http://www.qtcn.org](http://www.qtcn.org)|
 |豆子的空间|[https://www.devbean.net](https://www.devbean.net)|
 |yafeilinux|[http://www.qter.org](http://www.qter.org)|
+|feiyangqingyun|[https://blog.csdn.net/feiyangqingyun](https://blog.csdn.net/feiyangqingyun)|
+|**Qt系列文章**|[https://blog.csdn.net/feiyangqingyun/category_11460485.html](https://blog.csdn.net/feiyangqingyun/category_11460485.html)|
 |一去二三里|[http://blog.csdn.net/liang19890820](http://blog.csdn.net/liang19890820)|
 |乌托邦2号|[http://blog.csdn.net/taiyang1987912](http://blog.csdn.net/taiyang1987912)|
 |foruok|[http://blog.csdn.net/foruok](http://blog.csdn.net/foruok)|
@@ -2569,25 +2620,28 @@ bool nativeEvent(const QByteArray &eventType, void *message, long *result);
 |雨田哥|[https://blog.csdn.net/ly305750665](https://blog.csdn.net/ly305750665)|
 |郑天佐|[https://blog.csdn.net/zhengtianzuo06](https://blog.csdn.net/zhengtianzuo06)|
 |寒山-居士|[https://blog.csdn.net/esonpo](https://blog.csdn.net/esonpo)|
-|feiyangqingyun|[https://blog.csdn.net/feiyangqingyun](https://blog.csdn.net/feiyangqingyun)|
-|前行中小猪|[http://blog.csdn.net/goforwardtostep](http://blog.csdn.net/goforwardtostep)|  
+|前行中小猪|[http://blog.csdn.net/goforwardtostep](http://blog.csdn.net/goforwardtostep)|
 |涛哥的知乎专栏|[https://zhuanlan.zhihu.com/TaoQt](https://zhuanlan.zhihu.com/TaoQt)|
-|Qt君|[https://blog.csdn.net/nicai_xiaoqinxi](https://blog.csdn.net/nicai_xiaoqinxi)|  
+|Qt君|[https://blog.csdn.net/nicai_xiaoqinxi](https://blog.csdn.net/nicai_xiaoqinxi)|
+
+#### 6.3 推荐学习网站
+| 名称 | 网址 |
+| :------ | :------ |
 |Qt老外视频教程|[http://space.bilibili.com/2592237/#!/index](http://space.bilibili.com/2592237/#!/index)|
 |Qt维基补充文档|[https://wiki.qt.io/Main](https://wiki.qt.io/Main)|
 |Qt源码查看网站|[https://code.woboq.org/qt5](https://code.woboq.org/qt5)|
 |Qt官方下载地址|[https://download.qt.io](https://download.qt.io)|
 |Qt官方下载新地址|[https://download.qt.io/new_archive/qt/](https://download.qt.io/new_archive/qt/)|
 |Qt国内镜像下载地址|[https://mirrors.cloud.tencent.com/qt](https://mirrors.cloud.tencent.com/qt)|
-|Qt安装包下载地址|[http://qthub.com/download/](http://qthub.com/download/) (超过1000多个，由Qt君整理)|
+|Qt安装包下载地址|[http://qthub.com/download/](http://qthub.com/download/)|
 |精美图表控件QWT|[http://qwt.sourceforge.net/](http://qwt.sourceforge.net/)|
 |精美图表控件QCustomPlot|[https://www.qcustomplot.com/](https://www.qcustomplot.com/)|
 |免费图标下载|[http://www.easyicon.net/](http://www.easyicon.net/)|
 |图形字体下载|[https://www.iconfont.cn/](https://www.iconfont.cn/)|
 |漂亮界面网站|[https://www.ui.cn/](https://www.ui.cn/)|
-|微信公众号|官方公众号：Qt软件    亮哥公众号：高效程序员|
+|微信公众号|**官方公众号：Qt软件** &nbsp; **亮哥公众号：高效程序员**|
 
-### 六、书籍推荐
+### 七、书籍推荐
 
 1. C++入门书籍推荐《C++ primer plus》，进阶书籍推荐《C++ primer》。
 2. Qt入门书籍推荐霍亚飞的《Qt Creator快速入门》，Qt进阶书籍推荐官方的《C++ GUI Qt4编程》，qml书籍推荐《Qt5编程入门》。

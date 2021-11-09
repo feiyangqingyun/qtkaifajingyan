@@ -2269,8 +2269,21 @@ const char *data = buffer.constData();
 - 如果更在意更新数据（添加、删除等）的速度则用QList，就因为QChart用的是QList存取数据，也是导致大数据量卡顿的原因之一，一直被诟病。
 - 在数据量很小的情况下两者几乎没啥性能区别。
 - 貌似Qt6对这两个类合并了（选择困难症的Qter解放了），QVector=QList即QVector是QList的别名，可能底层改了代码以便发挥两者的优势。
-- Qt6中QStringList也成了 QList <QString> 的别名，没有了单独的类，之前QStringList中特有的方法合并了。
 
+187. 关于mouseTracking鼠标追踪和tabletTracking平板追踪的几点官方说明。
+- mouseTracking属性用于保存是否启用鼠标跟踪，缺省情况是不启用的。
+- 没启用的情况下，对应部件只接收在鼠标移动同时至少一个鼠标按键按下时的鼠标移动事件。
+- 启用鼠标跟踪的情况下，任何鼠标移动事件部件都会接收。
+- 部件方法hasMouseTracking()用于返回当前是否启用鼠标跟踪。
+- setMouseTracking(bool enable)用于设置是否启用鼠标跟踪。
+- 与鼠标跟踪相关的函数主要是mouseMoveEvent()。
+- tabletTracking属性保存是否启用部件的平板跟踪，缺省是不起用的。
+- 没有启用平板跟踪的情况下，部件仅接收触控笔与平板接触或至少有个触控笔按键按下时的触控笔移动事件。
+- 如果部件启用了平板跟踪功能，部件能接收触控笔靠近但未真正接触平板时的触控笔移动事件。
+- 这可以用于监视操作位置以及部件的辅助操作功能（如旋转和倾斜），并为图形界面提供这些操作的信息接口。
+- 部件方法hasTabletTracking()用于返回当前是否启用平板跟踪。
+- setTabletTracking(bool enable)用于设置是否启用平板跟踪。
+- 与平板跟踪相关的函数主要是tabletEvent()。
 
 ### 二、升级到Qt6
 #### 2.1 直观总结
@@ -2507,6 +2520,25 @@ bool nativeEvent(const QByteArray &eventType, void *message, long *result);
     QWebEngineSettings *webSetting = QWebEngineSettings::defaultSettings();
 #endif
 ```
+
+37. Qt6将enterEvent的参数QEvent改成了QEnterEvent也不打个招呼。这种改变编译也不会提示的。
+```cpp
+#if (QT_VERSION >= QT_VERSION_CHECK(6,0,0))
+    void enterEvent(QEnterEvent *);
+#else
+    void enterEvent(QEvent *);
+#endif
+
+//后面经过JasonWong大佬的指点，从父类重新实现的virtual修饰的函数，建议都加上override关键字。
+//这样的话一旦父类的函数或者参数变了则会提示编译报错，而不是编译通过但是运行不正常会一脸懵逼茫然，从而把锅扣给Qt。
+
+//下面是父类函数
+virtual void enterEvent(QEvent *event);
+//子类建议加上override
+void enterEvent(QEvent *event) override;
+```
+
+38. Qt6中多个类进行了合并，比如现在QVector就成了QList的别名，意味着这两个类是同一个类没有任何区别，可能Qt内部对两种的优点都集中在一起，并尽量重写算法或者其他处理规避缺点。同理QStringList现在也成了 QList&lt;QString&gt; 的别名，是同一个类，没有单独的类。
 
 ### 三、酷码专区
 **酷码大佬（微信Kuma-NPC）**

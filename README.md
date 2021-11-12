@@ -1,7 +1,14 @@
 ﻿### 一、开发经验
 #### 01：001-010
 1. 当编译发现大量错误的时候，从第一个看起，一个一个的解决，不要急着去看下一个错误，往往后面的错误都是由于前面的错误引起的，第一个解决后很可能都解决了。
-2. 定时器是个好东西，学会好使用它，有时候用QTimer::singleShot可以解决意想不到的问题。
+2. 定时器是个好东西，学会好使用它，有时候用QTimer::singleShot单次定时器和QMetaObject::invokeMethod可以解决意想不到的问题。比如在窗体初始化的时候加载一个耗时的操作，很容易卡主界面的显示，要在加载完以后才会显示界面，这就导致了体验很卡不友好的感觉，此时你可以将耗时的加载（有时候这些加载又必须在主线程，比如用QStackWidget堆栈窗体加载一些子窗体），延时或者异步进行加载，这样就会在界面显示后去执行，而不是卡主主界面。
+```cpp
+//异步执行load函数
+QMetaObject::invokeMethod(this, "load", Qt::QueuedConnection);
+//延时10毫秒执行load函数
+QTimer::singleShot(10, this, SLOT(load()));
+```
+
 3. 默认QtCreator是单线程编译，可能设计之初考虑到尽量不过多占用系统资源，而现在的电脑都是多核心的，默认msvc编译器是多线程编译的不需要手动设置，而对于其他编译器，需要手动设置才行。
 - 方法一：在每个项目的构建设置中（可以勾选一个shadow build的页面地方）的build步骤，make arguments增加一行 -j16 即可，此设置会保存在pro.user文件中，一旦删除就需要重新设置，不建议此方法；
 - 方法二：在构建套件的环境中增加，工具->选项->构建套件(kits)->选中一个构建套件->environment->右侧change按钮->打开的输入框中填入 MAKEFLAGS=-j4 ， 这样就可以不用每次设置多线程编译，只要是应用该构件套件的项目都会加上这个编译参数；
@@ -14,7 +21,7 @@
 
 6. 可以在pro文件中写上标记版本号+ico图标（Qt5才支持），其实在windows上就是qmake的时候会自动将此信息转换成rc文件。
 ```cpp
-VERSION  = 2022.10.25
+VERSION  = 2025.10.01
 RC_ICONS = main.ico
 ```
 
@@ -2285,6 +2292,17 @@ const char *data = buffer.constData();
 - setTabletTracking(bool enable)用于设置是否启用平板跟踪。
 - 与平板跟踪相关的函数主要是tabletEvent()。
 
+188. 关于QTableWidget等控件调用自带的removeRow、clearContents、clear函数删除了里面的item和内容，会自动调用item或者cellwidget的析构函数进行资源释放，不用自己手动再去释放。
+```cpp
+//每次调用 clearContents 都会自动清理之前的item
+ui->tableWidget->clearContents();
+for (int i = 0; i < count; ++i) {
+    ui->tableWidget->setItem(i, 0, new QTableWidgetItem("aaa"));
+    ui->tableWidget->setItem(i, 1, new QTableWidgetItem("bbb"));
+    ui->tableWidget->setCellWidget(i, 2, new QPushButton("ccc"));
+}
+```
+
 ### 二、升级到Qt6
 #### 2.1 直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
@@ -2539,6 +2557,23 @@ void enterEvent(QEvent *event) override;
 ```
 
 38. Qt6中多个类进行了合并，比如现在QVector就成了QList的别名，意味着这两个类是同一个类没有任何区别，可能Qt内部对两种的优点都集中在一起，并尽量重写算法或者其他处理规避缺点。同理QStringList现在也成了 QList&lt;QString&gt; 的别名，是同一个类，没有单独的类。
+
+39. 在Qt4时代默认QWidget构造函数父类是0，到了Qt5变成了Q_NULLPTR，到了Qt6居然用的是默认的c++标准中的nullptr而不是Qt自定义定义的Q_NULLPTR（同样的还有Q_DECL_OVERRIDE换成了用override等），可能是为了彻底抛弃历史包袱拥抱未来。
+```cpp
+//下面依次是Qt4/5/6的写法
+MainWindow(QWidget *parent = 0);
+MainWindow(QWidget *parent = Q_NULLPTR);
+MainWindow(QWidget *parent = nullptr);
+
+//查阅Qt源码查看Q_NULLPTR原来是根据编译器定义来选择
+#ifdef Q_COMPILER_NULLPTR
+# define Q_NULLPTR         nullptr
+#else
+# define Q_NULLPTR         NULL
+#endif
+
+//Qt高版本兼容低版本写法比如Qt5/6都支持 *parent = 0 这种写法。
+```
 
 ### 三、酷码专区
 **酷码大佬（微信Kuma-NPC）**

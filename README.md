@@ -2253,7 +2253,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 185. 在使用QString转换到char *或者const char *的时候，务必记得分两步来完成，血的教训，在一个场景中，就因为没有分两步走，现象是msvc的debug异常release正常，mingw和gcc的debug和release都正常，这就很无语了，找问题找半天，对比法排除法按道理要么都有问题才对。
 - 转换前QString的内容无关中文还是英文，要出问题都一样。
-- 转换中QByteArray无关具体类型，toUtf8、toLatin1、toLocal8Bit等方法，要出问题都一样。
+- 转换中QByteArray无关具体类型，toUtf8、toLatin1、toLocal8Bit、toStdString等方法，要出问题都一样。
 - 转换后无关char *还是const char *，要出问题都一样。
 - 出问题的随机性的，概率出现，理论上debug的概率更大。
 - 根据酷码大佬分析可能的原因(不确定)是msvc为了方便调试，debug会在内存释放后做填充，release则不会。
@@ -2300,6 +2300,38 @@ for (int i = 0; i < count; ++i) {
     ui->tableWidget->setItem(i, 0, new QTableWidgetItem("aaa"));
     ui->tableWidget->setItem(i, 1, new QTableWidgetItem("bbb"));
     ui->tableWidget->setCellWidget(i, 2, new QPushButton("ccc"));
+}
+```
+
+189. 对于QListView（QListWidget）、QTreeView（QTreeWidget）、QTableView（QTableWidget）这种类型的控件，可以通过setChecked来让对应的item产生复选框效果，很多人（包括曾经的自己）误以为这就是复选框控件，其实不是的，他是对应控件的indicator指示器，所以想要更换样式，不能说设置了QCheckBox的样式就有效果，而要单独对齐indicator指示器设置样式才行。
+```cpp
+QCheckBox::indicator,QGroupBox::indicator,QTreeWidget::indicator,QListWidget::indicator{
+width:13px;
+height:13px;
+}
+
+QCheckBox::indicator:unchecked,QGroupBox::indicator:unchecked,QTreeWidget::indicator:unchecked,QListWidget::indicator:unchecked{
+image:url(:/qss/flatwhite/checkbox_unchecked.png);
+}
+
+QCheckBox::indicator:unchecked:disabled,QGroupBox::indicator:unchecked:disabled,QTreeWidget::indicator:unchecked:disabled,QListWidget::indicator:disabled{
+image:url(:/qss/flatwhite/checkbox_unchecked_disable.png);
+}
+
+QCheckBox::indicator:checked,QGroupBox::indicator:checked,QTreeWidget::indicator:checked,QListWidget::indicator:checked{
+image:url(:/qss/flatwhite/checkbox_checked.png);
+}
+
+QCheckBox::indicator:checked:disabled,QGroupBox::indicator:checked:disabled,QTreeWidget::indicator:checked:disabled,QListWidget::indicator:checked:disabled{
+image:url(:/qss/flatwhite/checkbox_checked_disable.png);
+}
+
+QCheckBox::indicator:indeterminate,QGroupBox::indicator:indeterminate,QTreeWidget::indicator:indeterminate,QListWidget::indicator:indeterminate{
+image:url(:/qss/flatwhite/checkbox_parcial.png);
+}
+
+QCheckBox::indicator:indeterminate:disabled,QGroupBox::indicator:indeterminate:disabled,QTreeWidget::indicator:indeterminate:disabled,QListWidget::indicator:indeterminate:disabled{
+image:url(:/qss/flatwhite/checkbox_parcial_disable.png);
 }
 ```
 

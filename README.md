@@ -2273,7 +2273,8 @@ const char *data = buffer.constData();
 - 如果你需要一个真正的连接着的list，且需要保证一个固定插入耗时。那就用迭代器，而不是标签。使用QLinkedList()。
 - 如果你需要开辟连续的内存空间存储，或者你的元素远比一个指针大，这时你需要避免个别插入操作，出现堆栈溢出，这时候用QVector。
 - 如果更在意取值的速度则用QVector，QCustomPlot用的就是QVector，需要频繁大量的取出数据进行绘制。
-- 如果更在意更新数据（添加、删除等）的速度则用QList，就因为QChart用的是QList存取数据，也是导致大数据量卡顿的原因之一，一直被诟病。
+- 如果更在意更新数据（添加、删除等）的速度则用QList（对应操作是[]=值），但是因为QChart主要用的是QList访问数据（对应操作是at()），也是导致大数据量卡顿的原因之一，一直被诟病。
+- 曲线图表这类的基本上绝大部分时间都是在访问数据，拿到设置好的数据进行绘制。
 - 在数据量很小的情况下两者几乎没啥性能区别。
 - 貌似Qt6对这两个类合并了（选择困难症的Qter解放了），QVector=QList即QVector是QList的别名，可能底层改了代码以便发挥两者的优势。
 
@@ -2408,6 +2409,29 @@ void frmSimple::initTableWidget()
         }
     }
 }
+```
+
+#### 20：191-200
+191. 关于QList队列的处理中，我们最常用的就是调用append函数添加item，往前插入item很多人第一印象就是调用insert(0,xxx)来插入，其实QList完全提供了往前追加item的函数prepend、push_front。
+```cpp
+QStringList list;
+list << "aaa" << "bbb" << "ccc";
+
+//往后追加 等价于 append
+list.push_back("ddd");
+//往前追加 等价于 prepend
+list.push_front("xxx");
+
+//往后追加
+list.append("ddd");
+//往前追加
+list.prepend("xxx");
+
+//指定第一个位置插入 等价于 prepend
+list.insert(0, "xxx");
+
+//输出 QList("xxx", "aaa", "bbb", "ccc", "ddd")
+qDebug() << list;
 ```
 
 ### 二、升级到Qt6

@@ -2335,6 +2335,81 @@ image:url(:/qss/flatwhite/checkbox_parcial_disable.png);
 }
 ```
 
+190. 关于QTableView（采用model数据源）、QTableWidget列名列宽设置，有时候发现没有起作用，原来是对代码设置的顺序有要求，比如setColumnWidth前必须先setColumnCount，不然列数都没有，哪来的列宽，包括setHorizontalHeaderLabels设置列标题集合也是，前提都要先有列。
+```cpp
+void frmSimple::initForm()
+{
+    row = 100;
+    column = 6;
+    model = new QStandardItemModel(this);
+
+    columnNames << "列标题1" << "列标题2" << "列标题3" << "列标题4" << "列标题5" << "列标题6";
+    columnWidths << 100 << 100 << 100 << 100 << 100 << 100;
+}
+
+void frmSimple::initTableView()
+{
+    //清空数据
+    model->clear();
+    //先设置数据模型,否则 setColumnWidth 不起作用
+    ui->tableView->setModel(model);
+
+    //设置列数及列标题和列宽
+    model->setColumnCount(column);
+    for (int i = 0; i < column; ++i) {
+        model->setHeaderData(i, Qt::Horizontal, columnNames.at(i));
+        ui->tableView->setColumnWidth(i, columnWidths.at(i));
+    }
+
+    //循环添加行数据
+    for (int i = 0; i < row; ++i) {
+        //循环添加一行的列
+        QList<QStandardItem *> items;
+        for (int j = 0; j < column; ++j) {
+            QStandardItem *item = new QStandardItem;
+            //最后一列显示时间区别开来
+            if (j == column - 1) {
+                QDateTime now = QDateTime::currentDateTime().addSecs(i);
+                item->setText(now.toString("yyyy-MM-dd HH:mm:ss"));
+            } else {
+                item->setText(QString("行%1_列%2").arg(i + 1).arg(j + 1));
+            }
+            items << item;
+        }
+        model->appendRow(items);
+    }
+}
+
+void frmSimple::initTableWidget()
+{
+    //清空数据
+    ui->tableWidget->clearContents();
+
+    //设置列标题和列数及列宽
+    ui->tableWidget->setColumnCount(column);
+    ui->tableWidget->setHorizontalHeaderLabels(columnNames);
+    for (int i = 0; i < column; ++i) {
+        ui->tableWidget->setColumnWidth(i, columnWidths.at(i));
+    }
+
+    //添加数据
+    ui->tableWidget->setRowCount(row);
+    for (int i = 0; i < row; ++i) {
+        for (int j = 0; j < column; ++j) {
+            QTableWidgetItem *item = new QTableWidgetItem;
+            //最后一列显示时间区别开来
+            if (j == column - 1) {
+                QDateTime now = QDateTime::currentDateTime().addSecs(i);
+                item->setText(now.toString("yyyy-MM-dd HH:mm:ss"));
+            } else {
+                item->setText(QString("行%1_列%2").arg(i + 1).arg(j + 1));
+            }
+            ui->tableWidget->setItem(i, j, item);
+        }
+    }
+}
+```
+
 ### 二、升级到Qt6
 #### 2.1 直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。

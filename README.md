@@ -173,7 +173,7 @@ QMainWindow > .QWidget {
 //Qt4写法
 ./HelloQt -qws &
 
-//Qt5写法 xcb 可以改成 eglfs vnc wayland 等,有哪个就用哪个挨个测试
+//Qt5写法 xcb 可以改成 linuxfb eglfs vnc wayland 等,有哪个就用哪个挨个测试
 ./HelloQt --platform xcb
 ./HelloQt --platform wayland
 ```
@@ -2340,70 +2340,70 @@ image:url(:/qss/flatwhite/checkbox_parcial_disable.png);
 ```cpp
 void frmSimple::initForm()
 {
-    row = 100;
-    column = 6;
+    //实例化数据模型
     model = new QStandardItemModel(this);
 
-    columnNames << "列标题1" << "列标题2" << "列标题3" << "列标题4" << "列标题5" << "列标题6";
-    columnWidths << 100 << 100 << 100 << 100 << 100 << 100;
+    //设置行数列数
+    row = 100;
+    column = 10;
+    //设置列名列宽
+    for (int i = 0; i < column; ++i) {
+        columnNames << QString("列%1").arg(i + 1);
+        columnWidths << 60;
+    }
 }
 
-void frmSimple::initTableView()
+void frmSimple::on_btnLoad1_clicked()
 {
-    //清空数据
-    model->clear();
     //先设置数据模型,否则 setColumnWidth 不起作用
     ui->tableView->setModel(model);
 
     //设置列数及列标题和列宽
     model->setColumnCount(column);
+    //简便方法设置列标题集合
+    model->setHorizontalHeaderLabels(columnNames);
     for (int i = 0; i < column; ++i) {
-        model->setHeaderData(i, Qt::Horizontal, columnNames.at(i));
         ui->tableView->setColumnWidth(i, columnWidths.at(i));
     }
 
     //循环添加行数据
+    QDateTime now = QDateTime::currentDateTime();
+    model->setRowCount(row);
     for (int i = 0; i < row; ++i) {
-        //循环添加一行的列
-        QList<QStandardItem *> items;
         for (int j = 0; j < column; ++j) {
             QStandardItem *item = new QStandardItem;
             //最后一列显示时间区别开来
             if (j == column - 1) {
-                QDateTime now = QDateTime::currentDateTime().addSecs(i);
-                item->setText(now.toString("yyyy-MM-dd HH:mm:ss"));
+                item->setText(now.addSecs(i).toString("yyyy-MM-dd HH:mm:ss"));
             } else {
-                item->setText(QString("行%1_列%2").arg(i + 1).arg(j + 1));
+                item->setText(QString("%1_%2").arg(i + 1).arg(j + 1));
             }
-            items << item;
+            model->setItem(i, j, item);
         }
-        model->appendRow(items);
     }
 }
 
-void frmSimple::initTableWidget()
+void frmSimple::on_btnLoad2_clicked()
 {
-    //清空数据
-    ui->tableWidget->clearContents();
-
     //设置列标题和列数及列宽
     ui->tableWidget->setColumnCount(column);
+    //简便方法设置列标题集合
     ui->tableWidget->setHorizontalHeaderLabels(columnNames);
     for (int i = 0; i < column; ++i) {
         ui->tableWidget->setColumnWidth(i, columnWidths.at(i));
     }
 
     //添加数据
+    QDateTime now = QDateTime::currentDateTime();
     ui->tableWidget->setRowCount(row);
     for (int i = 0; i < row; ++i) {
         for (int j = 0; j < column; ++j) {
             QTableWidgetItem *item = new QTableWidgetItem;
             //最后一列显示时间区别开来
             if (j == column - 1) {
-                QDateTime now = QDateTime::currentDateTime().addSecs(i);
-                item->setText(now.toString("yyyy-MM-dd HH:mm:ss"));
+                item->setText(now.addSecs(i).toString("yyyy-MM-dd HH:mm:ss"));
             } else {
-                item->setText(QString("行%1_列%2").arg(i + 1).arg(j + 1));
+                item->setText(QString("%1_%2").arg(i + 1).arg(j + 1));
             }
             ui->tableWidget->setItem(i, j, item);
         }
@@ -2758,9 +2758,9 @@ for (int i = 0; i < count; ++i) {
 
 6. Qt一共有几百个版本，关于如何选择Qt版本的问题，我一般保留四个版本，为了兼容Qt4用4.8.7，最后的支持XP的版本5.7.0，最新的长期支持版本比如5.15，最高的新版本比如5.15.2。强烈不建议使用4.7以前和5.0到5.3之间的版本（Qt6.0到Qt6.2之间、不含6.2的版本也不建议，很多模块还没有集成），太多bug和坑，稳定性和兼容性相比于之后的版本相当差，能换就换，不能换睡服领导也要换。如果没有历史包袱建议用5.15.2，目前新推出的6.0版本也强烈不建议使用，官方还在整合当中，好多类和模块暂时没有整合，需要等到6.2版本再用。
 
-7. Qt和msvc编译器常见搭配是Qt5.7+VS2013、Qt5.9+VS2015、Qt5.12+VS2017、Qt5.15+VS2019、Qt6.2+VS2019，按照这些搭配来，基本上常用的模块都会有，比如webengine模块，如果选用的Qt5.12+msvc2015，则很可能官方没有编译这个模块，只是编译了Qt5.12+msvc2017的。
+7. Qt和msvc编译器常见搭配是Qt5.7+VS2013、Qt5.9+VS2015、Qt5.12+VS2017、Qt5.15+VS2019、Qt6.2+VS2019，按照这些搭配来，基本上常用的模块都会有，比如webengine模块，如果选用的Qt5.12+msvc2015，则很可能官方没有编译这个模块，只是编译了Qt5.12+msvc2017的，如果一定要用msvc2015不想换msvc2017则只能选择Qt5.9+msvc2015套件。
 
-8. Qt默认有对应VS版本，在下载对应VS插件的时候心里要有个数，官方默认提供的是原配的插件，如果想要Qt4.8+VS2015的插件，需要自行编译。一般来说是Qt4.8原配VS2010，Qt5.6原配VS2013，Qt5.9原配VS2015，Qt5.12原配VS2017，切记：原配最好。
+8. Qt默认有对应VS版本，在下载对应VS插件的时候心里要有个数，官方默认提供的是原配的插件，如果想要Qt4.8+VS2015的插件，需要自行编译。一般来说是Qt4.8原配VS2010，Qt5.6原配VS2013，Qt5.9原配VS2015，Qt5.12原配VS2017，Qt5.15原配VS2019，切记：原配最好。
 
 9. 新版本Qt安装包安装的时候需要填写注册信息，如果不想填写，先禁用网卡，在运行安装包，可以直接跳过这一步进行安装。
 

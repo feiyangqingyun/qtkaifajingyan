@@ -2434,6 +2434,21 @@ list.insert(0, "xxx");
 qDebug() << list;
 ```
 
+192. Qt内置了一些QList、QMap、QHash相关的类型，可以直接用，不用自己写个长长的类型。
+```cpp
+//qwindowdefs.h
+typedef QList<QWidget *> QWidgetList;
+typedef QList<QWindow *> QWindowList;
+typedef QHash<WId, QWidget *> QWidgetMapper;
+typedef QSet<QWidget *> QWidgetSet;
+
+//qmetatype.h
+typedef QList<QVariant> QVariantList;
+typedef QMap<QString, QVariant> QVariantMap;
+typedef QHash<QString, QVariant> QVariantHash;
+typedef QList<QByteArray> QByteArrayList;
+```
+
 ### 二、升级到Qt6
 #### 2.1 直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。

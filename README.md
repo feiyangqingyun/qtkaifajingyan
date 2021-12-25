@@ -1173,6 +1173,8 @@ struct FunctionInfo {
 //方法2：在可执行文件同目录下新建文件 qt.conf 填入下面内容
 [Platforms]
 WindowsArguments = dpiawareness=0
+//下面这行用来解决Qt高DPI下文字显示有锯齿的问题
+WindowsArguments = fontengine=freetype
 
 //方法3：在main函数最前面设置Qt内部的环境变量
 qputenv("QT_AUTO_SCREEN_SCALE_FACTOR", "1.5");
@@ -1180,6 +1182,15 @@ qputenv("QT_AUTO_SCREEN_SCALE_FACTOR", "1.5");
 //方法4：新版本的Qt比如Qt5.14修正了对高分屏的处理支持不是整数的缩放
 qputenv("QT_ENABLE_HIGHDPI_SCALING", "1");
 QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
+
+//禁用缩放
+//测试发现AA_Use96Dpi属性在Qt5.9以上版本完全正常，以下版本比如5.7有部分控件在175%缩放不正常比如QTextEdit，需要外层套个widget才行。
+#if (QT_VERSION >= QT_VERSION_CHECK(5,0,0))
+    QApplication::setAttribute(Qt::AA_Use96Dpi);
+#endif
+#if (QT_VERSION >= QT_VERSION_CHECK(5,14,0))
+    QGuiApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::Floor);
+#endif
 ```
 
 139. QTabWidget选项卡有个自动生成按钮切换选项卡的机制，有时候不想看到这个烦人的切换按钮，可以设置usesScrollButtons为假，其实QTabWidget的usesScrollButtons属性最终是应用到QTabWidget的QTabBar对象上，所以只要设置全局的QTabBar的这个属性关闭即可。为啥要设置全局的呢，因为如果只是对QTabWidget设置了该属性，而在QMainWindow窗体中QDockWidget合并自动形成的选项卡只有QTabBar对象导致依然是有切换按钮。
@@ -2449,6 +2460,9 @@ typedef QHash<QString, QVariant> QVariantHash;
 typedef QList<QByteArray> QByteArrayList;
 ```
 
+193. Qt的布局的边距间隔，如果在没有改动过的情况下，是会根据系统分辨率以及缩放比来决定对应的默认值，是变化的，比如在1080P分辨率是9px，在2K分辨率又变成了11px，所有你会发现你在1080P电脑编译的程序，明明看到的是6px、9px，怎么到2K、4K分辨率下间隔和边距就变得好大，如果要保持无论何种分辨率都一样，你需要手动重新设置这些值，这里有个坑，比如默认是是9，你想其他分辨率也是9，你必须先把9改成其他值比如10，然后再改成9，这样才表示真的改动，你直接9改成9是不会变化的，在属性设计器中右侧有个小箭头恢复值的，也是灰色，只有加深显示，并且出现了恢复默认值箭头，才表示你确实是改过了值。
+
+
 ### 二、升级到Qt6
 #### 2.1 直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
@@ -2720,6 +2734,8 @@ MainWindow(QWidget *parent = nullptr);
 
 //Qt高版本兼容低版本写法比如Qt5/6都支持 *parent = 0 这种写法。
 ```
+
+40. 对于委托的进度条样式QStyleOptionProgressBar类的属性，在Qt4的时候不能设置横向还是垂直样式，默认横向样式，要设置orientation需要用另外的QStyleOptionProgressBarV2。从Qt5开始新增了orientation和bottomToTop属性设置。在Qt6的时候彻底移除了orientation属性，只有bottomToTop属性，而且默认进度是垂直的，很操蛋，理论上默认应该是横向的才对，绝大部分进度条场景都是横向的。这个时候怎么办呢，原来现在的处理逻辑改了，默认垂直的，如果要设置横向的直接设置 styleOption.state |= QStyle::State_Horizontal 这种方式设置才行，而Qt6以前默认方向是通过 orientation 值取得，这个State_Horizontal从Qt4就一直有，Qt6以后要主动设置下才是横向的就是。
 
 ### 三、酷码专区
 **酷码大佬（微信Kuma-NPC）**

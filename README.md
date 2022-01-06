@@ -268,6 +268,14 @@ lessThan(QT_MINOR_VERSION, 8) {
 #这里放要做的处理
 }}
 
+#下面的含义是如果版本 < 5.12.0
+REQ_QT_MAJOR = 5
+REQ_QT_MINOR = 12
+REQ_QT_PATCH = 0
+lessThan(QT_MAJOR_VERSION, $$REQ_QT_MAJOR)|lessThan(QT_MINOR_VERSION, $$REQ_QT_MINOR)|lessThan(QT_MINOR_VERSION, $$REQ_QT_PATCH) {
+#这里放要做的处理
+}
+
 #下面的含义是如果版本 >= 5.5
 greaterThan(QT_MAJOR_VERSION, 4) {
 greaterThan(QT_MINOR_VERSION, 4) {
@@ -1671,7 +1679,13 @@ QApplication app(argc, argv);
 165. Qt对区分不同的编译器也做了非常细致的处理。
 ```cpp
 #pro文件可以这样判断
-msvc{}
+msvc {
+//要做的处理
+}
+
+mingw {
+//要做的处理
+}
 
 //代码中可以这样判断
 #ifdef Q_CC_MINGW
@@ -1933,8 +1947,10 @@ int main(int argc, char *argv[])
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 #endif
 #if (QT_VERSION > QT_VERSION_CHECK(5,4,0))
-    //设置opengl模式 AA_UseDesktopOpenGL(默认) AA_UseSoftwareOpenGL AA_UseOpenGLES
-    //QApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
+    //设置opengl模式 AA_UseDesktopOpenGL(默认) AA_UseOpenGLES AA_UseSoftwareOpenGL
+    //在一些很旧的设备上或者对opengl支持很低的设备上需要使用AA_UseOpenGLES表示禁用硬件加速
+    //如果开启的是AA_UseOpenGLES则无法使用硬件加速比如ffmpeg的dxva2
+    //QApplication::setAttribute(Qt::AA_UseOpenGLES);
     //设置opengl共享上下文
     QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 #endif
@@ -2505,6 +2521,34 @@ WindowsArguments = dpiawareness=0
 - qss的执行是有优先级的，如果没有指定父对象，则对所有的应用，比如在窗体widget中 {color:#ff0000;} 这样会对widget以及widget的所有子对象应用该样式，这种问题各大Qt群每周都在上演，你会发现各种奇奇怪怪的异样不正常，怎么办呢，你需要指定类名或者对象名，比如 #widget{color:#ff0000;} 这样就只会对widget对象应用该样式，另一种写法 QWidget#widget{color:#ff0000;}，只想对窗体本身而不是子控件按钮标签等 .QWidget{color:#ff0000;} ，具体详细规则参见官方说明。
 - qss整体来说还是可以的，尽管有着有那的BUG，怀着包容的心对待它。
 
+196. 关于Qt延时的几种方法。
+```cpp
+void QUIHelperCore::sleep(int msec)
+{
+    if (msec <= 0) {
+        return;
+    }
+
+#if 1
+    //非阻塞方式延时,现在很多人推荐的方法
+    QEventLoop loop;
+    QTimer::singleShot(msec, &loop, SLOT(quit()));
+    loop.exec();
+#else
+#if (QT_VERSION >= QT_VERSION_CHECK(5,0,0))
+    //阻塞方式延时,如果在主线程会卡住主界面
+    QThread::msleep(msec);
+#else
+    //非阻塞方式延时,不会卡住主界面,据说可能有问题
+    QTime endTime = QTime::currentTime().addMSecs(msec);
+    while (QTime::currentTime() < endTime) {
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+    }
+#endif
+#endif
+}
+```
+
 ### 二、升级到Qt6
 #### 2.1 直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
@@ -2935,6 +2979,8 @@ for (int i = 0; i < count; ++i) {
 |免费图标下载|[http://www.easyicon.net/](http://www.easyicon.net/)|
 |图形字体下载|[https://www.iconfont.cn/](https://www.iconfont.cn/)|
 |漂亮界面网站|[https://www.ui.cn/](https://www.ui.cn/)|
+|qss学习地址1|[http://47.100.39.100/qtwidgets/stylesheet-reference.html](http://47.100.39.100/qtwidgets/stylesheet-reference.html)|
+|qss学习地址2|[http://47.100.39.100/qtwidgets/stylesheet-examples.html](http://47.100.39.100/qtwidgets/stylesheet-examples.html)|
 |微信公众号|**官方公众号：Qt软件** &nbsp; **亮哥公众号：高效程序员**|
 
 ### 七、书籍推荐

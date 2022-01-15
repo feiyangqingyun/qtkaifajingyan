@@ -2900,7 +2900,7 @@ for (int i = 0; i < count; ++i) {
 - Qml无缝支持js，可以利用现在各种js轮子，指数级提升qml的项目范围。
 - 支持将程序转成web运行，比如转成cgi之类的程序，目前Qt for WebAssembly很鸡肋，功能极其有限，sql/network/本地访问等都不支持，首次加载速度超慢，大部分Qt类还不支持。
 
-13. 在Qt界始终有两大阵营产生激烈的纷争，那就是选用qml还是widget好，大量初学者也会问这个问题，有以下几点总结。
+13. Qt自从4.7以后引入的QML。从此以后，Qt开发就分成了两种流派，一者使用原来的C++ 语言进行开发，另外一种使用QML语言进行开发。这下搞得嘞，经常吵吵不亦乐乎，在Qt界从此就有两大阵营产生激烈的纷争，那就是选用qml还是widget好，大量初学者也会问这个问题，有以下几点总结。
 - widget属于传统界面开发，和VB/VC/Delphi等拖曳控件开发类似，走CPU绘制，能最大化的兼容现有的硬件和过去的相对偏低性能的硬件。
 - qml属于新时代的产物，大概从2010年开始，和flutter/Electron等web开发框架及移动开发框架类似，为了适应各种移动端开发及动画流畅性触摸丝滑体验、充分利用和“榨干”现在的GPU性能，把CPU留出来给用户最大化发挥。
 - 硬件性能越好，GPU越是强劲，qml的综合性能越是完爆widget，反之对比也是指数级的。除了极其省成本的嵌入式硬件领域或者国产CPU等，其他领域的硬件性能都是暴增。
@@ -2974,13 +2974,14 @@ for (int i = 0; i < count; ++i) {
 |Qt官方下载新地址|[https://download.qt.io/new_archive/qt/](https://download.qt.io/new_archive/qt/)|
 |Qt国内镜像下载地址|[https://mirrors.cloud.tencent.com/qt](https://mirrors.cloud.tencent.com/qt)|
 |Qt安装包下载地址|[http://qthub.com/download/](http://qthub.com/download/)|
+|Qt版本更新内容|[https://doc-snapshots.qt.io/qt6-6.2/whatsnew62.html](https://doc-snapshots.qt.io/qt6-6.2/whatsnew62.html)|
+|qss学习地址1|[http://47.100.39.100/qtwidgets/stylesheet-reference.html](http://47.100.39.100/qtwidgets/stylesheet-reference.html)|
+|qss学习地址2|[http://47.100.39.100/qtwidgets/stylesheet-examples.html](http://47.100.39.100/qtwidgets/stylesheet-examples.html)|
 |精美图表控件QWT|[http://qwt.sourceforge.net/](http://qwt.sourceforge.net/)|
 |精美图表控件QCustomPlot|[https://www.qcustomplot.com/](https://www.qcustomplot.com/)|
 |免费图标下载|[http://www.easyicon.net/](http://www.easyicon.net/)|
 |图形字体下载|[https://www.iconfont.cn/](https://www.iconfont.cn/)|
 |漂亮界面网站|[https://www.ui.cn/](https://www.ui.cn/)|
-|qss学习地址1|[http://47.100.39.100/qtwidgets/stylesheet-reference.html](http://47.100.39.100/qtwidgets/stylesheet-reference.html)|
-|qss学习地址2|[http://47.100.39.100/qtwidgets/stylesheet-examples.html](http://47.100.39.100/qtwidgets/stylesheet-examples.html)|
 |微信公众号|**官方公众号：Qt软件** &nbsp; **亮哥公众号：高效程序员**|
 
 ### 七、书籍推荐

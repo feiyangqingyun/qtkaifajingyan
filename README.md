@@ -1,7 +1,7 @@
-﻿### 一、开发经验
+﻿﻿﻿﻿﻿### 一、开发经验
 #### 01：001-010
-1. 当编译发现大量错误的时候，从第一个看起，一个一个的解决，不要急着去看下一个错误，往往后面的错误都是由于前面的错误引起的，第一个解决后很可能都解决了。
-2. 定时器是个好东西，学会好使用它，有时候用QTimer::singleShot单次定时器和QMetaObject::invokeMethod可以解决意想不到的问题。比如在窗体初始化的时候加载一个耗时的操作，很容易卡主界面的显示，要在加载完以后才会显示界面，这就导致了体验很卡不友好的感觉，此时你可以将耗时的加载（有时候这些加载又必须在主线程，比如用QStackWidget堆栈窗体加载一些子窗体），延时或者异步进行加载，这样就会在界面显示后去执行，而不是卡主主界面。
+1. 当编译发现大量错误的时候，从第一个看起，一个一个的解决，不要急着去看下一个错误，往往后面的错误都是由于前面的错误引起的，第一个解决后很可能都解决了。比如我们可能就写错了一行代码，编译提示几百个错误，你只要把这一行纠正了，其他错误也就没了。
+2. 定时器是个好东西，学会好使用它，有时候用QTimer::singleShot单次定时器和QMetaObject::invokeMethod可以解决意想不到的问题。比如在窗体初始化的时候加载一个耗时的操作，很容易卡主界面的显示，要在加载完以后才会显示界面，这就导致了体验很卡不友好的感觉，此时你可以将耗时的加载（有时候这些加载又必须在主线程，比如用QStackWidget堆栈窗体加载一些子窗体），延时或者异步进行加载，这样就会在界面显示后去执行，而不是卡住主界面。
 ```cpp
 //异步执行load函数
 QMetaObject::invokeMethod(this, "load", Qt::QueuedConnection);
@@ -10,28 +10,28 @@ QTimer::singleShot(10, this, SLOT(load()));
 ```
 
 3. 默认QtCreator是单线程编译，可能设计之初考虑到尽量不过多占用系统资源，而现在的电脑都是多核心的，默认msvc编译器是多线程编译的不需要手动设置，而对于其他编译器，需要手动设置才行。
-- 方法一：在每个项目的构建设置中（可以勾选一个shadow build的页面地方）的build步骤，make arguments增加一行 -j16 即可，此设置会保存在pro.user文件中，一旦删除就需要重新设置，不建议此方法；
+- 方法一：在每个项目的构建设置中（可以勾选一个 shadow build 的页面地方）的build步骤，make arguments增加一行 -j16 即可，此设置会保存在pro.user文件中，一旦删除就需要重新设置，不建议此方法；
 - 方法二：在构建套件的环境中增加，工具->选项->构建套件(kits)->选中一个构建套件->environment->右侧change按钮->打开的输入框中填入 MAKEFLAGS=-j4 ， 这样就可以不用每次设置多线程编译，只要是应用该构件套件的项目都会加上这个编译参数；
 - 注意：-j后面接的是电脑的核心数，写多了不会有效果，要自己看下电脑的参数，或者填个-j4就行，毕竟现在电脑4核心应该是最基本的；
 - 大概从2019年开始的新版本的QtCreator默认已经会根据电脑的核心自动设置多线程编译，比如识别到你的电脑是16核心的就会默认设置-j16参数进行编译；
 
-4. 如果你想顺利用QtCreator部署安卓程序，首先你要在AndroidStudio 里面配置成功，把坑全部趟平。
+4. 如果你想顺利用QtCreator部署安卓程序，首先你要在 Android Studio 里面配置成功，编译一个程序能够在手机上或者模拟器中跑起来，把坑全部趟平。
 
-5. 很多时候找到Qt对应封装的方法后，记得多看看该函数的重载，多个参数的，你会发现不一样的世界，有时候会恍然大悟，原来Qt已经帮我们封装好了，比如QString、QColor的重载参数极其丰富。
+5. 很多时候找到Qt对应封装的方法后，记得多看看该函数的重载，多个参数的，你会发现不一样的世界，有时候会恍然大悟，原来Qt已经帮我们封装好了，比如QString、QColor的重载参数极其丰富，很多你做梦都想要的功能就在里面。
 
-6. 可以在pro文件中写上标记版本号+ico图标（Qt5才支持），其实在windows上就是qmake的时候会自动将此信息转换成rc文件。
+6. 可以在pro文件中写上标记版本号+ico图标（Qt5才支持），其实在windows上就是qmake的时候会自动将此信息转换成rc文件。对于早期的Qt4版本你可以手动写rc文件实现。
 ```cpp
 VERSION  = 2025.10.01
 RC_ICONS = main.ico
 ```
 
-7. 管理员运行程序，限定在MSVC编译器。
+7. 管理员运行程序，限定在MSVC编译器，在项目pro文件中增加如下代码。
 ```cpp
 QMAKE_LFLAGS += /MANIFESTUAC:"level='requireAdministrator' uiAccess='false'" #以管理员运行
 QMAKE_LFLAGS += /SUBSYSTEM:WINDOWS,"5.01" #VS2013 在XP运行
 ```
 
-8. 运行文件附带调试输出窗口，这个非常有用，很多时候当我们发布程序阶段，我们会遇到程序双击无法运行也不报错提示（开发机器上一切正常），都不知道发生了什么，甚至任务管理器可以看到运行了但是没有界面弹出来，此时就需要在项目的pro文件中加上这个，带界面的程序也会自动弹出调试窗口打印输出信息，方便找问题，一般没法正常运行的程序都会打印一些提示信息缺啥之类的。
+8. 运行文件附带调试输出窗口，这个非常有用，很多时候当我们发布程序阶段，我们会遇到程序双击无法运行也不报错提示（开发机器上一切正常），都不知道发生了什么，甚至任务管理器可以看到运行了但是没有界面弹出来，此时就需要在项目的pro文件中加上一行CONFIG += console，带界面的程序也会自动弹出调试窗口打印输出信息，方便找问题，一般没法正常运行的程序都会打印一些提示信息缺啥之类的。
 ```cpp
 TEMPLATE    = app
 MOC_DIR     = temp/moc
@@ -42,9 +42,9 @@ OBJECTS_DIR = temp/obj
 CONFIG      += console
 ```
 
-9. 绘制平铺背景QPainter::drawTiledPixmap,绘制圆角矩形QPainter::drawRoundedRect(),而不是QPainter::drawRoundRect();
+9. 绘制平铺背景QPainter::drawTiledPixmap，绘制圆角矩形QPainter::drawRoundedRect()，而不是QPainter::drawRoundRect()，这两个函数非常容易搞混。
 
-10. 移除旧的样式
+10. 指定控件移除旧的样式。
 ```cpp
 //移除原有样式
 style()->unpolish(ui->btn);
@@ -55,15 +55,34 @@ style()->polish(ui->btn);
 ```
 
 #### 02：011-020
-11. 获取类的属性
+11. 获取类的属性和方法
 ```cpp
-const QMetaObject *metaobject = object->metaObject();
-int count = metaobject->propertyCount();
-for (int i = 0; i < count; ++i) {
-    QMetaProperty metaproperty = metaobject->property(i);
-    const char *name = metaproperty.name();
-    QVariant value = object->property(name);
-    qDebug() << name << value;
+//拿到控件元对象
+const QMetaObject *metaObject = widget->metaObject();
+
+//所有属性的数量
+int propertyCount = metaObject->propertyCount();
+//propertyOffset是自定义的属性开始的位置
+int propertyOffset = metaObject->propertyOffset();
+//循环取出控件的自定义属性, int i = 0 表示所有属性
+for (int i = propertyOffset; i < propertyCount; ++i) {
+    QMetaProperty metaProperty = metaObject->property(i);
+    const char *name = metaProperty.name();
+    const char *type = metaProperty.typeName();
+    QVariant value = widget->property(name);
+    qDebug() << name << type << value;
+}
+
+//所有方法的数量
+int methodCount = metaObject->methodCount();
+//methodOffset是自定义的方法开始的位置
+int methodOffset = metaObject->methodOffset();
+//循环取出控件的自定义方法, int i = 0 表示所有方法
+for (int i = methodOffset; i < methodCount; ++i) {
+    QMetaMethod metaMethod = metaObject->method(i);
+    const char *name = metaMethod.name();
+    const char *type = metaMethod.typeName();
+    qDebug() << name << type;
 }
 ```
 
@@ -133,13 +152,31 @@ timer->inherits("QAbstractButton"); // returns false
 #### 03：021-030
 21. 如果出现Z-order assignment: is not a valid widget.错误提示，用记事本打开对应的ui文件，找到<zorder></zorder>为空的地方，删除即可。
 
-22. 善于利用QComboBox的addItem的第二个参数设置用户数据，可以实现很多效果，使用itemData取出来。
+22. 善于利用QComboBox的addItem的第二个参数设置用户数据，可以实现很多效果，使用itemData取出来。特别注意的是第二个参数是QVariant类型，这就不要太灵活了，意味着可以附带万能的数据比如结构体，这样就可以带一堆数据了，而不是一个数据。比如下拉框选择学号，对应元素可以附带该学生的姓名、班级、成绩等。很多人以为只能附带QString、int之类的数据，因为通常的用法也是那两种。
+```cpp
+QStringList listVideoOpenInterval, listVideoOpenIntervalx;
+listVideoOpenInterval << "0.0 秒" << "0.1 秒" << "0.3 秒" << "0.5 秒" << "1.0 秒" << "2.0 秒";
+listVideoOpenIntervalx << "0" << "100" << "300" << "500" << "1000" << "2000";
+for (int i = 0; i < listVideoOpenInterval.count(); ++i) {
+    ui->cboxVideoOpenInterval->addItem(listVideoOpenInterval.at(i), listVideoOpenIntervalx.at(i));
+}
+//取出对应的值
+int indexVideoOpenInterval = ui->cboxVideoOpenInterval->currentIndex();
+indexVideoOpenInterval = ui->cboxVideoOpenInterval->itemData(indexVideoOpenInterval).toInt();
+```
 
-23. 如果用了webengine模块，发布程序的时候带上QtWebEngineProcess.exe+translations文件夹+resources文件夹。
+23. 如果用了webengine模块，发布程序的时候带上QtWebEngineProcess.exe、translations文件夹、resources文件夹，不然无法正常运行。
 
-24. 默认Qt是一个窗体一个句柄，如果要让每个控件都拥有独立的句柄，设置下 a.setAttribute(Qt::AA_NativeWindows);
+24. 在MFC程序或者VB/C#等窗体程序中，每个控件都有一个句柄，而且用句柄工具移过去会自动识别，但是在Qt程序中默认Qt是一个窗体一个句柄，如果要让每个控件都拥有独立的句柄，在main函数中要做如下设置。
+```cpp
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
+    a.setAttribute(Qt::AA_NativeWindows);
+}
+```
 
-25. Qt+Android防止程序被关闭。
+25. Qt编写的Android程序防止程序被关闭。
 ```cpp
 #if defined(Q_OS_ANDROID)
 QAndroidService a(argc, argv);
@@ -162,7 +199,7 @@ return a.exec();
 ```cpp
 QMainWindow > .QWidget {
     background-color: gainsboro;
-    background-image: url(:/images/pagefold.png);
+    background-image: url(:/images/xxoo.png);
     background-position: top right;
     background-repeat: no-repeat
 }
@@ -175,10 +212,11 @@ QMainWindow > .QWidget {
 
 //Qt5写法 xcb 可以改成 linuxfb eglfs vnc wayland 等,有哪个就用哪个挨个测试
 ./HelloQt --platform xcb
+./HelloQt --platform linuxfb
 ./HelloQt --platform wayland
 ```
 
-29. Qtcreator软件的配置文件存放在：C:\Users\Administrator\AppData\Roaming\QtProject，有时候如果发现出问题了，将这个文件夹删除后打开creator自动重新生成即可。
+29. 如果发现QtCreator中的构建套件不正常了或者坏了（比如不能正确识别环境中的qmake或者编译器、打开项目不能正常生成影子构建目录），请找到两个目录（C:\Users\Administrator\AppData\Local\QtProject、C:\Users\Administrator\AppData\Roaming\QtProject）删除即可，删除后重新打开QtCreator进行构建套件的配置就行。
 
 30. QMediaPlayer是个壳（也可以叫框架），依赖本地解码器，视频这块默认基本上就播放个MP4甚至连MP4都不能播放，如果要支持其他格式需要下载k-lite或者LAV Filters安装即可（k-lite或者LAV Filters是指windows上的，其他系统上自行搜索，貌似嵌入式linux上依赖GStreamer，并未完整验证）。如果需要做功能强劲的播放器，初学者建议用vlc、mpv，终极万能大法用ffmpeg（解码出来的视频可以用QOpenGLWidget走GPU绘制或者转成QImage绘制，音频数据可以用QAudioOutput播放）。
 
@@ -201,6 +239,39 @@ QMainWindow > .QWidget {
 #if _MSC_VER >=1700 // VC2012  以上
 #if _MSC_VER >=1800 // VC2013  以上
 #if _MSC_VER >=1900 // VC2015  以上
+
+//Visual Studio版本与MSVC版本号的对应关系
+MSC    1.0   _MSC_VER == 100
+MSC    2.0   _MSC_VER == 200
+MSC    3.0   _MSC_VER == 300
+MSC    4.0   _MSC_VER == 400
+MSC    5.0   _MSC_VER == 500
+MSC    6.0   _MSC_VER == 600
+MSC    7.0   _MSC_VER == 700
+MSVC++ 1.0   _MSC_VER == 800
+MSVC++ 2.0   _MSC_VER == 900
+MSVC++ 4.0   _MSC_VER == 1000 (Developer Studio 4.0)
+MSVC++ 4.2   _MSC_VER == 1020 (Developer Studio 4.2)
+MSVC++ 5.0   _MSC_VER == 1100 (Visual Studio 97 version 5.0)
+MSVC++ 6.0   _MSC_VER == 1200 (Visual Studio 6.0 version 6.0)
+MSVC++ 7.0   _MSC_VER == 1300 (Visual Studio .NET 2002 version 7.0)
+MSVC++ 7.1   _MSC_VER == 1310 (Visual Studio .NET 2003 version 7.1)
+MSVC++ 8.0   _MSC_VER == 1400 (Visual Studio 2005 version 8.0)
+MSVC++ 9.0   _MSC_VER == 1500 (Visual Studio 2008 version 9.0)
+MSVC++ 10.0  _MSC_VER == 1600 (Visual Studio 2010 version 10.0)
+MSVC++ 11.0  _MSC_VER == 1700 (Visual Studio 2012 version 11.0)
+MSVC++ 12.0  _MSC_VER == 1800 (Visual Studio 2013 version 12.0)
+MSVC++ 14.0  _MSC_VER == 1900 (Visual Studio 2015 version 14.0)
+MSVC++ 14.1  _MSC_VER == 1910 (Visual Studio 2017 version 15.0)
+MSVC++ 14.11 _MSC_VER == 1911 (Visual Studio 2017 version 15.3)
+MSVC++ 14.12 _MSC_VER == 1912 (Visual Studio 2017 version 15.5)
+MSVC++ 14.13 _MSC_VER == 1913 (Visual Studio 2017 version 15.6)
+MSVC++ 14.14 _MSC_VER == 1914 (Visual Studio 2017 version 15.7)
+MSVC++ 14.15 _MSC_VER == 1915 (Visual Studio 2017 version 15.8)
+MSVC++ 14.16 _MSC_VER == 1916 (Visual Studio 2017 version 15.9)
+MSVC++ 14.2  _MSC_VER == 1920 (Visual Studio 2019 Version 16.0)
+MSVC++ 14.21 _MSC_VER == 1921 (Visual Studio 2019 Version 16.1)
+MSVC++ 14.22 _MSC_VER == 1922 (Visual Studio 2019 Version 16.2)
 
 //Borland C++
 #ifdef __BORLANDC__
@@ -230,7 +301,6 @@ QMainWindow > .QWidget {
 #if (_WIN32_WINNT >= 0x0500) // Windows 2000以上
 #if (_WIN32_WINNT >= 0x0501) // Windows XP以上
 #if (_WIN32_WINNT >= 0x0600) // Windows Vista以上
-
 ```
 
 32. 在pro中判断Qt版本及构建套件位数
@@ -298,7 +368,7 @@ greaterThan(QT_MINOR_VERSION, 4) {
 #endif
 ```
 
-33. Qt最小化后恢复界面假死冻结，加上代码
+33. Qt最小化后恢复界面可能会出现假死冻结现象，加上代码
 ```cpp
 void showEvent(QShowEvent *e)
 {
@@ -307,11 +377,11 @@ void showEvent(QShowEvent *e)
 }
 ```
 
-34. 获取标题栏高度：style()->pixelMetric(QStyle::PM_TitleBarHeight); PM_TitleBarHeight点进去你会发现新大陆。
+34. 获取标题栏高度：style()->pixelMetric(QStyle::PM_TitleBarHeight); PM_TitleBarHeight点进去你会发现新大陆，有一堆玩意在里面。
 
 35. 设置高分屏属性以便支持2K4K等高分辨率，尤其是手机app。必须写在main函数的QApplication a(argc, argv);的前面。
 ```cpp
-#if (QT_VERSION > QT_VERSION_CHECK(5,6,0))
+#if (QT_VERSION >= QT_VERSION_CHECK(5,6,0))
     QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
     QApplication a(argc, argv);
@@ -352,7 +422,7 @@ db.setDatabaseName(":memory:");
 
 42. 清空数据表并重置自增ID，sql = truncate table table_name。
 
-43. Qtchart模块从Qt5.7开始自带，最低编译要求Qt5.4。在安装的时候记得勾选，默认不勾选。使用该模块需要引入命名空间。
+43. QtChart模块从Qt5.7开始自带，最低编译要求Qt5.4。在安装的时候记得勾选，默认不勾选。使用该模块需要引入命名空间。
 ```cpp
 #include <QChartView>
 QT_CHARTS_USE_NAMESPACE
@@ -391,7 +461,7 @@ while(model->canFetchMore()) {
 }
 ```
 
-50. 如果需要指定无边框窗体，但是又需要保留操作系统的边框特性，可以自由拉伸边框，可以使用 setWindowFlags(Qt::CustomizeWindowHint);
+50. 如果需要指定无边框窗体，但是又需要保留操作系统的边框特性，比如自由拉伸边框，可以使用 setWindowFlags(Qt::CustomizeWindowHint)，这样会保留一个系统白边框。
 
 #### 06：051-060
 51. 在某些http post数据的时候，如果采用的是&字符串连接的数据发送，中文解析乱码的话，需要将中文进行URL转码。
@@ -436,7 +506,7 @@ setsockopt(fd, SOL_TCP, TCP_KEEPCNT, (void *)&keepCount, sizeof(keepCount));
 
 57. 如果程序打包好以后弹出提示 This application failed to start because it could not find or load the Qt platform plugin 一般都是因为platforms插件目录未打包或者打包错了的原因导致的。
 
-58. 非常不建议tr中包含中文，尽管现在的新版Qt支持中文到其他语言的翻译，但是很不规范，也不知道TMD是谁教的，tr的本意是包含英文，然后翻译到其他语言比如中文，现在大量的初学者滥用tr，如果没有翻译的需求，禁用tr，tr需要开销的，Qt默认会认为他需要翻译，会额外进行特殊处理。
+58. 非常不建议tr中包含中文，尽管现在的新版Qt支持中文到其他语言的翻译，但是很不规范，也不知道TMD是谁教的（后面发现我在刚学Qt的时候也发布了一些demo到网上也是tr包含中文的，当时就狠狠的打了自己一巴掌），tr的本意是包含英文，然后翻译到其他语言比如中文，现在大量的初学者滥用tr，如果没有翻译的需求，禁用tr，tr需要开销的，Qt默认会认为他需要翻译，会额外进行特殊处理。
 
 59. 很多人Qt和Qt Creator傻傻分不清楚，经常问Qt什么版本结果发一个Qt Creator的版本过来，Qt Creator是使用Qt编写的集成开发环境IDE，和宇宙第一的Visual Studio一样，他可以是msvc编译器的（WIN对应的Qt集成安装环境中自带的Qt Cerator是msvc的），也可以是mingw编译的，还可以是gcc的。如果是自定义控件插件，需要集成到Qt Creator中，必须保证该插件的动态库文件（dll或者so等文件）对应的编译器和Qt版本以及位数和Qt Creator的版本完全一致才行，否则基本不大可能集成进去。特别注意的是Qt集成环境安装包中的Qt版本和Qt Creator版本未必完全一致，必须擦亮眼睛看清楚，有些是完全一致的。
 
@@ -704,7 +774,7 @@ while (it.hasNext()) {
 100. setPixmap是最糟糕的贴图方式，一般只用来简单的不是很频繁的贴图，频繁的建议painter绘制，默认双缓冲，在高级点用opengl绘制，利用GPU。
 
 #### 11：101-110
-101. 如果需要在尺寸改变的时候不重绘窗体，则设置属性即可 this->setAttribute(Qt::WA_StaticContents, true); 这样可以避免可以避免对已经显示区域的重新绘制。
+101. 如果需要在尺寸改变的时候不重绘窗体，则设置属性即可 this->setAttribute(Qt::WA_StaticContents, true); 这样可以避免对已经显示区域的重新绘制。
 
 102. 默认程序中获取焦点以后会有虚边框，如果看着觉得碍眼不舒服可以去掉，设置样式即可：setStyleSheet("*{outline:0px;}");
 
@@ -2929,7 +2999,7 @@ for (int i = 0; i < count; ++i) {
 - 很多人有个误区包括几年前的我，以为要用Qt编写静态库，前提是Qt库必须静态的。
 - 如果要将Qt程序编译成静态的可执行文件（单个文件无依赖），前提是所用的Qt库必须静态的。
 
-17. 最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
+17.  最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
 
 ### 六、七七八八
 #### 6.1 推荐开源主页
@@ -2975,6 +3045,7 @@ for (int i = 0; i < count; ++i) {
 |Qt国内镜像下载地址|[https://mirrors.cloud.tencent.com/qt](https://mirrors.cloud.tencent.com/qt)|
 |Qt安装包下载地址|[http://qthub.com/download/](http://qthub.com/download/)|
 |Qt版本更新内容|[https://doc-snapshots.qt.io/qt6-6.2/whatsnew62.html](https://doc-snapshots.qt.io/qt6-6.2/whatsnew62.html)|
+|Qt入门最简单教程|[http://c.biancheng.net/qt/](http://c.biancheng.net/qt/)|
 |qss学习地址1|[http://47.100.39.100/qtwidgets/stylesheet-reference.html](http://47.100.39.100/qtwidgets/stylesheet-reference.html)|
 |qss学习地址2|[http://47.100.39.100/qtwidgets/stylesheet-examples.html](http://47.100.39.100/qtwidgets/stylesheet-examples.html)|
 |精美图表控件QWT|[http://qwt.sourceforge.net/](http://qwt.sourceforge.net/)|
@@ -2985,7 +3056,6 @@ for (int i = 0; i < count; ++i) {
 |微信公众号|**官方公众号：Qt软件** &nbsp; **亮哥公众号：高效程序员**|
 
 ### 七、书籍推荐
-
 1. C++入门书籍推荐《C++ primer plus》，进阶书籍推荐《C++ primer》。
 2. Qt入门书籍推荐霍亚飞的《Qt Creator快速入门》，Qt进阶书籍推荐官方的《C++ GUI Qt4编程》，qml书籍推荐《Qt5编程入门》。
 3. 强烈推荐程序员自我提升、修养、规划系列书《走出软件作坊》《大话程序员》《程序员的成长课》《解忧程序员》，受益匪浅，受益终生！

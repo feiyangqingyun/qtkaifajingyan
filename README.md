@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿### 一、开发经验
+﻿﻿﻿﻿﻿﻿﻿### 一、开发经验
 #### 01：001-010
 1. 当编译发现大量错误的时候，从第一个看起，一个一个的解决，不要急着去看下一个错误，往往后面的错误都是由于前面的错误引起的，第一个解决后很可能都解决了。比如我们可能就写错了一行代码，编译提示几百个错误，你只要把这一行纠正了，其他错误也就没了。
 2. 定时器是个好东西，学会好使用它，有时候用QTimer::singleShot单次定时器和QMetaObject::invokeMethod可以解决意想不到的问题。比如在窗体初始化的时候加载一个耗时的操作，很容易卡主界面的显示，要在加载完以后才会显示界面，这就导致了体验很卡不友好的感觉，此时你可以将耗时的加载（有时候这些加载又必须在主线程，比如用QStackWidget堆栈窗体加载一些子窗体），延时或者异步进行加载，这样就会在界面显示后去执行，而不是卡住主界面。
@@ -2225,7 +2225,8 @@ model->revertAll();
 | vim 1.txt | 用vim打开文件，很多时候可以缩写用vi。 |
 | ./configure  make -j4  make install | 通用编译源码命令， 第一步./configure执行配置脚本，第二步make -j4启用多线程编译，第三步make install安装编译好的文件。|
 | ./configure -prefix /home/liu/Qt-5.9.3-static -static -sql-sqlite -qt-zlib -qt-xcb -qt-libpng -qt-libjpeg -fontconfig -system-freetype -iconv -nomake tests -nomake examples -skip qt3d -skip qtdoc | Qt通用编译命令 |
-| ./configure -prefix /home/liu/Qt-5.9.3-static -static -release -nomake examples -nomake tests -skip qt3d |  精简编译命令 |
+| ./configure -static -release -fontconfig -system-freetype -qt-xcb -qt-sql-sqlite -qt-zlib -qt-libpng -qt-libjpeg -nomake tests -nomake examples -prefix /home/liu/qt/Qt5.6.3 | Qt静态带中文 |
+| ./configure -prefix /home/liu/Qt-5.9.3-static -static -release -nomake examples -nomake tests -skip qt3d | 精简编译命令 |
 | ./configure --prefix=host --enable-static --disable-shared --disable-doc | ffmpeg编译命令 |
 
 182. Qt自带的日志重定向机制非常简单好用，自从用了以后再也不用什么断点调试啥的了，在需要的地方支持qdebug输出对应的信息，而且发布程序以后也可以开启调试日志将其输出查看等。
@@ -2618,6 +2619,21 @@ void QUIHelperCore::sleep(int msec)
 #endif
 }
 ```
+
+197. 随着国产化的兴起，各种国产系统和国产数据库等逐渐进入开发者的世界，科普几个常识。
+- 中标麒麟neokylin基于fedora。
+- 银河麒麟kylin基于freebsd。
+- 优麒麟ubuntukylin就是ubuntu的汉化版本。
+- deepin基于debian。
+- uos基于deepin或者说是deepin的商业分支。
+- ubuntu基于debian。
+- linux界主要分两种内核系统，debian（ubuntu、deepin、uos等）和redhat（fedora、centos、neokylin等），分别对应apt-get和yum安装命令。绝大部分的linux系统都基于或者衍生自这两种系统。
+- 理论上基于同一种系统内核的，在其上编译的程序可以换到另外的系统运行，前提是编译器版本一致，比如都是gcc4.9，在ubuntu14.04 64位用gcc4.9编译的Qt程序，是能够在uos 64位上运行的。
+- 高版本编译器的系统一般能够兼容低版本的，比如你用gcc4.9编译的程序是能够在gcc7.0上运行，反过来不行。
+- 意味着如果你想尽可能兼容更多的系统，尽量用低版本的编译器编译你的程序，当然要你的程序代码语法支持，比如c++11就要从gcc4.7开始才支持，如果你的代码用了c++11则必须至少选择gcc4.7版本及以上。
+- 用Qt编写linux程序为了发布后的可执行文件可以兼容各种linux系统，只要在这两种内核（debian、redhat）的系统上用低版本的编译器比如gcc4.7编译qt程序发布即可。
+- 国产人大金仓数据库用的是postgresql数据库改的，意味着你在Qt中用postgresql数据库插件也是能够连接到人大金仓数据库的。
+- 以上未必完全正确，欢迎各位指正。
 
 ### 二、升级到Qt6
 #### 2.1 直观总结

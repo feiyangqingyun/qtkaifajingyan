@@ -1,4 +1,5 @@
-﻿﻿﻿﻿﻿﻿﻿### 一、开发经验
+﻿
+### 一、开发经验
 #### 01：001-010
 1. 当编译发现大量错误的时候，从第一个看起，一个一个的解决，不要急着去看下一个错误，往往后面的错误都是由于前面的错误引起的，第一个解决后很可能都解决了。比如我们可能就写错了一行代码，编译提示几百个错误，你只要把这一行纠正了，其他错误也就没了。
 2. 定时器是个好东西，学会好使用它，有时候用QTimer::singleShot单次定时器和QMetaObject::invokeMethod可以解决意想不到的问题。比如在窗体初始化的时候加载一个耗时的操作，很容易卡主界面的显示，要在加载完以后才会显示界面，这就导致了体验很卡不友好的感觉，此时你可以将耗时的加载（有时候这些加载又必须在主线程，比如用QStackWidget堆栈窗体加载一些子窗体），延时或者异步进行加载，这样就会在界面显示后去执行，而不是卡住主界面。
@@ -3021,9 +3022,11 @@ for (int i = 0; i < count; ++i) {
 #### 6.1 推荐开源主页
 | 名称 | 网址 |
 | :------ | :------ |
-|Qt交流大会群|群号：853086607|
-|Qt技术交流群|群号：46679801|
-|Qt进阶之路群|群号：734623697|
+|Qt技术交流群1|46679801(已满员)|
+|Qt技术交流群2|573199610(未满员)|
+|Qt高级学习群 |951393302(作者群)|
+|Qt交流大会群 |853086607(已满员)|
+|Qt进阶之路群 |734623697(已满员)|
 |QtWidget开源demo集合|[https://gitee.com/feiyangqingyun/QWidgetDemo](https://gitee.com/feiyangqingyun/QWidgetDemo)|
 |QtQuick/Qml开源demo集合|[https://gitee.com/jaredtao/TaoQuick](https://gitee.com/jaredtao/TaoQuick)|
 |QtQuick/Qml开源demo集合|[https://gitee.com/zhengtianzuo/QtQuickExamples](https://gitee.com/zhengtianzuo/QtQuickExamples)|

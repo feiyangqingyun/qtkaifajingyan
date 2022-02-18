@@ -3024,9 +3024,8 @@ for (int i = 0; i < count; ++i) {
 | :------ | :------ |
 |Qt技术交流群1|46679801(已满员)|
 |Qt技术交流群2|573199610(未满员)|
-|Qt高级学习群 |951393302(作者群)|
+|Qt高级学习群 |951393302(未满员，推荐此群)|
 |Qt交流大会群 |853086607(已满员)|
-|Qt进阶之路群 |734623697(已满员)|
 |QtWidget开源demo集合|[https://gitee.com/feiyangqingyun/QWidgetDemo](https://gitee.com/feiyangqingyun/QWidgetDemo)|
 |QtQuick/Qml开源demo集合|[https://gitee.com/jaredtao/TaoQuick](https://gitee.com/jaredtao/TaoQuick)|
 |QtQuick/Qml开源demo集合|[https://gitee.com/zhengtianzuo/QtQuickExamples](https://gitee.com/zhengtianzuo/QtQuickExamples)|

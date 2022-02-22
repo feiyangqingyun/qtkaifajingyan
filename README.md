@@ -2623,7 +2623,7 @@ void QUIHelperCore::sleep(int msec)
 
 197. 随着国产化的兴起，各种国产系统和国产数据库等逐渐进入开发者的世界，科普几个常识。
 - 中标麒麟neokylin基于fedora。
-- 银河麒麟kylin基于freebsd。
+- 银河麒麟kylin早期版本比如V2基于freebsd，新版本V4、V10基于ubuntu。
 - 优麒麟ubuntukylin就是ubuntu的汉化版本。
 - deepin基于debian。
 - uos基于deepin或者说是deepin的商业分支。
@@ -2633,6 +2633,8 @@ void QUIHelperCore::sleep(int msec)
 - 高版本编译器的系统一般能够兼容低版本的，比如你用gcc4.9编译的程序是能够在gcc7.0上运行，反过来不行。
 - 意味着如果你想尽可能兼容更多的系统，尽量用低版本的编译器编译你的程序，当然要你的程序代码语法支持，比如c++11就要从gcc4.7开始才支持，如果你的代码用了c++11则必须至少选择gcc4.7版本及以上。
 - 用Qt编写linux程序为了发布后的可执行文件可以兼容各种linux系统，只要在这两种内核（debian、redhat）的系统上用低版本的编译器比如gcc4.7编译qt程序发布即可。
+- 2022-1-27补充：根据Qt官方安装包，发现基于redhat的gcc4.9编译器发布的，通用各种linux系统（亲测ubuntu各个版本、fedora、centos、deepin、uos、中标麒麟neokylin、银河麒麟kylin等），自己按照这个版本也亲测打包发布了亲测可用，我擦，redhat系统的也可以在debian系统跑。
+- 2022-2-10补充：debian上静态编译的程序也可以在redhat系统跑，可能静态编译去掉了很多依赖吧。
 - 国产人大金仓数据库用的是postgresql数据库改的，意味着你在Qt中用postgresql数据库插件也是能够连接到人大金仓数据库的。
 - 以上未必完全正确，欢迎各位指正。
 

@@ -2638,6 +2638,47 @@ void QUIHelperCore::sleep(int msec)
 - 国产人大金仓数据库用的是postgresql数据库改的，意味着你在Qt中用postgresql数据库插件也是能够连接到人大金仓数据库的。
 - 以上未必完全正确，欢迎各位指正。
 
+198. 纵观Qt的发展历史，也几乎经历着合久必分、分久必合的逻辑，比如最开始QPushButton等UI控件类都是在QtGui模块中，后面越发臃肿不方便管理和升级迭代，又分离出一个QtWidgets模块；到Qt6又将QList和QVector合并了成了一个类，搞得像分久必合；而且一些数学函数以及封装的c++标准函数库的方法，逐渐放弃了Qt自己的封装改用c++标准函数库，从开始的分到现在的合统一。
+
+199. Qt一直在持续升级迭代，尽管新增加的代码质量明显不如诺基亚时代，但最起码有行动，慢慢完善。目前主要的升级改善在qml模块，底层也有完善，毕竟无论是widget还是qml都是公用一套底层逻辑类，底层基础一定要扎实稳固，个人这几年一直对比测试过不同Qt版本（从旧版本到新版本）很多类和函数的性能，发现官网列出来的新版本对应类和方法的性能提升改善，确实没有说谎，至于提升了多少这块有没有吹牛逼那就不清楚。
+- base64算法性能提升很大。
+- QStringList等凡是使用了QList相关的类，性能提升巨大。
+- 对比测试大概从5.12版本开始QStringList和QMap性能相当。
+- 早期版本QStringList如果查找的值先插入则时间越短，QMap则没有这个区别。
+```cpp
+QStringList list1, list2;
+QMap<QString, QString> map;
+
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)
+    , ui(new Ui::MainWindow)
+{
+    ui->setupUi(this);
+
+    for (int i = 0; i < 100000; ++i) {
+        QString s1 = QString("%1").arg(i);
+        QString s2 = QString("A%1").arg(i);
+        list1 << s1;
+        list2 << s2;
+        map.insert(s1, s2);
+    }
+}
+
+void MainWindow::on_pushButton_clicked()
+{
+    QElapsedTimer time;
+    time.start();
+    qDebug() << "111" << time.nsecsElapsed() << list2.at(list1.indexOf("9999"));
+}
+
+void MainWindow::on_pushButton_2_clicked()
+{
+    QElapsedTimer time;
+    time.start();
+    qDebug() << "222" << time.nsecsElapsed() << map.value("9999");
+}
+```
+
 ### 二、升级到Qt6
 #### 2.1 直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
@@ -3009,13 +3050,14 @@ for (int i = 0; i < count; ++i) {
 16. 关于动态和静态的一点个人理解：
 - 在Qt程序中，分动态库版本的Qt和静态库版本的Qt。
 - 官方默认提供的二进制包就是动态库版本的Qt，如果自行编译则编译的时候对应参数 -shared。
-- 静态库版本的Qt需要自行编译，编译的时候对应参数 -static，（理论上个人用静态库的Qt也需要收费，因为静态编译后都看不到Qt的相关库文件）。
+- 静态库版本的Qt需要自行编译，编译的时候对应参数 -static，（理论上无论商业非商业使用Qt静态库需要收费，因为静态编译后都看不到Qt的相关库文件）。
 - 使用动态库的Qt支持编译生成动态库和静态库（CONFIG += staticlib）的程序。
-- 使用动态库的Qt程序支持动态库的引用（引用的时候 LIB += ，运行的时候需要动态库文件比如.dll .so 支持）。
+- 使用动态库的Qt程序支持动态库的引用（引用的时候 LIB += ，运行的时候需要动态库文件比如 .dll .so 文件支持）。
 - 使用动态库的Qt程序支持静态库的引用（引用的时候 LIB += ，运行的时候无需库文件支持，可以理解为该文件已经和可执行文件合二为一，缺点是可执行文件体积变大）。
+- 通过生成文件的个数和大小可以发现，静态库相当于把运行时需要的文件也一并合并到一个文件了，而动态库是拆分成两个文件，一个用于编译，一个用于运行。
 - 上述动态库的规则也通用于静态库。
 - 此规则应该是通用于其他语言框架。
-- 很多人有个误区包括几年前的我，以为要用Qt编写静态库，前提是Qt库必须静态的。
+- 很多人有个误区包括几年前的我，以为要用Qt编写静态库就必须用静态的Qt库，其实动态库的Qt也可以编写静态的库，只是该库不会生成动态库文件。
 - 如果要将Qt程序编译成静态的可执行文件（单个文件无依赖），前提是所用的Qt库必须静态的。
 
 17.  最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！

@@ -2621,20 +2621,22 @@ void QUIHelperCore::sleep(int msec)
 }
 ```
 
-197. 随着国产化的兴起，各种国产系统和国产数据库等逐渐进入开发者的世界，科普几个常识。
-- 中标麒麟neokylin基于fedora。
+197. 随着国产化的兴起，各种国产系统和国产数据库等逐渐进入开发者的世界，罗列几个要点。
+- 中标麒麟neokylin基于centos。
 - 银河麒麟kylin早期版本比如V2基于freebsd，新版本V4、V10基于ubuntu。
-- 优麒麟ubuntukylin就是ubuntu的汉化版本。
+- 优麒麟ubuntukylin就是ubuntu的汉化版本，加了点农历控件啥的。
 - deepin基于debian。
 - uos基于deepin或者说是deepin的商业分支。
 - ubuntu基于debian。
-- linux界主要分两种内核系统，debian（ubuntu、deepin、uos、银河麒麟kylin等）和redhat（fedora、centos、中标麒麟neokylin、中兴新支点newstart等），分别对应apt-get和yum安装命令。绝大部分的linux系统都基于或者衍生自这两种系统。
+- linux界主要分两种发行版本，debian（ubuntu、deepin、uos、银河麒麟kylin等）和redhat（fedora、centos、中标麒麟neokylin、中兴新支点newstart等），分别对应apt-get和yum安装命令。绝大部分的linux系统都基于或者衍生自这两种发行版本。
 - 理论上基于同一种系统内核的，在其上编译的程序可以换到另外的系统运行，前提是编译器版本一致，比如都是gcc4.9，在ubuntu14.04 64位用gcc4.9编译的Qt程序，是能够在uos 64位上运行的。
 - 高版本编译器的系统一般能够兼容低版本的，比如你用gcc4.9编译的程序是能够在gcc7.0上运行，反过来不行。
 - 意味着如果你想尽可能兼容更多的系统，尽量用低版本的编译器编译你的程序，当然要你的程序代码语法支持，比如c++11就要从gcc4.7开始才支持，如果你的代码用了c++11则必须至少选择gcc4.7版本及以上。
 - 用Qt编写linux程序为了发布后的可执行文件可以兼容各种linux系统，只要在这两种内核（debian、redhat）的系统上用低版本的编译器比如gcc4.7编译qt程序发布即可。
-- 2022-1-27补充：根据Qt官方安装包，发现基于redhat的gcc4.9编译器发布的，通用各种linux系统（亲测ubuntu各个版本、fedora、centos、deepin、uos、银河麒麟kylin、中标麒麟neokylin、中兴新支点newstart等），自己按照这个版本也亲测打包发布了亲测可用，我擦，redhat系统的也可以在debian系统跑。
-- 2022-2-10补充：debian上静态编译的程序也可以在redhat系统跑，可能静态编译去掉了很多依赖吧。
+- 2022-01-27补充：根据Qt官方安装包，发现基于redhat的gcc4.9编译器发布的，通用各种linux系统（亲测ubuntu各个版本、fedora、centos、deepin、uos、银河麒麟kylin、中标麒麟neokylin、中兴新支点newstart等），自己按照这个版本也亲测打包发布了亲测可用，我擦，redhat系统的也可以在debian系统跑。
+- 2022-02-10补充：debian上静态编译的程序也可以在redhat系统跑，可能静态编译去掉了很多依赖吧。
+- 2022-03-01补充：Song宋大佬补充，如果没有特定的依赖关系，高版本的编译器编译的程序也可以在低版本编译器的系统运行，比如alpine Linux下用gcc11/clang13编译生成的可执行二进制，依然可以在cenos5/ubuntu10上运行。并不是编译器版本的问题，也不是C++11特性的问题，这个问题涉及到太多，内核版本、gnu libc、ABI兼容等等，两句话说不清。
+- 按照QtCreator软件采用的编译器环境规则，一般来说就是低版本的可以在高版本运行，比如Qt5可以在ubuntu14/16/18/20运行，但是高版本编译器编译的就无法在低版本编译器系统运行，会提示缺少GLBC、LIBCXX、symbol xxxxxx等，比如Qt6可以在ubuntu20运行而无法在ubuntu18/16/14等运行。
 - 国产人大金仓数据库用的是postgresql数据库改的，意味着你在Qt中用postgresql数据库插件也是能够连接到人大金仓数据库的。
 - 以上未必完全正确，欢迎各位指正。
 

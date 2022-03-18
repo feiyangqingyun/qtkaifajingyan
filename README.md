@@ -3113,7 +3113,6 @@ for (int i = 0; i < count; ++i) {
 |前行中小猪|[http://blog.csdn.net/goforwardtostep](http://blog.csdn.net/goforwardtostep)|
 |涛哥的知乎专栏|[https://zhuanlan.zhihu.com/TaoQt](https://zhuanlan.zhihu.com/TaoQt)|
 |Qt君|[https://blog.csdn.net/nicai_xiaoqinxi](https://blog.csdn.net/nicai_xiaoqinxi)|
-|Qt最新版二进制包|[https://build-qt.fsu0413.me/](https://build-qt.fsu0413.me/)|
 
 #### 6.3 推荐学习网站
 | 名称 | 网址 |
@@ -3125,6 +3124,7 @@ for (int i = 0; i < count; ++i) {
 |Qt官方下载新地址|[https://download.qt.io/new_archive/qt/](https://download.qt.io/new_archive/qt/)|
 |Qt国内镜像下载地址|[https://mirrors.cloud.tencent.com/qt](https://mirrors.cloud.tencent.com/qt)|
 |Qt安装包下载地址|[http://qthub.com/download/](http://qthub.com/download/)|
+|Qt最新版二进制包|[https://build-qt.fsu0413.me/](https://build-qt.fsu0413.me/)|
 |Qt版本更新内容|[https://doc-snapshots.qt.io/qt6-6.2/whatsnew62.html](https://doc-snapshots.qt.io/qt6-6.2/whatsnew62.html)|
 |Qt入门最简单教程|[http://c.biancheng.net/qt/](http://c.biancheng.net/qt/)|
 |qss学习地址1|[http://47.100.39.100/qtwidgets/stylesheet-reference.html](http://47.100.39.100/qtwidgets/stylesheet-reference.html)|

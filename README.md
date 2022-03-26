@@ -2719,10 +2719,14 @@ CONFIG(debug, debug|release) {
 |FORMS += Form.ui|项目中用到的UI文件，一般拓展名是.ui，可以写在一行也可以分行写，分行要用 \ 斜杠结束。|
 |RESOURCES += main.qrc|项目中用到的资源文件，可以多个，写代码使用对应资源文件中的文件时候务必记得资源文件中的前缀。|
 |LIBS += -L$$PWD/ -lavformat -lavcodec|项目中编译时候链接依赖的库，一般是 .lib .a .dylib 文件，可以写在一行，省略文件名的lib打头部分，也可以分多行绝对路径和全名称。|
-|DESTDIR += $$PWD/bin|目标生成路径，$$PWD表示当前目录。|
+|DESTDIR += $$PWD/bin|目标生成路径，$$PWD表示当前目录，一般建议生成的最终文件重定向到另外目录存放，好找，不然一堆临时文件在里面有时候文件太多好难找。|
 |INCLUDEPATH += $$PWD/include|工程需要的头文件，指定整个目录，写代码的时候找到的话会自动下拉。|
 |DEPENDPATH += |工程的依赖路径，用的比较少，一般涉及到引入链接库的时候可能需要。|
 |include($$PWD/3rd.pri)|引入pri模块文件，pri最大的好处就是分目录管理文件，通用的轮子模块可以放到一个目录下，然后用pri统一管理，可以给多个项目公用。|
+
+203. 如果发现之前编译正常，突然之间再编译就一直死循环的样子，停留在一行提示并疯狂不停的打印，或者提示文件时间在未来，这说明你很可能改过开发环境的时间（比如测试某个授权文件失效），导致有修改过文件的保存时间在未来，你只需要将时间调整回来，将最后更新时间不正确的代码文件重新保存下就行。Qt的增量编译是根据文件的最后修改时间来判定的，最后的修改时间比上一次的修改时间还要新则认为该文件被修改过，需要重新编译该文件。
+
+204. Qt的构建套件一般是在安装Qt开发环境的时候自动设置的，当然也可以手动设置，手动设置的时候千万要注意编译器和Qt库必须一致，否则该构建套件是有问题的，千万不能乱设置，尤其是对构建套件命名的时候最好标明qt版本和编译器版本，最好也要一致，不要说名称叫msvc而编译器选择的确是mingw，这样尽管能正常使用该构建套件，但是会造成一种误解，还以为该套件是msvc的，其实里面是mingw的。有个qter说他的qt坏了，死活编译失败，远程一看，尼玛，构建套件名称写的qt_msvc2019 编译器选择的msvc2015（他电脑只安装了vs2015），qt库选择的mingw！差点狂扇自己八个耳光，太离谱了！
 
 ### 二、升级到Qt6
 #### 2.1 直观总结
@@ -3000,12 +3004,243 @@ MainWindow(QWidget *parent = nullptr);
 
 41. Qt6.2版本开始增加了对多媒体模块的支持，但是在mingw编译器下还是有问题，直到6.2.2才修复这个问题，官网解释是因为mingw编译器版本不支持，到6.2.2采用了新的mingw900_64，这个编译器版本才支持。所以理论上推荐从6.2.2开始使用新的Qt6。
 
-### 三、酷码专区
-**酷码大佬（微信Kuma-NPC）**
-1. 关于Qt事件传递的一个说明：
-- 通常写win32程序，鼠标消息应该是直接发给指定窗口句柄的，指定窗口没有处理就会转化成透传消息，交给父窗口处理。你在一个普通文字label上点击，父窗口也能收到鼠标事件。
-- Qt应该是所有消息都发给了顶层窗口，所以事件分发逻辑是自己处理，主窗口收到鼠标事件然后Qt自己分发给指定子控件，QEvent会有ignore或者accept表示自己处理了没有，例如鼠标点击事件，事件分发器发现没有被处理，数据重新计算然后分发给父窗口。这样父窗口收到的事件坐标就是基于自己窗口内的。用eventFilter就需要自己计算坐标。
-- 再比如，当使用QDialog，放一个QLineEdit并设置焦点，按Esc时QDialog也会自动关闭，本质上就是因为QLineEdit并不处理Esc的按键事件，透传给了QDialog。
+### 三、Qt安卓经验
+1. pro中引入安卓拓展模块 QT += androidextras ，Qt6以后没有这个模块了，原有的函数移到了core模块中，不需要额外引入，而且类名发生了变化。
+2. pro中指定安卓打包目录 ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android 指定引入安卓特定目录比如程序图标、变量、颜色、java代码文件、jar库文件等。
+- AndroidManifest.xml 每个程序唯一的一个全局配置文件，里面xml格式的数据，标明支持的安卓版本、图标位置、横屏竖屏、权限等。这个文件是最关键的，如果没有这个文件则Qt会默认生成一个。
+- android/res/drawable-hdpi drawable-xxxhdpi 等目录下存放的是应用程序图标。
+- android/res/layout 目录下存放的布局文件。
+- android/res/values/libs.xml 存储的一些变量值。
+- android/libs 目录下存放的jar库文件。
+- android/src 目录下存放的java代码文件，可以是根据包名建立的一层层子目录，也可以直接在src目录下。
+- 其他目录自行搜索安卓目录规范。
+- 后面的说明统一用的android目录举例，其实你可以改成任意目录，比如你的代码目录下是xxoo存放的安卓相关的打包文件，你就写成 ANDROID_PACKAGE_SOURCE_DIR = $$PWD/xxoo 。
+
+3. java类名必须和文件名完全一致，区分大小写。
+4. java类必须在android/src目录下不然不会打包到apk文件，可以是子目录比如 android/src/com/qt 。
+5. Qt代码中的QAndroidJniObject指定传入的java包名，必须严格和java文件package完全一致，不然程序执行到此处会因为找不到而崩溃。
+- android/scr/MainActivity.java 顶部 没有 package 则代码中必须是 QAndroidJniObject javaClass("MainActivity");
+- android/scr/MainActivity.java 顶部 package com.qandroid; 则代码中必须是 QAndroidJniObject javaClass("com/qandroid/MainActivity");
+- android/scr/com/example/MainActivity.java 顶部 package com.qandroid; 则代码中必须是 QAndroidJniObject javaClass("com/qandroid/MainActivity");
+- android/scr/com/example/MainActivity.java 顶部 package com.example.qandroid; 则代码中必须是 QAndroidJniObject javaClass("com/qandroid/example/MainActivity");
+- 总之这个包名是和代码中的package后面一段吻合，而不是目录路径。为了统一管理方便查找文件，建议包名和目录路径一致。
+
+6. Qt只能干Qt内部类的事情，做一些简单的UI交互还是非常方便，如果涉及到底层操作，还是需要熟悉java会如虎添翼，一般的做法就是写好java文件调试好，提供静态方法给Qt调用，这样通过QAndroidJniObject这个万能胶水可以做到Qt程序调用java中的函数并拿到执行结果，也可以接收java中的函数。
+7. pro中通过 OTHER_FILES += android/AndroidManifest.xml OTHER_FILES += android/src/JniMessenger.java 引入文件其实对整个程序的编译打包没有任何影响，就是为了方便在QtCreator中查看和编辑。
+8. 在Qt中与安卓的java文件交互都是用万能的QAndroidJniObject，可以执行java类中的普通函数、静态函数，可以传类对象jclass、类名className、方法methodName、参数，也可以拿到执行结果返回值。 (I)V括号中的是参数类型，括号后面的是返回值类型，void返回值对应V，由于String在java中不是数据类型而是类，所以要用Ljava/lang/String;表示，其他类作为参数也是这样处理。
+- 调用实例方法：callMethod、callObjectMethod。
+- 调用静态方法：callStaticMethod、callStaticObjectMethod。
+- 不带Object的函数名用来执行无返回值或者常规返回值int、float等的方法。
+- 如果返回值是String或者类则需要用带Object的函数名来执行，返回QAndroidJniObject类型再转换处理拿到结果，比如toString拿到字符串。
+
+9. 各种参数和返回值示例。
+```java
+package org.qt;
+import org.qt.QtAndroidData;
+
+public class QtAndroidTest
+{
+    //需要通过实例来调用 测试发现不论 private public 或者不写都可以调用 我擦
+    private void printText()
+    {
+        System.out.println("printText");
+    }
+
+    public static void printMsg()
+    {
+        System.out.println("printMsg");
+    }
+
+    public static void printValue(int value)
+    {
+        System.out.println("printValue:" + value);
+    }
+
+    public static void setValue(float value1, double value2, char value3)
+    {
+        System.out.println("value1:" + value1 + " value2:" + value2 + " value3:" + value3);
+    }
+
+    public static int getValue()
+    {
+        return 65536;
+    }
+
+    public static int getValue(int value)
+    {
+        return value + 1;
+    }
+
+    public static void setMsg(String message)
+    {
+        System.out.println("setMsg:" + message);
+    }
+
+    public static String getMsg()
+    {
+        return "hello from java";
+    }
+
+    public static void setText(int value1, float value2, boolean value3, String message)
+    {
+        System.out.println("value1:" + value1 + " value2:" + value2 + " value3:" + value3 + " message:" + message);
+    }
+
+    public static String getText(int value1, float value2, boolean value3, String message)
+    {
+        //同时演示触发静态函数发给Qt
+        QtAndroidData.receiveData("message", "你好啊 java");
+
+        //下面两种办法都可以拼字符串
+        return "value1:" + value1 + " value2:" + value2 + " value3:" + value3 + " message:" + message;
+        //return "value1:" + String.valueOf(value1) + " value2:" + String.valueOf(value2) + " value3:" + String.valueOf(value3) + " message:" + message;
+    }
+}
+```
+
+```cpp
+#include "androidtest.h"
+
+//java类对应的包名+类名
+#define className "org/qt/QtAndroidTest"
+
+void AndroidTest::test()
+{
+    jint a = 12;
+    jint b = 4;
+    //可以直接调用java内置类中的方法
+    jint max = QAndroidJniObject::callStaticMethod<jint>("java/lang/Math", "max", "(II)I", a, b);
+
+    //jclass javaMathClass = "java/lang/Math";
+    jdouble value = QAndroidJniObject::callStaticMethod<jdouble>("java/lang/Math", "random");
+
+    qDebug() << "111" << max << value;
+}
+
+void AndroidTest::printText()
+{
+    QAndroidJniEnvironment env;
+    jclass clazz = env.findClass(className);
+    QAndroidJniObject obj(clazz);
+    obj.callMethod<void>("printText");
+}
+
+void AndroidTest::printMsg()
+{
+#if 0
+    //查看源码得知不传入jclass类的函数中内部会自动根据类名查找jclass
+    QAndroidJniEnvironment env;
+    jclass clazz = env.findClass(className);
+    QAndroidJniObject::callStaticMethod<void>(clazz, "printMsg");
+#else
+    //没有参数和返回值可以忽略第三个参数
+    QAndroidJniObject::callStaticMethod<void>(className, "printMsg");
+    //QAndroidJniObject::callStaticMethod<void>(classNameTest, "printMsg", "()V");
+#endif
+}
+
+void AndroidTest::printValue(int value)
+{
+    QAndroidJniObject::callStaticMethod<jint>(className, "printValue", "(I)I", (jint)value);
+}
+
+void AndroidTest::setValue(float value1, double value2, char value3)
+{
+    QAndroidJniObject::callStaticMethod<void>(className, "setValue", "(FDC)V", (jfloat)value1, (jdouble)value2, (jchar)value3);
+}
+
+int AndroidTest::getValue(int value)
+{
+    //java类中有两个 getValue 函数 一个需要传参数
+    //jint result = QAndroidJniObject::callStaticMethod<jint>(className, "getValue");
+    jint result = QAndroidJniObject::callStaticMethod<jint>(className, "getValue", "(I)I", (jint)value);
+    return result;
+}
+
+void AndroidTest::setMsg(const QString &msg)
+{
+    QAndroidJniObject jmsg = QAndroidJniObject::fromString(msg);
+    QAndroidJniObject::callStaticMethod<void>(className, "setMsg", "(Ljava/lang/String;)V", jmsg.object<jstring>());
+}
+
+QString AndroidTest::getMsg()
+{
+    QAndroidJniObject result = QAndroidJniObject::callStaticObjectMethod(className, "getMsg", "()Ljava/lang/String;");
+    return result.toString();
+}
+
+void AndroidTest::setText(int value1, float value2, bool value3, const QString &msg)
+{
+    QAndroidJniObject jmsg = QAndroidJniObject::fromString(msg);
+    QAndroidJniObject::callStaticMethod<void>(className, "setText", "(IFZLjava/lang/String;)V", (jint)value1, (jfloat)value2, (jboolean)value3, jmsg.object<jstring>());
+}
+
+QString AndroidTest::getText(int value1, float value2, bool value3, const QString &msg)
+{
+    QAndroidJniObject jmsg = QAndroidJniObject::fromString(msg);
+    QAndroidJniObject result = QAndroidJniObject::callStaticObjectMethod(className, "getText", "(IFZLjava/lang/String;)Ljava/lang/String;", (jint)value1, (jfloat)value2, (jboolean)value3, jmsg.object<jstring>());
+    return result.toString();
+}
+```
+
+10. 在原生Android开发中，不同页面会定义不同的Activity。但使用Qt Quick、Flutter等采用Direct UI方式实现的第三方开发框架则只定义了一个Activity。里面不同页面实际都是使用OpenGL等直接绘制的。https://blog.csdn.net/LCSENs/article/details/100182235
+
+11. 安卓中一个界面窗体对应一个Activity，多个界面就有多个Activity，而在Qt安卓程序中，Qt这边只有一个Activity那就是QtActivity（包名全路径 org.qtproject.qt5.android.bindings.QtActivity），这个QtActivity是固定的写好的，整个Qt程序都是在这个QtActivity界面中。你打开AndroidManifest.xml文件可以看到对应节点有个name=org.qtproject.qt5.android.bindings.QtActivity，所以如果要让Qt程序能够更方便通畅的与对应的java类进行交互（需要上下文传递Activity的，比如震动，消息提示等），建议新建一个java类，继承自QtActivity即可，这样相当于默认Qt启动的就是你java类中定义的Activity，可以很好的控制和交互。
+
+12. 由于AndroidManifest.xml文件每个程序都可能不一样，为了做成通用的组件，这就要求可能不能带上AndroidManifest.xml文件，这样的话每个Qt安卓程序都启动默认内置的Activity，如果依赖Activity上下文的执行函数需要传入Qt的Activity才行，这里切记Qt的Activity包名是 Lorg/qtproject/qt5/android/bindings/QtActivity; 之前顺手想当然的写的 Landroid/app/Activity; 发现死活不行，原来是包名错了。
+
+13. 一个Qt安卓程序中可以有多个Java类，包括继承自Activity的类（这样的Activity可以通过QtAndroid::startActivity函数来调用），但是只能有一个通过AndroidManifest.xml文件指定的Activity，不指定会默认一个。如果java类中不需要拿到Qt的Activity进行处理的，可以不需要继承任何Activity，比如全部是运算的静态函数。
+
+14. 在java类中如果上面没有主动引入包名，则下面需要写全路径，引入了则不需要全路径可以直接用（包括枚举值都可以直接写，比如 VIBRATOR_SERVICE 这种枚举值引入了包名后不需要写android.content.Context.VIBRATOR_SERVICE），建议引入包名，比如上面写了 import org.qtproject.qt5.android.bindings.QtActivity; 则下面继承类可以直接写 public class QtAndroidActivity extends QtActivity，如果没有引入则需要写成 public class QtAndroidActivity extends org.qtproject.qt5.android.bindings.QtActivity 。
+
+15. 建议搭配 android studio 工具开发，因为在 android studio 中写代码都有自动语法提示，包名会提示自动引入，可以查看有那些函数方法等，还可以校验代码是否正确，而如果在QtCreator中手写有时候可能会写错，尤其是某个字母写错，当然这种错误是编译通不过的，会提示错误在哪行。
+
+16. 用Qt做安卓开发最大难点两个，第一个就是传参数这些奇奇怪怪的字符（Ljava/lang/String;）啥意思，如何对应，这也不是Qt故意为难初学者啥的，因为这套定义机制是安卓系统底层要求的，系统层面定义的一套规范，其实这个在帮助文档中写的很清楚，都有数据类型对照表，用熟悉了几次就很简单了。第二个难点就是用java写对应的类，如果是会安卓开发的人来说那不要太简单，尤其是搜索那么方便一大堆，没有搞过安卓开发的人来说就需要学习下，这个没有捷径，只是希望Qt能够尽可能最大化的封装一些可以直接使用的类，比如后期版本就提供了权限申请的类 QtAndroid::requestPermissionsSync 之类的，用起来就非常的爽，不用自己写个java类调来调去的。
+
+17. 理论上来说按照Qt提供的万能大法类QAndroidJniObject，可以不用写java类也能执行各种处理，拿到安卓库中的属性和执行方法，就是写起来太绕太费劲，在java类中一行代码，这里起码三行，所以终极大法就是熟悉安卓开发，直接封装好java类进行调用。
+
+18. 测试发现GetStringUTFChars方法对应的数据字符串中不能带有temp字样，否则解析有问题，不知什么原因。
+
+19. 数据类型参数和返回值类型必须完全一致，否则执行会提示找不到对应的函数，有返回值一定要写上返回值。
+
+20. jar文件对包名的命名没有要求，只要放在android/libs目录下即可，安卓底层是通过包名去查找，而不是通过文件名，你甚至可以将原来的包名重新改成也可以正常使用，比如classes.jar改成test.jar也能正常使用。
+
+21. 关于权限设置，在早期的安卓版本，所有权限都写在全局配置文件AndroidManifest.xml中，这种叫安装时权限，就是安装的时候告诉安卓系统当前app需要哪些权限。大概从安卓6开始，部分权限需要动态申请，这种叫动态权限，这种申请到的权限也可以动态撤销，就是要求程序再次执行代码去向系统申请权限，比如拍照、存储读写等。也不是所有的权限都改成了动态申请，意味着兼容安卓6以上的系统你既要在AndroidManifest.xml中写上要求的权限，也要通过checkPermission申请你需要的权限。
+
+22. android studio 新建并生产jar包步骤。
+- 第一步：文件（File）-》新建（new）-》项目（new project）-》空白窗体（empty activity）。
+- 第二步：刚才新建好的项目鼠标右键新建（new）-》模块（new module）-》安卓库（android library）。
+- 第三步：写好库名字，根据项目需要选择好最低sdk版本-》完成。
+- 第四步：在刚才新建好的库项目mylibrary，依次找到子节点src/main/java/com.example.mylibrary上鼠标右键新建-》class类。切记是这个节点不是java节点或者其他节点。
+- 第五步：写好你的类方法函数等。
+```cpp
+package com.example.mylibrary;
+public class Test {
+    public static int add(int a, int b) {
+        return a + b;
+    }
+}
+```
+
+- 第六步：选中库项目mylibrary，菜单执行编译（build）-》编译库（make module xxx）。
+- 第七步：此时在mylibrary/build目录下有outputs目录和intermediates目录，其中outputs/aar目录下是生成的Android库项目的二进制归档文件，包含所有资源，class以及res资源文件全部包含。有时候我们仅仅需要jar文件，只包含了class文件与清单文件 ，不包含资源文件，如图片等所有res中的文件。需要到intermediates/aar_main_jar/debug目录下，可以看到classes.jar，将这个拷贝出来使用即可。当然你也可以对刚才的aar文件用解压缩软件解压出来也能看到classes.jar，是同一个文件。
+- 其他：调用jar包非常简单，只需要将jar文件放在你的项目的libs目录下即可，对应的包名和函数一般jar包提供者会提供，没有提供的话，可以在android studio中新建空白项目，切换到project视图，找到libs目录，鼠标右键最下面作为包动态库添加到项目，导入包完成以后会自动在libs目录列出，双击刚刚导入的包然后就自动列出对应的类和函数。
+
+23. Qt安卓使用jar包步骤。
+- 第一步：将classes.jar放到android/libs目录下，为啥是这个目录？因为这是安卓的规则约定，这个目录就是放库文件，放在这个目录下的文件会自动打包编译到apk文件中。
+- 第二步：调用jar文件之前，前提是你知道jar文件中的函数详细信息，这个一般jar提供者会提供好手册，如果代码没有混肴的话，你可以在android studio中双击打开查阅具体的函数。
+- 第三步：如果jar文件中的函数简单，直接拿到结果不需要绕来绕去，可以直接写Qt类来调用；如果还是很复杂，建议再去新建java类处理完再交给Qt，当然也可以让jar的作者尽可能封装函数的时候就做好，尽量提供最简单的接口返回需要的数据。比如返回图片数据可以做成jar内部存储好图片，然后返回图片路径即可，不然有些数据转换也挺烦。
+- 第四步：编写最终的调用函数。
+```cpp
+int AndroidJar::add(int a, int b)
+{
+#ifdef Q_OS_ANDROID
+    const char *className = "com/example/mylibrary/Test";
+    jint result = QAndroidJniObject::callStaticMethod<jint>(className, "add", "(II)I", (jint)a, (jint)b);
+    return result;
+#endif
+}
+```
 
 ### 四、Qt设计模式
 **读《c++ Qt设计模式》书籍整理的一点经验。此书和官方的《C++ GUI Qt4编程》一起的。**
@@ -3048,7 +3283,15 @@ for (int i = 0; i < count; ++i) {
 
 9. 
 
-### 五、其他经验
+### 五、Qt大佬专区
+#### 5.1 酷码大佬
+**微信：Kuma-NPC**
+1. 关于Qt事件传递的一个说明：
+- 通常写win32程序，鼠标消息应该是直接发给指定窗口句柄的，指定窗口没有处理就会转化成透传消息，交给父窗口处理。你在一个普通文字label上点击，父窗口也能收到鼠标事件。
+- Qt应该是所有消息都发给了顶层窗口，所以事件分发逻辑是自己处理，主窗口收到鼠标事件然后Qt自己分发给指定子控件，QEvent会有ignore或者accept表示自己处理了没有，例如鼠标点击事件，事件分发器发现没有被处理，数据重新计算然后分发给父窗口。这样父窗口收到的事件坐标就是基于自己窗口内的。用eventFilter就需要自己计算坐标。
+- 再比如，当使用QDialog，放一个QLineEdit并设置焦点，按Esc时QDialog也会自动关闭，本质上就是因为QLineEdit并不处理Esc的按键事件，透传给了QDialog。
+
+### 六、其他经验
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！
 
 2. 在Qt的学习过程中，学会查看对应类的头文件是一个好习惯，如果在该类的头文件没有找到对应的函数，可以去他的父类中找找，实在不行还有爷爷类，肯定能找到的。通过头文件你会发现很多函数接口其实Qt已经帮我们封装好了，有空还可以阅读下他的实现代码。
@@ -3111,8 +3354,8 @@ for (int i = 0; i < count; ++i) {
 
 18.  最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
 
-### 六、七七八八
-#### 6.1 推荐开源主页
+### 七、七七八八
+#### 7.1 推荐开源主页
 | 名称 | 网址 |
 | :------ | :------ |
 |Qt技术交流群1|46679801(已满员)|
@@ -3123,7 +3366,7 @@ for (int i = 0; i < count; ++i) {
 |QtQuick/Qml开源demo集合|[https://gitee.com/jaredtao/TaoQuick](https://gitee.com/jaredtao/TaoQuick)|
 |QtQuick/Qml开源demo集合|[https://gitee.com/zhengtianzuo/QtQuickExamples](https://gitee.com/zhengtianzuo/QtQuickExamples)|
 
-#### 6.2 推荐网站主页
+#### 7.2 推荐网站主页
 | 名称 | 网址 |
 | :------ | :------ |
 |qtcn|[http://www.qtcn.org](http://www.qtcn.org)|
@@ -3145,7 +3388,7 @@ for (int i = 0; i < count; ++i) {
 |涛哥的知乎专栏|[https://zhuanlan.zhihu.com/TaoQt](https://zhuanlan.zhihu.com/TaoQt)|
 |Qt君|[https://blog.csdn.net/nicai_xiaoqinxi](https://blog.csdn.net/nicai_xiaoqinxi)|
 
-#### 6.3 推荐学习网站
+#### 7.3 推荐学习网站
 | 名称 | 网址 |
 | :------ | :------ |
 |Qt老外视频教程|[http://space.bilibili.com/2592237/#!/index](http://space.bilibili.com/2592237/#!/index)|
@@ -3167,7 +3410,7 @@ for (int i = 0; i < count; ++i) {
 |漂亮界面网站|[https://www.ui.cn/](https://www.ui.cn/)|
 |微信公众号|**官方公众号：Qt软件** &nbsp; **亮哥公众号：高效程序员**|
 
-### 七、书籍推荐
+### 八、书籍推荐
 1. C++入门书籍推荐《C++ primer plus》，进阶书籍推荐《C++ primer》。
 2. Qt入门书籍推荐霍亚飞的《Qt Creator快速入门》，Qt进阶书籍推荐官方的《C++ GUI Qt4编程》，qml书籍推荐《Qt5编程入门》，Qt电子书强烈推荐《Qt5.10 GUI完全参考手册》。
 3. 强烈推荐程序员自我提升、修养、规划系列书《走出软件作坊》《大话程序员》《程序员的成长课》《解忧程序员》，受益匪浅，受益终生！

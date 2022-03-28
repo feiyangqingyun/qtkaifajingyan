@@ -2728,6 +2728,8 @@ CONFIG(debug, debug|release) {
 
 204. Qt的构建套件一般是在安装Qt开发环境的时候自动设置的，当然也可以手动设置，手动设置的时候千万要注意编译器和Qt库必须一致，否则该构建套件是有问题的，千万不能乱设置，尤其是对构建套件命名的时候最好标明qt版本和编译器版本，最好也要一致，不要说名称叫msvc而编译器选择的确是mingw，这样尽管能正常使用该构建套件，但是会造成一种误解，还以为该套件是msvc的，其实里面是mingw的。有个qter说他的qt坏了，死活编译失败，远程一看，尼玛，构建套件名称写的qt_msvc2019 编译器选择的msvc2015（他电脑只安装了vs2015），qt库选择的mingw！差点狂扇自己八个耳光，太离谱了！
 
+205. 当你编译Qt程序发现编译通不过提示报错，而且报错提示在Qt的头文件的时候，不要去尝试着修改Qt头文件来编译通过，那样没用的，你使用的Qt的库是已经根据原始的头文件编译好的。如果报错提示在编译生成的临时的moc等文件，你也不要尝试去修改他，那个是临时文件，这次你改好了也许编译通过了，你重新编一下又覆盖了还是旧的错误。总之你要从源头（你的代码）找问题。
+
 ### 二、升级到Qt6
 #### 00：直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
@@ -3010,7 +3012,7 @@ MainWindow(QWidget *parent = nullptr);
 
 ### 三、Qt安卓经验
 #### 01：01-05
-1. pro中引入安卓拓展模块 QT += androidextras ，Qt6以后没有这个模块了，原有的函数移到了core模块中，不需要额外引入，而且类名发生了变化，Qt6对应的安卓jdk要用jdk11而不是jdk1.8，Qt5.15两个都支持，建议就统一用jdk11。
+1. pro中引入安卓拓展模块 QT += androidextras 。
 2. pro中指定安卓打包目录 ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android 指定引入安卓特定目录比如程序图标、变量、颜色、java代码文件、jar库文件等。
 - AndroidManifest.xml 每个程序唯一的一个全局配置文件，里面xml格式的数据，标明支持的安卓版本、图标位置、横屏竖屏、权限等。这个文件是最关键的，如果没有这个文件则Qt会默认生成一个。
 - android/res/drawable-hdpi drawable-xxxhdpi 等目录下存放的是应用程序图标。
@@ -3250,6 +3252,15 @@ int AndroidJar::add(int a, int b)
 #endif
 }
 ```
+
+24. Qt6中对安卓支持部分做了大的改动，目前还不完善，如果是不涉及到与java交互的纯Qt项目，可以正常移植，涉及到的暂时不建议移植到Qt6，等所有类完善了再说。
+- 移除了安卓插件androidextras，将其中部分功能类移到core模块中，不需要额外引入。
+- 类名发生了变化，比如QAndroidJniObject改成了QJniObject、QAndroidJniEnvironment改成了QJniEnvironment，可能是为了统一移动开发平台类，弱化安卓的影响。
+- 对应的安卓jdk要用jdk11而不是jdk1.8，Qt5.15两个都支持，建议就统一用jdk11。
+- 对应封装的java类包名去掉了qt5标识，org.qtproject.qt5.android.bindings.QtActivity改成了org.qtproject.qt.android.bindings.QtActivity、org.qtproject.qt5.android.bindings.QtApplication改成了org.qtproject.qt.android.bindings.QtApplication。
+- 对安卓最低sdk有要求，所以建议在配置AndroidManifest.xml文件的时候不要带上最低版本要求。
+- 对AndroidManifest.xml文件内容有要求，之前Qt5安卓的不能在Qt6安卓下使用，具体内容参见示例下的文件。
+- 对应示例demo在 C:\Qt\Examples\Qt-6.3.0\corelib\platform 目录下，之前是 C:\Qt\Examples\Qt-5.15.2\androidextras ，目前就一个示例，可能因为其他类还没有移植好。
 
 ### 四、Qt设计模式
 **读《c++ Qt设计模式》书籍整理的一点经验。此书和官方的《C++ GUI Qt4编程》一起的。**

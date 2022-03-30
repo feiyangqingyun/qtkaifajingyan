@@ -20,10 +20,18 @@ QTimer::singleShot(10, this, SLOT(load()));
 
 5. 很多时候找到Qt对应封装的方法后，记得多看看该函数的重载，多个参数的，你会发现不一样的世界，有时候会恍然大悟，原来Qt已经帮我们封装好了，比如QString、QColor的重载参数极其丰富，很多你做梦都想要的功能就在里面。
 
-6. 可以在pro文件中写上标记版本号+ico图标（Qt5才支持），其实在windows上就是qmake的时候会自动将此信息转换成rc文件。对于早期的Qt4版本你可以手动写rc文件实现。
+6. 可以在pro文件中写上版本号、程序图标、产品名称、版权所有、文件说明等信息（Qt5才支持），其实在windows上就是qmake的时候会自动将此信息转换成rc文件。对于早期的Qt4版本你可以手动写rc文件实现。
 ```cpp
+#程序版本
 VERSION  = 2025.10.01
+#程序图标
 RC_ICONS = main.ico
+#产品名称
+QMAKE_TARGET_PRODUCT = quc
+#版权所有
+QMAKE_TARGET_COPYRIGHT = feiyangqingyun
+#文件说明
+QMAKE_TARGET_DESCRIPTION = QQ: 517216493  WX: feiyangqingyun
 ```
 
 7. 管理员运行程序，限定在MSVC编译器，在项目pro文件中增加如下代码。
@@ -2724,6 +2732,8 @@ CONFIG(debug, debug|release) {
 |DEPENDPATH += |工程的依赖路径，用的比较少，一般涉及到引入链接库的时候可能需要。|
 |include($$PWD/3rd.pri)|引入pri模块文件，pri最大的好处就是分目录管理文件，通用的轮子模块可以放到一个目录下，然后用pri统一管理，可以给多个项目公用。|
 
+**官方详细地址[https://doc.qt.io/qt-5/qmake-variable-reference.html](https://doc.qt.io/qt-5/qmake-variable-reference.html)**
+
 203. 如果发现之前编译正常，突然之间再编译就一直死循环的样子，停留在一行提示并疯狂不停的打印，或者提示文件时间在未来，这说明你很可能改过开发环境的时间（比如测试某个授权文件失效），导致有修改过文件的保存时间在未来，你只需要将时间调整回来，将最后更新时间不正确的代码文件重新保存下就行。Qt的增量编译是根据文件的最后修改时间来判定的，最后的修改时间比上一次的修改时间还要新则认为该文件被修改过，需要重新编译该文件。
 
 204. Qt的构建套件一般是在安装Qt开发环境的时候自动设置的，当然也可以手动设置，手动设置的时候千万要注意编译器和Qt库必须一致，否则该构建套件是有问题的，千万不能乱设置，尤其是对构建套件命名的时候最好标明qt版本和编译器版本，最好也要一致，不要说名称叫msvc而编译器选择的确是mingw，这样尽管能正常使用该构建套件，但是会造成一种误解，还以为该套件是msvc的，其实里面是mingw的。有个qter说他的qt坏了，死活编译失败，远程一看，尼玛，构建套件名称写的qt_msvc2019 编译器选择的msvc2015（他电脑只安装了vs2015），qt库选择的mingw！差点狂扇自己八个耳光，太离谱了！
@@ -2743,7 +2753,7 @@ CONFIG(debug, debug|release) {
 9. 强烈建议暂时不要用Qt6.0到Qt6.2之间的版本，一些模块还缺失，相对来说BUG也比较多，推荐6.2.2版本开始正式迁移。
 
 #### 01：01-10
-1. 万能方法：安装5.15版本，定位到报错的函数，切换到源码头文件，可以看到对应提示字样 QT_DEPRECATED_X("Use sizeInBytes") 和新函数。按照这个提示类修改就没错，一些函数是从Qt5.7 5.9 5.10等版本新增加的，可能你的项目还用的Qt4的方法，但是Qt6以前都兼容这些旧方法，到了Qt6就彻底需要用新方法了。
+1. 万能方法：安装5.15版本，定位到报错的函数，切换到源码头文件，可以看到对应提示字样 QT_DEPRECATED_X("Use sizeInBytes") 和新函数。按照这个提示类修改就没错，一些函数是从Qt5.7 5.9 5.10等版本新增加的，可能你的项目还用的Qt4的方法，但是Qt6以前都兼容这些旧方法，到了Qt6就彻底需要用新方法了。**PS：如果本身就是Qt6新增的功能函数则此方法无效**
 
 2. Qt6对core这个核心类进行了拆分，多出来core5compat，因此你需要在pro增加对应的模块已经代码中引入对应的头文件。
 ```cpp
@@ -3009,6 +3019,16 @@ MainWindow(QWidget *parent = nullptr);
 
 #### 05：41-50
 41. Qt6.2版本开始增加了对多媒体模块的支持，但是在mingw编译器下还是有问题，直到6.2.2才修复这个问题，官网解释是因为mingw编译器版本不支持，到6.2.2采用了新的mingw900_64，这个编译器版本才支持。所以理论上推荐从6.2.2开始使用新的Qt6。
+
+42. QTextStream中的setCodec方法改成了setEncoding，参数变了，功能更强大。
+```cpp
+QTextStream stream(&file);
+#if (QT_VERSION < QT_VERSION_CHECK(6,0,0))
+stream.setCodec("gbk");
+#else
+stream.setEncoding(QStringConverter::System);
+#endif
+```
 
 ### 三、Qt安卓经验
 #### 01：01-05
@@ -3420,6 +3440,7 @@ for (int i = 0; i < count; ++i) {
 |Qt安装包下载地址|[http://qthub.com/download/](http://qthub.com/download/)|
 |Qt最新版二进制包|[https://build-qt.fsu0413.me/](https://build-qt.fsu0413.me/)|
 |Qt版本更新内容|[https://doc-snapshots.qt.io/qt6-6.2/whatsnew62.html](https://doc-snapshots.qt.io/qt6-6.2/whatsnew62.html)|
+|Qt中qmake变量说明|[https://doc.qt.io/qt-5/qmake-variable-reference.html](https://doc.qt.io/qt-5/qmake-variable-reference.html)|
 |Qt入门最简单教程|[http://c.biancheng.net/qt/](http://c.biancheng.net/qt/)|
 |qss学习地址1|[http://47.100.39.100/qtwidgets/stylesheet-reference.html](http://47.100.39.100/qtwidgets/stylesheet-reference.html)|
 |qss学习地址2|[http://47.100.39.100/qtwidgets/stylesheet-examples.html](http://47.100.39.100/qtwidgets/stylesheet-examples.html)|

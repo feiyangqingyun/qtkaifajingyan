@@ -2217,26 +2217,26 @@ model->revertAll();
 #### 19：181-190
 181. Qt天生就是linux的，从linux开始发展起来的，所以不少Qt程序员经常的开发环境是linux，比如常用的ubuntu等系统，整理了一点常用的linux命令。
 
-| 命令 | 功能 |
-| :------ | :------ |
-| sudo -s | 切换到管理员，如果是 sudo -i 切换后会改变当前目录。 |
-| apt install g++ | 安装软件包（要管理员权限），另一个派系的是 yum install |
-| cd /home | 进入home目录 |
-| ls | 罗列当前所在目录所有目录和文件 |
-| ifconfig | 查看网卡信息包括IP地址，windows上是 ipconfig。 |
-| tar -zxvf bin.tar.gz | 解压文件到当前目录 |
-| tar -jxvf bin.tar.xz | 解压文件到当前目录 |
-| tar -zxvf bin.tar.gz -C /home | 解压文件到/home目录，记住是大写的C。 |
-| tar -zcvf bin.tar.gz bin | 将bin目录压缩成tar.gz格式文件（压缩比一般） |
-| tar -jcvf bin.tar.xz bin | 将bin目录压缩成tar.xz格式文件（压缩比高，推荐） |
-| tar -... | j z 表示不同的压缩方法，x表示解压，c表示压缩。 |
-| gedit 1.txt | 用记事本打开文本文件 |
-| vim 1.txt | 用vim打开文件，很多时候可以缩写用vi。 |
-| ./configure  make -j4  make install | 通用编译源码命令， 第一步./configure执行配置脚本，第二步make -j4启用多线程编译，第三步make install安装编译好的文件。|
-| ./configure -prefix /home/liu/Qt-5.9.3-static -static -sql-sqlite -qt-zlib -qt-xcb -qt-libpng -qt-libjpeg -fontconfig -system-freetype -iconv -nomake tests -nomake examples -skip qt3d -skip qtdoc | Qt通用编译命令 |
-| ./configure -static -release -fontconfig -system-freetype -qt-xcb -qt-sql-sqlite -qt-zlib -qt-libpng -qt-libjpeg -nomake tests -nomake examples -prefix /home/liu/qt/Qt5.6.3 | Qt静态带中文 |
-| ./configure -prefix /home/liu/Qt-5.9.3-static -static -release -nomake examples -nomake tests -skip qt3d | 精简编译命令 |
-| ./configure --prefix=host --enable-static --disable-shared --disable-doc | ffmpeg编译命令 |
+|命令|功能|
+|:------|:------|
+|sudo -s|切换到管理员，如果是 sudo -i 切换后会改变当前目录。|
+|apt install g++| 安装软件包（要管理员权限），另一个派系的是 yum install。|
+|cd /home|进入home目录。|
+|ls|罗列当前所在目录所有目录和文件。|
+|ifconfig|查看网卡信息包括IP地址，windows上是 ipconfig。|
+|tar -zxvf bin.tar.gz|解压文件到当前目录。|
+|tar -jxvf bin.tar.xz|解压文件到当前目录。|
+|tar -zxvf bin.tar.gz -C /home|解压文件到/home目录，记住是大写的C。|
+|tar -zcvf bin.tar.gz bin|将bin目录压缩成tar.gz格式文件（压缩比一般）。|
+|tar -jcvf bin.tar.xz bin|将bin目录压缩成tar.xz格式文件（压缩比高，推荐）。|
+|tar -... |j z 表示不同的压缩方法，x表示解压，c表示压缩。|
+|gedit 1.txt|用记事本打开文本文件。|
+|vim 1.txt |用vim打开文件，很多时候可以缩写用vi。|
+|./configure  make -j4  make install|通用编译源码命令，第一步./configure执行配置脚本，第二步make -j4启用多线程编译，第三步make install安装编译好的文件。|
+|./configure -prefix /home/liu/Qt-5.9.3-static -static -sql-sqlite -qt-zlib -qt-xcb -qt-libpng -qt-libjpeg -fontconfig -system-freetype -iconv -nomake tests -nomake examples -skip qt3d -skip qtdoc |Qt通用编译命令。|
+|./configure -static -release -fontconfig -system-freetype -qt-xcb -qt-sql-sqlite -qt-zlib -qt-libpng -qt-libjpeg -nomake tests -nomake examples -prefix /home/liu/qt/Qt5.6.3| Qt静态带中文。|
+|./configure -prefix /home/liu/Qt-5.9.3-static -static -release -nomake examples -nomake tests -skip qt3d|精简编译命令。|
+|./configure --prefix=host --enable-static --disable-shared --disable-doc|ffmpeg编译命令。|
 
 182. Qt自带的日志重定向机制非常简单好用，自从用了以后再也不用什么断点调试啥的了，在需要的地方支持qdebug输出对应的信息，而且发布程序以后也可以开启调试日志将其输出查看等。
 ```cpp
@@ -3241,6 +3241,7 @@ QString AndroidTest::getText(int value1, float value2, bool value3, const QStrin
 22. android studio 新建并生产jar包步骤。
 - 第一步：文件（File）-》新建（new）-》项目（new project）-》空白窗体（empty activity）。
 - 第二步：刚才新建好的项目鼠标右键新建（new）-》模块（new module）-》安卓库（android library）。
+- 说明：如果选择的不是安卓库（android library）而是java库（Java Library），则直接编译出来的就是jar文件，默认包名 com.example.lib.MyClass。推荐选择java库，编译后不用去一堆文件中找jar文件。
 - 第三步：写好库名字，根据项目需要选择好最低sdk版本-》完成。
 - 第四步：在刚才新建好的库项目mylibrary，依次找到子节点src/main/java/com.example.mylibrary上鼠标右键新建-》class类。切记是这个节点不是java节点或者其他节点。
 - 第五步：写好你的类方法函数等。
@@ -3252,7 +3253,6 @@ public class Test {
     }
 }
 ```
-
 - 第六步：选中库项目mylibrary，菜单执行编译（build）-》编译库（make module xxx）。
 - 第七步：此时在mylibrary/build目录下有outputs目录和intermediates目录，其中outputs/aar目录下是生成的Android库项目的二进制归档文件，包含所有资源，class以及res资源文件全部包含。有时候我们仅仅需要jar文件，只包含了class文件与清单文件 ，不包含资源文件，如图片等所有res中的文件。需要到intermediates/aar_main_jar/debug目录下，可以看到classes.jar，将这个拷贝出来使用即可。当然你也可以对刚才的aar文件用解压缩软件解压出来也能看到classes.jar，是同一个文件。
 - 其他：调用jar包非常简单，只需要将jar文件放在你的项目的libs目录下即可，对应的包名和函数一般jar包提供者会提供，没有提供的话，可以在android studio中新建空白项目，切换到project视图，找到libs目录，鼠标右键最下面作为包动态库添加到项目，导入包完成以后会自动在libs目录列出，双击刚刚导入的包然后就自动列出对应的类和函数。
@@ -3281,6 +3281,19 @@ int AndroidJar::add(int a, int b)
 - 对安卓最低sdk有要求，所以建议在配置AndroidManifest.xml文件的时候不要带上最低版本要求。
 - 对AndroidManifest.xml文件内容有要求，之前Qt5安卓的不能在Qt6安卓下使用，具体内容参见示例下的文件。
 - 对应示例demo在 C:\Qt\Examples\Qt-6.3.0\corelib\platform 目录下，之前是 C:\Qt\Examples\Qt-5.15.2\androidextras ，目前就一个示例，可能因为其他类还没有移植好。
+
+25. 如果想要安卓全屏遮挡住顶部状态栏，可以在main函数中将show改成showFullScreen即可，当然也可以采用java的方式在onCreate函数中加一行 getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+#### 06：25-30
+26. 横竖屏切换的识别，在Qt中会同时反映到resizeEvent事件中，你可以在这个是尺寸变化后读取下当前屏幕是横屏还是竖屏，然后界面上做出调整，比如上下排列改成左右排列。
+
+27. 由于不同Qt版本对应的安卓配置文件 AndroidManifest.xml 内容格式不一样，高版本和低版本模板格式互不兼容，所以建议使用自己的Qt版本创建的 AndroidManifest.xml 文件，创建好以后如果使用的是自己重新定义的java文件的启动窗体则需要将 AndroidManifest.xml 文件中的 android:name="org.qtproject.qt5.android.bindings.QtActivity" 换掉就行。
+
+28. 如果自己用android studio编译的jar文件放到Qt项目的libs目录下，导致编译通不过，提示 com.android.dx.cf.iface.ParseException: bad class file magic 之类的，那是因为jdk版本不一致导致的，你可能需要在android studio项目中找到模块编jdk版本设置的地方降低版本，比如你用的ndk是r14，则需要选择jdk1.6或者jdk1.7。一般来说高版本兼容低版本，因为ndk版本太低无法兼容jdk1.8。后面发现如果直接新建的是java库（Java Library）则不存在这个问题，如果选择的是安卓库（android library）就可能有这个问题。
+
+29. 安卓项目配置文件是固定的名字 AndroidManifest.xml ，改成其他名字就不认识，不要想当然改成其他名字导致无法正常识别。
+
+30. AndroidManifest.xml文件中的package="org.qtproject.example"是包名，也是整个apk程序的内部唯一标识，如果多个apk这个包名一样，则会覆盖，所以一定要注意不同的程序记得把这个包名改成你自己的。这个包名也决定了java文件中需要使用资源文件时候的引入包名 import org.qtproject.example.R; 如果包名不一样则编译都通不过。
 
 ### 四、Qt设计模式
 **读《c++ Qt设计模式》书籍整理的一点经验。此书和官方的《C++ GUI Qt4编程》一起的。**
@@ -3396,8 +3409,8 @@ for (int i = 0; i < count; ++i) {
 
 ### 七、七七八八
 #### 7.1 推荐开源主页
-| 名称 | 网址 |
-| :------ | :------ |
+|名称|网址|
+|:------ |:------|
 |Qt技术交流群1|46679801(已满员)|
 |Qt技术交流群2|573199610(未满员)|
 |Qt高级学习群 |951393302(未满员，推荐此群)|
@@ -3407,8 +3420,8 @@ for (int i = 0; i < count; ++i) {
 |QtQuick/Qml开源demo集合|[https://gitee.com/zhengtianzuo/QtQuickExamples](https://gitee.com/zhengtianzuo/QtQuickExamples)|
 
 #### 7.2 推荐网站主页
-| 名称 | 网址 |
-| :------ | :------ |
+|名称|网址|
+|:------|:------|
 |qtcn|[http://www.qtcn.org](http://www.qtcn.org)|
 |豆子的空间|[https://www.devbean.net](https://www.devbean.net)|
 |yafeilinux|[http://www.qter.org](http://www.qter.org)|
@@ -3429,8 +3442,8 @@ for (int i = 0; i < count; ++i) {
 |Qt君|[https://blog.csdn.net/nicai_xiaoqinxi](https://blog.csdn.net/nicai_xiaoqinxi)|
 
 #### 7.3 推荐学习网站
-| 名称 | 网址 |
-| :------ | :------ |
+|名称|网址|
+|:------|:------|
 |Qt老外视频教程|[http://space.bilibili.com/2592237/#!/index](http://space.bilibili.com/2592237/#!/index)|
 |Qt维基补充文档|[https://wiki.qt.io/Main](https://wiki.qt.io/Main)|
 |Qt源码查看网站|[https://code.woboq.org/qt5](https://code.woboq.org/qt5)|

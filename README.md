@@ -457,7 +457,7 @@ connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
 loop.exec();
 ```
 
-47. 多种预定义变量 #if (defined webkit) || (defined webengine)，去掉生成空的debug和release目录 CONFIG -= debug_and_release。
+47. 多种预定义变量 #if (defined webkit) || (defined webengine)，去掉生成空的debug和release目录，在pro文件中加一行 CONFIG -= debug_and_release。
 
 48. 新版的Qtcreator增强了语法检查，会弹出很多警告提示等，可以在插件列表中关闭clang打头的几个即可，Help》About Plugins。也可以设置代码检查级别，Tools》Options 》C++ 》Code Model。
 
@@ -2740,6 +2740,32 @@ CONFIG(debug, debug|release) {
 
 205. 当你编译Qt程序发现编译通不过提示报错，而且报错提示在Qt的头文件的时候，不要去尝试着修改Qt头文件来编译通过，那样没用的，你使用的Qt的库是已经根据原始的头文件编译好的。如果报错提示在编译生成的临时的moc等文件，你也不要尝试去修改他，那个是临时文件，这次你改好了也许编译通过了，你重新编一下又覆盖了还是旧的错误。总之你要从源头（你的代码）找问题。
 
+206. 有时候需要对文本进行分散对齐显示，相当于无论文字多少，尽可能占满整个空间平摊占位宽度，但是在对支持对齐方式的控件比如QLabel调用 setAlignment(Qt::AlignJustify | Qt::AlignVCenter) 设置分散对齐会发现没有任何效果，这个时候就要考虑另外的方式比如通过控制字体的间距来实现分散对齐效果。
+```cpp
+QString text = "测试分散对齐内容";
+//计算当前文本在当前字体下占用的宽度
+QFont font = ui->label->font();
+int textWidth = ui->label->fontMetrics().width(text);
+//显示文本的区域宽度=标签的宽度-两边的边距
+int width = ui->label->width() - 12;
+//需要-1相当于中间有几个间隔
+int count = text.count() - 1;
+//计算每个间距多少
+qreal space = qreal(width - textWidth) / count;
+//设置固定间距
+font.setLetterSpacing(QFont::AbsoluteSpacing, space);
+ui->label->setFont(font);
+ui->label->setText(text);
+```
+
+207. 随着需求的不断增加，程序不断变大，用到的动态库也越来越多，到了发布程序的时候你会发现和可执行文件同一目录下文件数量真多，此时可能会考虑如何将一些库文件分门别类的存放，这样方便管理。
+- Qt提供的设置动态库路径的方法setLibraryPaths是用来搜索插件动态库的，而不是程序直接依赖的动态库。
+- 很多人以为这个可以设置Qt的库或者程序中依赖的第三方库的路径，其实想想也知道，因为程序依赖这个库，找不到的话根本跑不起来，程序跑不起来怎么应用执行这个代码呢？
+- Qt默认是可用通过setLibraryPaths的方式设置Qt插件的动态库目录位置，比如数据库插件sqldrivers，因为这些库文件是真正在Qt程序跑起来以后通过插件形式去加载的。
+- 还可以通过qt.conf文件设置 Plugins="config" 指定所有插件在可执行文件下的config目录下。
+- 要想设置程序直接依赖的动态库在其他目录，找遍全宇宙也只有一个办法，那就是设置环境变量，除此别无他法。
+- 至于如何设置环境变量方式很多，比如手动在电脑上设置，或者搞个批处理文件执行命令行，在程序安装的时候自动执行，或者程序打包目录下用户手动运行这个批处理。
+
 ### 二、升级到Qt6
 #### 00：直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
@@ -3028,6 +3054,17 @@ stream.setCodec("gbk");
 #else
 stream.setEncoding(QStringConverter::System);
 #endif
+```
+
+43. QModelIndex的查找子节点child函数去掉了，但是查找父节点parent函数保留，查阅代码得知之前的child函数就是封装的model->index(row, column, QModelIndex)函数。
+```cpp
+//下面两个函数等价 如果要兼容Qt456则用下面这个方法
+QModelIndex index = indexParent.child(i, 0);
+QModelIndex index = model->index(i, 0, indexParent);
+
+//下面两个函数等价 如果要兼容Qt456则用下面这个方法
+QModelIndex indexChild = index.child(i, 0);
+QModelIndex indexChild = model->index(i, 0, index);
 ```
 
 ### 三、Qt安卓经验

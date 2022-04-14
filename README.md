@@ -2765,6 +2765,72 @@ ui->label->setText(text);
 - 还可以通过qt.conf文件设置 Plugins="config" 指定所有插件在可执行文件下的config目录下。
 - 要想设置程序直接依赖的动态库在其他目录，找遍全宇宙也只有一个办法，那就是设置环境变量，除此别无他法。
 - 至于如何设置环境变量方式很多，比如手动在电脑上设置，或者搞个批处理文件执行命令行，在程序安装的时候自动执行，或者程序打包目录下用户手动运行这个批处理。
+- 大神补充：设置插件的目录还可以通过在main函数最前面写 qputenv("PATH", QString("%1;%2").arg(qgetenv("PATH"), pluginFileInfo.path()).toLocal8Bit()); 来实现。
+- 网友补充：最终找插件的路径其实就是这个 QT_PLUGIN_PATH 环境变量。
+
+208. 进度条控件如果设置的垂直方向，就算你设置了文本可见，会发现根本看不到进度文本，经过多方百折不挠的试探，以及和酷码大佬深入的探讨，发现只要设置下border样式（border:1px solid #ff0000、border:none、border-style:solid、border-radius:0px 任意一种）就行，就可以把文本显示出来，这TM就不知道Qt为什么总是不统一规则，这个BUG通用于任何版本，这个可能是因为边框的solid样式冲突了导致无法继续绘制，确切的说这必须是BUG，这个锅Qt必须背。
+
+209. 我们在使用QFileDialog::getOpenFileName、QFileDialog::getExistingDirectory等方法时，有时候会发现首次打开很卡，尤其是在默认目录很多文件的时候，此时你可以考虑设置这些函数最末尾的参数为QFileDialog::DontUseNativeDialog，表示不采用本地系统对话框，这样的话会采用Qt的对话框，速度快很多，估计系统的对话框在打开的时候会做很多初始化加载处理。
+```cpp
+QFileDialog::getOpenFileName(this, "", "", "", 0, QFileDialog::DontUseNativeDialog);
+QFileDialog::getExistingDirectory(this, "", "", QFileDialog::DontUseNativeDialog);
+```
+
+210. 滑块控件QSlider，如果设置的垂直样式，其进度颜色和剩余颜色，刚好和横向样式的颜色相反的，不确定这个是否是Qt的BUG，Qt456都是这个现象。
+```cpp
+QSlider::groove:horizontal{
+height:8px;
+background:#FF0000;
+}
+
+QSlider::add-page:horizontal{
+height:8px;
+background:#FF0000;
+}
+
+QSlider::sub-page:horizontal{
+height:8px;
+background:#00FF00;
+}
+
+QSlider::handle:horizontal{
+width:10px;
+background:#0000FF;
+}
+
+QSlider::groove:vertical{
+width:8px;
+background:#FF0000;
+}
+
+QSlider::add-page:vertical{
+width:8px;
+background:#00FF00;
+}
+
+QSlider::sub-page:vertical{
+width:8px;
+background:#FF0000;
+}
+
+QSlider::handle:vertical{
+height:10px;
+background:#0000FF;
+}
+```
+
+211. QMainWindow 在对停靠窗体进行排列的时候，有些不常用的设置容易遗忘，建议将 QMainWindow 的头文件函数过一遍一目了然。
+```cpp
+//设置停靠参数,不允许重叠,只允许拖动
+this->setDockOptions(QMainWindow::AnimatedDocks);
+
+//将底部左侧作为左侧区域,底部右侧作为右侧区域,否则底部区域会填充拉伸
+this->setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
+this->setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
+
+//设置停靠窗体可以放到中间,相当于嵌套布局
+this->setDockNestingEnabled(true);
+```
 
 ### 二、升级到Qt6
 #### 00：直观总结

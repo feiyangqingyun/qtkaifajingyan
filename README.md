@@ -2870,7 +2870,7 @@ void frmMain::dragEnterEvent(QDragEnterEvent *event)
 
 214. Qt5.6以后内置的是webengine浏览器内核，如果需要做web交互的话必须用到 qwebchannel.js 这个文件，此文件是Qt官方提供的，所以不建议去改动其中的源码，要注意的是，由于官方对webengine的支持在不断更新，所以官方提供的对应Qt版本的 qwebchannel.js 文件也不同，意味着你要用对应提供的版本的 qwebchannel.js 文件才ok，该文件默认在 C:\Qt\Qt5.12.11\Examples\Qt-5.12.11\webchannel\shared 目录下。经过几十个Qt版本的测试发现，用高版本的 qwebchannel.js 放到低版本运行不行，低版本放到高版本可以，为了万无一失还是建议直接用对应版本的。
 
-215. 对于QString去除空格，有多种场景，比如去除
+215. 对于QString去除空格，有多种场景，可能需要去除左侧、右侧、所有等位置的空格。
 ```cpp
 //字符串去空格 -1=移除左侧空格 0=移除所有空格 1=移除右侧空格 2=移除首尾空格 3=首尾清除中间留一个空格
 QString QUIHelperData::trimmed(const QString &text, int type)
@@ -3632,7 +3632,7 @@ for (int i = 0; i < count; ++i) {
 |yafeilinux|[http://www.qter.org](http://www.qter.org)|
 |feiyangqingyun|[https://blog.csdn.net/feiyangqingyun](https://blog.csdn.net/feiyangqingyun)|
 |**Qt作品大全**|[https://qtchina.blog.csdn.net/article/details/97565652](https://qtchina.blog.csdn.net/article/details/97565652)|
-|**Qt系列文章**|[https://blog.csdn.net/feiyangqingyun/category_11460485.html](https://blog.csdn.net/feiyangqingyun/category_11460485.html)|
+|Qt系列文章|[https://blog.csdn.net/feiyangqingyun/category_11460485.html](https://blog.csdn.net/feiyangqingyun/category_11460485.html)|
 |一去二三里|[http://blog.csdn.net/liang19890820](http://blog.csdn.net/liang19890820)|
 |乌托邦2号|[http://blog.csdn.net/taiyang1987912](http://blog.csdn.net/taiyang1987912)|
 |foruok|[http://blog.csdn.net/foruok](http://blog.csdn.net/foruok)|

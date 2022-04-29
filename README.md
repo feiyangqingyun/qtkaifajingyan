@@ -599,12 +599,14 @@ double gray = (0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue(
 QColor textColor = gray > 0.5 ? Qt::black : Qt::white;
 ```
 
-79. 对QTableView或者QTableWidget禁用列拖动。
+79. 对QTableView、QTableWidget、QTreeView、QTreeWidget禁用列拖动。
 ```cpp
-#if (QT_VERSION <= QT_VERSION_CHECK(5,0,0))
+#if (QT_VERSION < QT_VERSION_CHECK(5,0,0))
     ui->tableView->horizontalHeader()->setResizeMode(0, QHeaderView::Fixed);
+    ui->treeView->header()->setResizeMode(0, QHeaderView::Fixed);
 #else
     ui->tableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
+    ui->treeView->header()->setSectionResizeMode(0, QHeaderView::Fixed);
 #endif
 ```
 
@@ -2392,6 +2394,7 @@ const char *data = buffer.constData();
 - 如果更在意取值的速度则用QVector，QCustomPlot用的就是QVector，需要频繁大量的取出数据进行绘制。
 - 如果更在意更新数据（添加、删除等）的速度则用QList（对应操作是[]=值），但是因为QChart主要用的是QList访问数据（对应操作是at()），也是导致大数据量卡顿的原因之一，一直被诟病。
 - 曲线图表这类的基本上绝大部分时间都是在访问数据，拿到设置好的数据进行绘制。
+- 总之：QList更新（插入、追加等）数据速度快，QVector取数据速度快。
 - 在数据量很小的情况下两者几乎没啥性能区别。
 - 貌似Qt6对这两个类合并了（选择困难症的Qter解放了），QVector=QList即QVector是QList的别名，可能底层改了代码以便发挥两者的优势。
 
@@ -2832,6 +2835,86 @@ this->setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
 this->setDockNestingEnabled(true);
 ```
 
+212. 当我们在对QModelIndex取数据的时候，常规的角色的数据（QVariant类型支持to的比如toString、toInt、toDouble等）可以很方便的取出来，特定的数据类型需要用的万能取值模板函数 T value() 取出来。
+```cpp
+//显示文本
+QString text = index.data(Qt::DisplayRole).toString();
+//文本对齐
+int align = index.data(Qt::TextAlignmentRole).toInt();
+//文字字体
+QFont font = index.data(Qt::FontRole).value<QFont>();
+//前景色
+QColor color = index.data(Qt::ForegroundRole).value<QColor>();
+//背景色
+QColor color = index.data(Qt::BackgroundRole).value<QColor>();
+```
+
+213. 很多人以为拖曳只要在dropEvent事件就可以了，其实不行的，没有效果的，需要先在dragEnterEvent事件中执行event->accept()才行，不然根本没有效果，很多人尤其是初学者都挂在这里，我就是在这里摔了一跤，好疼！
+```cpp
+void frmMain::dropEvent(QDropEvent *event)
+{
+    QList<QUrl> urls = event->mimeData()->urls();
+}
+
+void frmMain::dragEnterEvent(QDragEnterEvent *event)
+{
+    if(event->mimeData()->hasFormat("application/x-qabstractitemmodeldatalist")) {
+        event->setDropAction(Qt::MoveAction);
+        event->accept();
+    } else {
+        event->ignore();
+    }
+}
+```
+
+214. Qt5.6以后内置的是webengine浏览器内核，如果需要做web交互的话必须用到 qwebchannel.js 这个文件，此文件是Qt官方提供的，所以不建议去改动其中的源码，要注意的是，由于官方对webengine的支持在不断更新，所以官方提供的对应Qt版本的 qwebchannel.js 文件也不同，意味着你要用对应提供的版本的 qwebchannel.js 文件才ok，该文件默认在 C:\Qt\Qt5.12.11\Examples\Qt-5.12.11\webchannel\shared 目录下。经过几十个Qt版本的测试发现，用高版本的 qwebchannel.js 放到低版本运行不行，低版本放到高版本可以，为了万无一失还是建议直接用对应版本的。
+
+215. 对于QString去除空格，有多种场景，比如去除
+```cpp
+//字符串去空格 -1=移除左侧空格 0=移除所有空格 1=移除右侧空格 2=移除首尾空格 3=首尾清除中间留一个空格
+QString QUIHelperData::trimmed(const QString &text, int type)
+{
+    QString temp = text;
+    QString pattern;
+    if (type == -1) {
+        pattern = "^ +\\s*";
+    } else if (type == 0) {
+        pattern = "\\s";
+        //temp.replace(" ", "");
+    } else if (type == 1) {
+        pattern = "\\s* +$";
+    } else if (type == 2) {
+        temp = temp.trimmed();
+    } else if (type == 3) {
+        temp = temp.simplified();
+    }
+
+    //调用正则表达式移除空格
+    if (!pattern.isEmpty()) {
+#if (QT_VERSION >= QT_VERSION_CHECK(6,0,0))
+        temp.remove(QRegularExpression(pattern));
+#else
+        temp.remove(QRegExp(pattern));
+#endif
+    }
+
+    return temp;
+}
+
+//测试代码
+QString text = "  a  b  c d  ";
+//结果：a  b  c d  
+QUIHelper::trimmed(text, -1);
+//结果：abcd  
+QUIHelper::trimmed(text, 0);
+//结果：  a  b  c d
+QUIHelper::trimmed(text, 1);
+//结果：a  b  c d
+QUIHelper::trimmed(text, 2);
+//结果：a b c d
+QUIHelper::trimmed(text, 3);
+```
+
 ### 二、升级到Qt6
 #### 00：直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
@@ -3131,6 +3214,15 @@ QModelIndex index = model->index(i, 0, indexParent);
 //下面两个函数等价 如果要兼容Qt456则用下面这个方法
 QModelIndex indexChild = index.child(i, 0);
 QModelIndex indexChild = model->index(i, 0, index);
+```
+
+44. 之前QPixmap类中的静态函数grabWindow和grabWidget彻底废弃了，改成了用QApplication::primaryScreen()->grabWindow，其实这个从Qt5开始就建议用这个。
+```cpp
+#if (QT_VERSION >= QT_VERSION_CHECK(5,0,0))
+    QPixmap pixmap = QApplication::primaryScreen()->grabWindow(widget->winId());
+#else
+    QPixmap pixmap = QPixmap::grabWidget(widget->winId());
+#endif
 ```
 
 ### 三、Qt安卓经验
@@ -3447,6 +3539,15 @@ for (int i = 0; i < count; ++i) {
 - Qt应该是所有消息都发给了顶层窗口，所以事件分发逻辑是自己处理，主窗口收到鼠标事件然后Qt自己分发给指定子控件，QEvent会有ignore或者accept表示自己处理了没有，例如鼠标点击事件，事件分发器发现没有被处理，数据重新计算然后分发给父窗口。这样父窗口收到的事件坐标就是基于自己窗口内的。用eventFilter就需要自己计算坐标。
 - 再比如，当使用QDialog，放一个QLineEdit并设置焦点，按Esc时QDialog也会自动关闭，本质上就是因为QLineEdit并不处理Esc的按键事件，透传给了QDialog。
 
+#### 5.2 小豆君
+1. 无论你是学Qt，Java，Python或其它，都需要明白一个道理：摒弃掉你的好奇心，千万不要去追求第三方类或工具是怎么实现的，这往往会让你收效甚微，其实，你只需要熟练掌握它的接口，知道类的目的即可，不可犯面向过程的毛病，刨根问底。记住，你的目标是让其它工具为你服务，你要踩在巨人的肩膀上创造世界。
+
+2. Qt真正的核心：元对象系统、属性系统、对象模型、对象树、信号槽。往死里啃这五大特性，在你的项目中，逐渐的设法加入这些特性，多多练习使用它们，长此以往你会收获意想不到的效果。
+
+3. 一边请教别人，一边多多重构，其实编码这条路虽然有人给你指路，但真正走下去的是你自己，当你真正走完时，你的编码水平一定会有非常大的提升。也许别人1000行的代码，在你这里几十行就搞定了，这也正事Qt的魅力。
+
+4. 在阅读Qt的帮助文档时，要静下心来，不要放过每一句，记住在文档中没有废话，尤其是每段的开头。
+
 ### 六、其他经验
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！
 
@@ -3529,6 +3630,7 @@ for (int i = 0; i < count; ++i) {
 |豆子的空间|[https://www.devbean.net](https://www.devbean.net)|
 |yafeilinux|[http://www.qter.org](http://www.qter.org)|
 |feiyangqingyun|[https://blog.csdn.net/feiyangqingyun](https://blog.csdn.net/feiyangqingyun)|
+|**Qt作品大全**|[https://qtchina.blog.csdn.net/article/details/97565652](https://qtchina.blog.csdn.net/article/details/97565652)|
 |**Qt系列文章**|[https://blog.csdn.net/feiyangqingyun/category_11460485.html](https://blog.csdn.net/feiyangqingyun/category_11460485.html)|
 |一去二三里|[http://blog.csdn.net/liang19890820](http://blog.csdn.net/liang19890820)|
 |乌托邦2号|[http://blog.csdn.net/taiyang1987912](http://blog.csdn.net/taiyang1987912)|

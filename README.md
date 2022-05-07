@@ -2940,9 +2940,37 @@ tcpSocket->setProxy(QNetworkProxy::NoProxy);
 - 交叉编译ffmpeg命令：./configure --prefix=host --enable-static --disable-shared --disable-doc --cross-prefix=/opt/FriendlyARM/toolschain/4.5.1/bin/arm-linux- --arch=arm --target-os=linux
 - 交叉编译qt前提：修改mkspecs/qws/linux-arm-g++下面的qmake.conf，如果没有设置环境变量则设置对应编译器的绝对路径，并将编译器的名字改成你需要的。
 - 比如修改gcc编译器：QMAKE_CC = /opt/FriendlyARM/toolschain/4.5.1/bin/arm-linux-gcc
-- 交叉编译qt4.8.5命令：./configure -prefix host -embedded arm -platform linux-g++ -xplatform qws/linux-arm-g++ -release -opensource -confirm-license -no-qt3support -nomake demos -nomake examples -nomake docs -no-webkit -no-phonon
-- 交叉编译qt5.9.3命令：
+- 交叉编译qt4.8.5命令：./configure -prefix host -embedded arm -xplatform qws/linux-arm-g++ -release -opensource -confirm-license -qt-sql-sqlite -qt-gfx-linuxfb -plugin-sql-sqlit -no-qt3support -no-phonon -no-svg -no-webkit -no-javascript-jit -no-script -no-scripttools -no-declarative -no-declarative-debug -qt-zlib -no-gif -qt-libtiff -qt-libpng -no-libmng -qt-libjpeg -no-rpath -no-pch -no-3dnow -no-avx -no-neon -no-openssl -no-nis -no-cups -no-dbus -little-endian -qt-freetype -no-opengl -no-glib -nomake demos -nomake examples -nomake docs -nomake tools
+- 交叉编译qt5.9.8命令：./configure -prefix host -xplatform linux-arm-g++ -recheck-all -opensource -confirm-license -optimized-qmake -release -no-separate-debug-info -strip -shared -static -c++std c++1z -no-sse2 -pch -compile-examples -gui -widgets -no-dbus -no-openssl -no-cups -no-opengl -linuxfb -qt-zlib -qt-libpng -qt-libjpeg -qt-freetype
 - 综上所述交叉编译和常规的编译就一个区别，需要手动指定交叉编译器路径。ffmpeg是通过--cross-prefix=指定，qt比较庞大是通过更改配置文件最后通过-xplatform指定配置文件名称。
+- Qt6的编译比较繁琐，默认用cmake编译，在linux上先用cmake3.19以上版本的源码，用make编译生成cmake，然后再用cmake编译qt生成qmake，最后调用qmake来编译你的qt项目。
+
+218. 在Qt中设置图片有时候会发现不成功，很可能是因为文件的拓展名不正确导致的，比如jpg的图片拓展名是png，bmp的图片拓展名改成了jpg，QImage、QPixmap传入文件路径加载图片，是通过拓展名去调用对应的图片解析算法，比较傻，但是速度快，不用经过分析具体内部是何种图片格式。如果想要不管拓展名都能保证加载成功，则必须读取图片文件数据加载的方式处理。
+```cpp
+//可以是资源文件中的图片也可以是本地文件
+QString fileName = ":/test.png";
+
+//此方式按照拓展名来区分具体格式不准确
+//如果拓展名不正确就无法加载成功
+ui->label->setPixmap(QPixmap(fileName));
+
+//通过直接读取图片数据加载保证成功
+QFile file(fileName);
+file.open(QIODevice::ReadOnly);
+QByteArray data = file.readAll();
+
+//通过 QImage 处理
+QImage img;
+img.loadFromData(data);
+//下面这种方式也行
+//QImage img = QImage::fromData(data);
+ui->label->setPixmap(QPixmap::fromImage(img));
+
+//通过 QPixmap 处理
+QPixmap pix;
+pix.loadFromData(data);
+ui->label->setPixmap(pix);
+```
 
 ## 二、升级到Qt6
 ### 00：直观总结

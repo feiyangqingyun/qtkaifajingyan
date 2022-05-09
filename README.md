@@ -2222,7 +2222,7 @@ model->revertAll();
 |命令|功能|
 |:------|:------|
 |sudo -s|切换到管理员，如果是 sudo -i 切换后会改变当前目录。|
-|apt install g++| 安装软件包（要管理员权限），另一个派系的是 yum install。|
+|sudo apt install g++| 安装软件包（要管理员权限），另一个派系的是 yum install。|
 |cd /home|进入home目录。|
 |ls|罗列当前所在目录所有目录和文件。|
 |ifconfig|查看网卡信息包括IP地址，windows上是 ipconfig。|
@@ -2233,8 +2233,8 @@ model->revertAll();
 |tar -jcvf bin.tar.xz bin|将bin目录压缩成tar.xz格式文件（压缩比高，推荐）。|
 |tar -... |j z 表示不同的压缩方法，x表示解压，c表示压缩。|
 |gedit 1.txt|用记事本打开文本文件。|
-|vim 1.txt |用vim打开文件，很多时候可以缩写用vi。|
-|./configure  make -j4  make install|通用编译源码命令，第一步./configure执行配置脚本，第二步make -j4启用多线程编译，第三步make install安装编译好的文件。|
+|vim 1.txt |用vim打开文件。|
+|./configure && make -j4 && make install|通用编译源码命令，第一步./configure执行配置脚本，第二步make -j4启用多线程编译，第三步make install安装编译好的文件。|
 |./configure -prefix /home/liu/Qt-5.9.3-static -static -sql-sqlite -qt-zlib -qt-xcb -qt-libpng -qt-libjpeg -fontconfig -system-freetype -iconv -nomake tests -nomake examples -skip qt3d -skip qtdoc |Qt通用编译命令。|
 |./configure -static -release -fontconfig -system-freetype -qt-xcb -qt-sql-sqlite -qt-zlib -qt-libpng -qt-libjpeg -nomake tests -nomake examples -prefix /home/liu/qt/Qt5.6.3| Qt静态带中文。|
 |./configure -prefix /home/liu/Qt-5.9.3-static -static -release -nomake examples -nomake tests -skip qt3d|精简编译命令。|

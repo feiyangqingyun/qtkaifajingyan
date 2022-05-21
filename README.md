@@ -2646,7 +2646,7 @@ void QUIHelperCore::sleep(int msec)
 - 高版本编译器的系统一般能够兼容低版本的，比如你用gcc4.9编译的程序是能够在gcc7.0上运行，反过来不行。
 - 意味着如果你想尽可能兼容更多的系统，尽量用低版本的编译器编译你的程序，当然要你的程序代码语法支持，比如c++11就要从gcc4.7开始才支持，如果你的代码用了c++11则必须至少选择gcc4.7版本及以上。
 - 用Qt编写linux程序为了发布后的可执行文件可以兼容各种linux系统，只要在这两种内核（debian、redhat）的系统上用低版本的编译器比如gcc4.7编译qt程序发布即可。
-- 2022-01-27补充：根据Qt官方安装包，发现基于redhat的gcc4.9编译器发布的，通用各种linux系统（亲测ubuntu各个版本、fedora、centos、deepin、uos、银河麒麟kylin、中标麒麟neokylin、中兴新支点newstart等），自己按照这个版本也亲测打包发布了亲测可用，我擦，redhat系统的也可以在debian系统跑。
+- 2022-01-27补充：根据Qt官方安装包（关于对话框），发现基于redhat和gcc4.9（后面Qt5.14/5.15带的qtc采用gcc5.3）编译器发布的，通用各种linux系统（亲测ubuntu各个版本、fedora、centos、deepin、uos、银河麒麟kylin、中标麒麟neokylin、中兴新支点newstart等），自己按照这个版本也亲测打包发布了，亲测可用，我擦，redhat系统的也可以在debian系统跑。
 - 2022-02-10补充：debian上静态编译的程序也可以在redhat系统跑，可能静态编译去掉了很多依赖吧。
 - 2022-03-01补充：低调大佬补充，如果没有特定的依赖关系，高版本的编译器编译的程序也可以在低版本编译器的系统运行，比如alpine Linux下用gcc11/clang13编译生成的可执行二进制，依然可以在cenos5/ubuntu10上运行。并不是编译器版本的问题，也不是C++11特性的问题，这个问题涉及到太多，内核版本、gnu libc、ABI兼容等等，两句话说不清。
 - 按照QtCreator软件采用的编译器环境规则，一般来说就是低版本的可以在高版本运行，比如Qt5可以在ubuntu14/16/18/20运行，但是高版本编译器编译的就无法在低版本编译器系统运行，会提示缺少GLBC、LIBCXX、symbol xxxxxx等，比如Qt6可以在ubuntu20运行而无法在ubuntu18/16/14等运行。
@@ -2929,11 +2929,12 @@ tcpSocket->setProxy(QNetworkProxy::NoProxy);
 //从5.8开始socket默认代理类型是DefaultProxy而不是NoProxy，不知道出于什么考虑。
 ```
 
-217. 关于交叉编译，对于初学者来说是个极难跨过去的砍（一旦跨过去了以后遇到需要交叉编译的时候都是顺水推舟信手拈来），因为需要搭建交叉编译环境，好在现在厂家提供的板子基本上都是测试好的环境，尤其是提供的编译器，不用自己再去折腾，按照官方手册来基本上不会有啥的的问题。
+217. 关于交叉编译，对于初学者来说是个极难跨过去的砍（一旦跨过去了，以后遇到需要交叉编译的时候都是顺水推舟、信手拈来。），因为需要搭建交叉编译环境，好在现在厂家提供的板子基本上都是测试好的环境，尤其是提供的编译器，不用自己再去折腾，按照官方手册来基本上不会有啥的的问题。
 - 在linux系统上编译ffmpeg和qt都是非常简单的事情，初学者也会，前提只要本地的gcc g++编译器正常。
-- 任何编译器包括嵌入式编译器，为了确保环境正常，你可以先查看对应的编译器版本是否ok，g++ -v  或者执行编译器所在目录的绝对路径。
-- 交叉编译器查看版本 /opt/FriendlyARM/toolschain/4.5.1/bin/arm-linux-g++ -v
-- 编译器位数和操作系统位数有关，一般32位的编译器要在32位的系统上做交叉编译，虽然32位也可以安装依赖在64位系统做交叉编译，但是个人不建议，可能会出问题。64位的编译器只能在64位的系统。
+- 任何编译器包括嵌入式编译器，为了确保环境正常，你可以先查看对应的编译器版本是否ok，g++ -v  arm-linux-g++ -v。
+- 交叉编译器查看版本 /opt/FriendlyARM/toolschain/4.5.1/bin/arm-linux-g++ -v 。
+- 编译器位数和操作系统位数有关，一般32位的编译器要在32位的系统上做交叉编译，虽然32位也可以在安装依赖后，在64位系统做交叉编译，但是个人不建议，可能会出问题。64位的编译器只能在64位的系统。
+- 设置了环境变量则可以省略掉长长的路径，直接打可执行文件名称即可，没有设置环境变量则需要打完整路径。
 - 设置环境变量只是为了编译的时候让自动寻找编译器，其实也完全可以不用设置环境变量，使用绝对路径指定编译器位置即可。
 - 在linux上编译，无论是ffmpeg还是qt还是其他，都是通用的步骤，第一步：./configure  第二步：make  第三步：make install 。
 - 至于具体configure后面有哪些参数，参照对应源码包的手册就行，搜索也一大堆。当然你用默认的就不带任何参数一般也可以，自动采用默认参数进行编译。
@@ -2944,6 +2945,12 @@ tcpSocket->setProxy(QNetworkProxy::NoProxy);
 - 交叉编译qt5.9.8命令：./configure -prefix host -xplatform linux-arm-g++ -recheck-all -opensource -confirm-license -optimized-qmake -release -no-separate-debug-info -strip -shared -static -c++std c++1z -no-sse2 -pch -compile-examples -gui -widgets -no-dbus -no-openssl -no-cups -no-opengl -linuxfb -qt-zlib -qt-libpng -qt-libjpeg -qt-freetype
 - 综上所述交叉编译和常规的编译就一个区别，需要手动指定交叉编译器路径。ffmpeg是通过--cross-prefix=指定，qt比较庞大是通过更改配置文件最后通过-xplatform指定配置文件名称。
 - Qt6的编译比较繁琐，默认用cmake编译，在linux上先用cmake3.19以上版本的源码，用make编译生成cmake，然后再用cmake编译qt生成qmake，最后调用qmake来编译你的qt项目。
+- 编译Qt其实只是想用其中的库，至于demo、doc、tool、example等统统不用，费时费力。所以强烈建议编译的时候去掉，大大加快编译速度。
+- 编译建议用普通用户编译即可，包括解压源码，因为这样编译出来的库普通用户就能用，如果是root管理员编译的则以后都需要管理员权限才行。
+- 很多系统都提供了直接鼠标右键解压，其实也是可以的，就是速度慢，建议用命令行解压和删除目录。
+- Qt的编译参数每个版本都可能有出入，毕竟一直在更新代码，甚至有些分类描述变了，比如之前-qt-xcb到了5.15改成了-xcb，之前-qt-sql-sqlite改成了-qt-sqlite，一定要看源码下的readme，里面约定了编译环境要求的最低版本，后面qt5开始具体的配置参数有哪些放到了qtbase目录下的config说明。
+- 编译完成使用如果遇到提示 GL/gl.h 错误，需要安装 apt install libgl1-mesa-dev libglu1-mesa-dev  或者 yum install mesa-libGL-devel mesa-libGLU-devel 。
+- 编译参数说明可参考 [https://blog.csdn.net/xi_gua_gua/article/details/53413930](https://blog.csdn.net/xi_gua_gua/article/details/53413930)。
 
 218. 在Qt中设置图片有时候会发现不成功，很可能是因为文件的拓展名不正确导致的，比如jpg的图片拓展名是png，bmp的图片拓展名改成了jpg，QImage、QPixmap传入文件路径加载图片，是通过拓展名去调用对应的图片解析算法，比较傻，但是速度快，不用经过分析具体内部是何种图片格式。如果想要不管拓展名都能保证加载成功，则必须读取图片文件数据加载的方式处理。
 ```cpp
@@ -2971,6 +2978,20 @@ QPixmap pix;
 pix.loadFromData(data);
 ui->label->setPixmap(pix);
 ```
+
+219. 总结几个Qt版本的冷知识。
+- Qt4.8.7是Qt4的终结版本，是Qt4系列版本中最稳定最经典的（很多嵌入式板子还是用Qt4.8），其实该版本是和Qt5.5差不多时间发布的。参考链接 [https://www.qt.io/blog/2015/05/26/qt-4-8-7-released](https://www.qt.io/blog/2015/05/26/qt-4-8-7-released) [https://blog.qt.io/blog/2015/07/01/qt-5-5-released/](https://blog.qt.io/blog/2015/07/01/qt-5-5-released/)
+- Qt5.6.3最最后支持xp系统的长期支持版本，Qt5.7.0是最后支持xp系统的非长期支持版本（有可能有极少数函数不支持，个人没遇到过）。
+- Qt5.12.3是最后提供mysql数据库插件的版本，往后的版本需要自行编译对应的mysql数据库插件，官方安装包不再提供。
+- Qt5.12.5是最后样式表性能最高的版本，经过酷码大佬查阅代码发现此后版本的样式表源码中为了修复一个bug做了循环嵌套设置，导致性能急剧下降，界面越多性能暴降10倍以上。
+- Qt5.14.2是最后提供二进制安装包的版本，后面的版本都需要在线安装。
+- Qt5.15系列是最后支持win7的版本，后面的Qt6系列版本需要更改源码编译才能支持win7，这对于小白来说难于上青天。
+- Qt6.0/6.1版本其实也是支持win7的，但是因为缺失太多模块，而且BUG成山，大佬说了狗都不用，所以使用此版本没意义。
+- Qt6不支持win7，是说开发阶段和运行阶段都不支持，无论开发阶段还是运行阶段你都需要Qt的库，只要是Qt的库不支持，到哪里也不支持。
+- 新版的qtc7由于采用Qt6编译，所以也只能在win10及以上运行，意味着你要用新的qtc7+Qt5做开发也必须用win10及以上。
+- 欢迎各位补充，比如哪个版本以后商用需要收费之类的，貌似用Qt4，在不更改Qt本身源码，动态库发布程序，法律风险小一些？
+
+220. Qt官方除了Qt库一直在升级外，对应的集成开发环境也在更新升级，一般会选用最新的Qt库编译新版本，要注意的是，有些人安装的旧版本的qtc，加载比较高版本的Qt库，很容易出现报错提示 Project ERROR: Cannot run compiler 'g++'. Maybe you forgot to setup the environment? 之类的，一般是版本跨度过大，比如用Qt5.5附带的qtc加载Qt5.9的库，导致有些环境识别不到，可能是qtc在新版本中对某些识别处理规则有变动。所以一般建议可以用新的qtc加载旧的Qt库，不建议旧的qtc加载新的Qt库。
 
 ## 二、升级到Qt6
 ### 00：直观总结
@@ -3724,6 +3745,7 @@ for (int i = 0; i < count; ++i) {
 |Qt入门最简单教程|[http://c.biancheng.net/qt/](http://c.biancheng.net/qt/)|
 |qss学习地址1|[http://47.100.39.100/qtwidgets/stylesheet-reference.html](http://47.100.39.100/qtwidgets/stylesheet-reference.html)|
 |qss学习地址2|[http://47.100.39.100/qtwidgets/stylesheet-examples.html](http://47.100.39.100/qtwidgets/stylesheet-examples.html)|
+|qss学习地址3|[https://doc.qt.io/qt-6/qstyle.html](https://doc.qt.io/qt-6/qstyle.html)|
 |精美图表控件QWT|[http://qwt.sourceforge.net/](http://qwt.sourceforge.net/)|
 |精美图表控件QCustomPlot|[https://www.qcustomplot.com/](https://www.qcustomplot.com/)|
 |免费图标下载|[http://www.easyicon.net/](http://www.easyicon.net/)|

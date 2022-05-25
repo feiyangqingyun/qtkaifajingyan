@@ -1,5 +1,16 @@
 ﻿
-## 一、开发经验
+## 0 前言说明﻿﻿
+1. **下载说明：由于可执行文件比较大，如有需要请到网盘下载。**
+2. **网店地址：https://shop244026315.taobao.com/**
+3. **联系方式：QQ（517216493）微信（feiyangqingyun）推荐加微信。**
+4. **以下项目已经全部支持Qt4/5/6所有版本以及后续版本**
+5. 监控作品体验：[https://pan.baidu.com/s/1d7TH_GEYl5nOecuNlWJJ7g](https://pan.baidu.com/s/1d7TH_GEYl5nOecuNlWJJ7g) 提取码：01jf
+6. 其他作品体验：[https://pan.baidu.com/s/1ZxG-oyUKe286LPMPxOrO2A](https://pan.baidu.com/s/1ZxG-oyUKe286LPMPxOrO2A) 提取码：o05q
+7. 监控系统在线文档：[https://feiyangqingyun.gitee.io/QWidgetDemo/video_system/](https://feiyangqingyun.gitee.io/QWidgetDemo/video_system/)
+8. 大屏系统在线文档：[https://feiyangqingyun.gitee.io/QWidgetDemo/bigscreen/](https://feiyangqingyun.gitee.io/QWidgetDemo/bigscreen/)
+9. 物联网系统在线文档：[https://feiyangqingyun.gitee.io/QWidgetDemo/iotsystem/](https://feiyangqingyun.gitee.io/QWidgetDemo/iotsystem/)
+
+## 1 开发经验
 ### 01：001-010
 1. 当编译发现大量错误的时候，从第一个看起，一个一个的解决，不要急着去看下一个错误，往往后面的错误都是由于前面的错误引起的，第一个解决后很可能都解决了。比如我们可能就写错了一行代码，编译提示几百个错误，你只要把这一行纠正了，其他错误也就没了。
 2. 定时器是个好东西，学会好使用它，有时候用QTimer::singleShot单次定时器和QMetaObject::invokeMethod可以解决意想不到的问题。比如在窗体初始化的时候加载一个耗时的操作，很容易卡主界面的显示，要在加载完以后才会显示界面，这就导致了体验很卡不友好的感觉，此时你可以将耗时的加载（有时候这些加载又必须在主线程，比如用QStackWidget堆栈窗体加载一些子窗体），延时或者异步进行加载，这样就会在界面显示后去执行，而不是卡住主界面。
@@ -1864,6 +1875,7 @@ socket->setLocalPort(6005);
 - 可以设置不同的线条样式（setLineStyle）、数据样式（setScatterStyle）。
 - 坐标轴的箭头样式可更换 setUpperEnding。
 - 可以用 QCPBarsGroup 实现柱状分组图，这个类在官方demo中没有，所以非常容易忽略。
+- V2.0开始支持数据排序设置，默认是交给QCustomPlot排序，也可以设置setData第三个参数为true表示已经排序过，这样可以绘制往回走的曲线。
 
 ```cpp
 //对调XY轴，在最前面设置
@@ -1925,6 +1937,12 @@ foreach (QCPBars *bar, bars) {
 }
 //设置分组之间的间隔
 group->setSpacing(2);
+
+//绘制往回走的曲线
+QVector<double> keys, values;
+keys << 0 << 1 << 2 << 3 << 4 << 5 << 4 << 3;
+values << 5 << 4 << 6 << 7 << 7 << 6 << 5 << 4;
+customPlot->graph(0)->setData(keys, values, true);
 ```
 
 ### 18：171-180
@@ -2993,7 +3011,7 @@ ui->label->setPixmap(pix);
 
 220. Qt官方除了Qt库一直在升级外，对应的集成开发环境也在更新升级，一般会选用最新的Qt库编译新版本，要注意的是，有些人安装的旧版本的qtc，加载比较高版本的Qt库，很容易出现报错提示 Project ERROR: Cannot run compiler 'g++'. Maybe you forgot to setup the environment? 之类的，一般是版本跨度过大，比如用Qt5.5附带的qtc加载Qt5.9的库，导致有些环境识别不到，可能是qtc在新版本中对某些识别处理规则有变动。所以一般建议可以用新的qtc加载旧的Qt库，不建议旧的qtc加载新的Qt库。
 
-## 二、升级到Qt6
+## 2 升级到Qt6
 ### 00：直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
 2. 把一些过度封装的东西移除了（比如同样的功能有多个函数），保证了只有一个函数执行该功能。
@@ -3308,7 +3326,7 @@ QModelIndex indexChild = model->index(i, 0, index);
 #endif
 ```
 
-## 三、Qt安卓经验
+## 3 Qt安卓经验
 ### 01：01-05
 1. pro中引入安卓拓展模块 QT += androidextras 。
 2. pro中指定安卓打包目录 ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android 指定引入安卓特定目录比如程序图标、变量、颜色、java代码文件、jar库文件等。
@@ -3573,7 +3591,7 @@ int AndroidJar::add(int a, int b)
 
 30. AndroidManifest.xml文件中的package="org.qtproject.example"是包名，也是整个apk程序的内部唯一标识，如果多个apk这个包名一样，则会覆盖，所以一定要注意不同的程序记得把这个包名改成你自己的。这个包名也决定了java文件中需要使用资源文件时候的引入包名 import org.qtproject.example.R; 如果包名不一样则编译都通不过。
 
-## 四、Qt设计模式
+## 4 Qt设计模式
 **读《c++ Qt设计模式》书籍整理的一点经验。此书和官方的《C++ GUI Qt4编程》一起的。**
 1. 通常而言，好的做法是在包含了Qt头文件之后再包含非Qt头文件，由于Qt（为编译器和预处理器）定义了许多符号，这使得避免名称冲突变得更容易，也更容易找到文件。
 ```cpp
@@ -3614,7 +3632,7 @@ for (int i = 0; i < count; ++i) {
 
 9. 
 
-## 五、Qt大佬专区
+## 5 Qt大佬专区
 ### 5.1 酷码大佬
 **微信：Kuma-NPC**
 1. 关于Qt事件传递的一个说明：
@@ -3631,7 +3649,7 @@ for (int i = 0; i < count; ++i) {
 
 4. 在阅读Qt的帮助文档时，要静下心来，不要放过每一句，记住在文档中没有废话，尤其是每段的开头。
 
-## 六、其他经验
+## 6 其他经验
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！
 
 2. 在Qt的学习过程中，学会查看对应类的头文件是一个好习惯，如果在该类的头文件没有找到对应的函数，可以去他的父类中找找，实在不行还有爷爷类，肯定能找到的。通过头文件你会发现很多函数接口其实Qt已经帮我们封装好了，有空还可以阅读下他的实现代码。
@@ -3694,7 +3712,7 @@ for (int i = 0; i < count; ++i) {
 
 18.  最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
 
-## 七、七七八八
+## 7 七七八八
 ### 7.1 推荐开源主页
 |名称|网址|
 |:------ |:------|
@@ -3753,7 +3771,7 @@ for (int i = 0; i < count; ++i) {
 |漂亮界面网站|[https://www.ui.cn/](https://www.ui.cn/)|
 |微信公众号|**官方公众号：Qt软件** &nbsp; **亮哥公众号：高效程序员**|
 
-## 八、书籍推荐
+## 8 书籍推荐
 1. C++入门书籍推荐《C++ primer plus》，进阶书籍推荐《C++ primer》。
 2. Qt入门书籍推荐霍亚飞的《Qt Creator快速入门》，Qt进阶书籍推荐官方的《C++ GUI Qt4编程》，qml书籍推荐《Qt5编程入门》，Qt电子书强烈推荐《Qt5.10 GUI完全参考手册》。
 3. 强烈推荐程序员自我提升、修养、规划系列书《走出软件作坊》《大话程序员》《程序员的成长课》《解忧程序员》，受益匪浅，受益终生！

@@ -3028,6 +3028,7 @@ ui->label->setPixmap(pix);
 
 220. Qt官方除了Qt库一直在升级外，对应的集成开发环境也在更新升级，一般会选用最新的Qt库编译新版本，要注意的是，有些人安装的旧版本的qtc，加载比较高版本的Qt库，很容易出现报错提示 Project ERROR: Cannot run compiler 'g++'. Maybe you forgot to setup the environment? 之类的，一般是版本跨度过大，比如用Qt5.5附带的qtc加载Qt5.9的库，导致有些环境识别不到，可能是qtc在新版本中对某些识别处理规则有变动。所以一般建议可以用新的qtc加载旧的Qt库，不建议旧的qtc加载新的Qt库。
 
+### 23：221-230
 221. 在对表格数据模型操作的时候，经常遇到一种场景就是，删除某条记录后，希望重新选中某一行。QTableView、QTableWidget本身就支持多选全选等操作，比如批量删除可以多选。
 ```cpp
 //拿到表格数据模型

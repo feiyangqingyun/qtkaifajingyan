@@ -1867,7 +1867,7 @@ socket->setLocalPort(6005);
 - tcp对网卡1监听了端口6000，在网卡1上其他tcp只能监听6000以外的端口。
 - udp协议也是上面的逻辑。
 
-170. 开源的图表控件QCustomPlot很经典，在曲线数据展示这块性能彪悍，总结了一些容易忽略的经验要点。
+170. 开源的图表控件QCustomPlot很经典，作者至少是八星斗圣级别，在曲线数据展示这块性能彪悍，总结了一些容易忽略的经验要点。
 - 可以将XY轴对调，然后形成横向的效果，无论是曲线图还是柱状图，分组图、堆积图等，都支持这个特性。
 - 不需要的提示图例可以调用 legend->removeItem 进行移除。
 - 两条曲线可以调用 setChannelFillGraph 设置合并为一个面积区域。
@@ -1876,6 +1876,7 @@ socket->setLocalPort(6005);
 - 坐标轴的箭头样式可更换 setUpperEnding。
 - 可以用 QCPBarsGroup 实现柱状分组图，这个类在官方demo中没有，所以非常容易忽略。
 - V2.0开始支持数据排序设置，默认是交给QCustomPlot排序，也可以设置setData第三个参数为true表示已经排序过，这样可以绘制往回走的曲线。
+- 频繁绘制数据可以设置排队绘制参数 replot(QCustomPlot::rpQueuedReplot)，可以避免重复的replot和提高性能。如果不开启很可能绘制出错。
 
 ```cpp
 //对调XY轴，在最前面设置
@@ -1891,8 +1892,12 @@ customPlot->legend->removeItem(1);
 customPlot->graph(0)->setChannelFillGraph(customPlot->graph(1));
 
 //关闭抗锯齿以及设置拖动的时候不启用抗锯齿
-customPlot->graph()->setAntialiased(false);
 customPlot->setNoAntialiasingOnDrag(true);
+customPlot->graph()->setAntialiased(false);
+customPlot->graph()->setAntialiasedFill(false);
+customPlot->graph()->setAntialiasedScatters(false);
+//设置快速绘制可以大大加快画笔宽度大于1的线条
+customPlot->setPlottingHint(QCP::phFastPolylines);
 
 //多种设置数据的方法
 customPlot->graph(0)->setData();
@@ -1943,6 +1948,18 @@ QVector<double> keys, values;
 keys << 0 << 1 << 2 << 3 << 4 << 5 << 4 << 3;
 values << 5 << 4 << 6 << 7 << 7 << 6 << 5 << 4;
 customPlot->graph(0)->setData(keys, values, true);
+
+//频繁绘制数据开启排队绘制可以提高性能
+customPlot->replot(QCustomPlot::rpQueuedReplot);
+
+QCPAxis *axis = customPlot->xAxis;
+double lower = axis->range().lower;
+double upper = axis->range().upper;
+double origin = (upper - lower) / 2;
+//设置刻度线按照设置优先而不是可读性优先
+axis->ticker()->setTickStepStrategy(QCPAxisTicker::tssMeetTickCount);
+//设置原点值为范围值的中心点
+axis->ticker()->setTickOrigin(origin);
 ```
 
 ### 18：171-180
@@ -3011,6 +3028,101 @@ ui->label->setPixmap(pix);
 
 220. Qt官方除了Qt库一直在升级外，对应的集成开发环境也在更新升级，一般会选用最新的Qt库编译新版本，要注意的是，有些人安装的旧版本的qtc，加载比较高版本的Qt库，很容易出现报错提示 Project ERROR: Cannot run compiler 'g++'. Maybe you forgot to setup the environment? 之类的，一般是版本跨度过大，比如用Qt5.5附带的qtc加载Qt5.9的库，导致有些环境识别不到，可能是qtc在新版本中对某些识别处理规则有变动。所以一般建议可以用新的qtc加载旧的Qt库，不建议旧的qtc加载新的Qt库。
 
+221. 在对表格数据模型操作的时候，经常遇到一种场景就是，删除某条记录后，希望重新选中某一行。QTableView、QTableWidget本身就支持多选全选等操作，比如批量删除可以多选。
+```cpp
+//拿到表格数据模型
+QAbstractItemModel *model = ui->tableView->model();
+//主动定位到第三行
+ui->tableView->setCurrentIndex(model->index(3, 0));
+//主动定位到最后一行
+ui->tableView->setCurrentIndex(model->index(model->rowCount() - 1, 0));
+
+//设置选择模式支持多选，其他几个枚举值自行查阅文档。
+ui->tableView->setSelectionMode(QAbstractItemView::MultiSelection);
+
+//选择全部
+ui->tableView->selectAll();
+//取消所有选中
+ui->tableView->clearSelection();
+
+//选中行，注意如果该行选中则执行后取消选中，如此往复。这个设计很巧妙，掌声。
+ui->tableView->selectRow(row);
+//选中列，注意如果该列选中则执行后取消选中，如此往复。这个设计很巧妙，掌声。
+ui->tableView->selectColumn(column);
+
+//获取选中行的内容
+QItemSelectionModel *selections = ui->tableView->selectionModel();
+QModelIndexList selected = selections->selectedIndexes();
+foreach (QModelIndex index, selected) {
+    qDebug() << index.row() << index.column() << index.data();   
+}
+```
+
+222. 在读取文本文件的时候，有时候会发现读取出来的中文乱码，这个时候就需要识别文件编码格式，然后主动设置对应的编码去读取就不会乱码。
+```cpp
+//检查文件编码 0=ANSI 1=UTF-16LE 2=UTF-16BE 3=UTF-8 4=UTF-8BOM
+int DataCsv::findCode(const QString &fileName)
+{
+    //假定默认编码utf8
+    int code = 3;
+    QFile file(fileName);
+    if (file.open(QIODevice::ReadOnly)) {
+        //读取3字节用于判断
+        QByteArray buffer = file.read(3);
+        quint8 b1 = buffer.at(0);
+        quint8 b2 = buffer.at(1);
+        quint8 b3 = buffer.at(2);
+        if (b1 == 0xFF && b2 == 0xFE) {
+            code = 1;
+        } else if (b1 == 0xFE && b2 == 0xFF) {
+            code = 2;
+        } else if (b1 == 0xEF && b2 == 0xBB && b3 == 0xBF) {
+            code = 4;
+        } else {
+            //尝试用utf8转换,如果可用字符数大于0,则表示是ansi编码
+            QTextCodec::ConverterState state;
+            QTextCodec *codec = QTextCodec::codecForName("utf-8");
+            codec->toUnicode(buffer.constData(), buffer.size(), &state);
+            if (state.invalidChars > 0) {
+                code = 0;
+            }
+        }
+
+        file.close();
+    }
+
+    return code;
+}
+```
+
+223. 在连接远程数据库进行查询数据的时候，有时候会发现很慢，尤其是表数据量越多越慢，本地的话同等数据量快很多，可以尝试开启只前进属性，query.setForwardOnly(true);这样的话只会缓存一次的数据，大大提高远程数据库的查询效率，据说可以提高几十倍百倍的速度。当然前提是对查询的数据之前向前取数据的需求，如果还要往后取数据或者在数据模型QSqlQueryModel中使用，则不能开启此属性。原因在每次利用QSqlQuery获取下一条记录时，若不开启isForwardOnly属性（很遗憾默认就是不开启），则每次都开辟新的内存空间，来存储已经访问及未访问的记录，这样，每次都会浪费好多存储空间。
+
+224. Qt中的painter绘制非常灵活强大，接口丰富，但是对于很多初学者来说还是有一定的难度，尤其是各种奇奇怪怪的复杂格式，而这些格式用html确很好描述，比如控制行间距、字符间距等，此时可以用QTextDocument传入html格式内容交给QPainter绘制，非常完美、简单、强大，包括一些数学公式啥的。
+```cpp
+void Form::paintEvent(QPaintEvent *event)
+{
+    QPainter painter(this);
+    QTextDocument doc;
+    doc.setHtml(html);
+    //设置文本宽度
+    doc.setTextWidth(200);
+    //指定绘制区域
+    doc.drawContents(&painter, QRect(0, 0, 200, 70));
+}
+```
+
+225. Qt中样式表对选中颜色和悬停颜色是有优先级的，根据对操作系统默认样式的观察，当处于选中状态+悬停状态的时候，默认取悬停状态，也就是鼠标移动到选中的列表item上，颜色取悬停状态颜色。而Qt中如果两种颜色都设置了，根据设置的顺序来，取最后的为准，如果最后设置的选中状态颜色，则当item处于选中状态+悬停状态的时候，取选中状态颜色而不是悬停状态颜色，切记！
+```cpp
+//下面这样设置则当鼠标停留在选中的item上时背景颜色=#00FF00
+QTableView::item:selected{background:#FF0000;}
+QTableView::item:hover{background:#00FF00;}
+
+//下面这样设置则当鼠标停留在选中的item上时背景颜色=#FF0000
+QTableView::item:hover{background:#00FF00;}
+QTableView::item:selected{background:#FF0000;}
+```
+
+
 ## 2 升级到Qt6
 ### 00：直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
@@ -3300,8 +3412,10 @@ MainWindow(QWidget *parent = nullptr);
 ```cpp
 QTextStream stream(&file);
 #if (QT_VERSION < QT_VERSION_CHECK(6,0,0))
+stream.setCodec("utf-8");
 stream.setCodec("gbk");
 #else
+stream.setEncoding(QStringConverter::Utf8);
 stream.setEncoding(QStringConverter::System);
 #endif
 ```

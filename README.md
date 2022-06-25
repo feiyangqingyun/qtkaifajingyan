@@ -1615,6 +1615,10 @@ image.save("2.png");
 - 其他数据库还要注意版本的区别，ODBC数据源形式还容易出错和执行失败；
 - sqlite数据库也有几个重大缺点：不支持加密，不支持网络访问，不支持部分数据库高级特性，不支持海量数据（亿级别以上），但是对于绝大部分Qt项目还是足够；
 - 数据库支持友好度大致是 sqlite > postgresql > mysql > odbc ;
+- 如果采用的odbc数据源模式连接数据库，只需要设置数据库名称为对应新建的数据源名字，然后设置用户名和密码就行，不需要设置主机名称和端口，因为数据源那边已经设置过的，这里只需要再次验证用户信息就行。
+- ODBC数据源分32/64位之分，在数据源管理器中，如果添加的数据源对应平台显示的只有32或者只有64位，那你的Qt程序也只能是对应位数的才能连接成功。如果显示的是64位，你用32位的程序去连接会失败。
+- 32位的Qt程序，带对应32位的libmysql动态库，可以访问32/64位的mysql数据库，64位的也是一样可以访问32/64位的mysql数据库，只需要带上对应位数的动态库就行。查看mysql是32位还是64位命令 mysql.exe -V。
+- 在mysql驱动可用且正常的情况下，如果还是提示Driver not loaded Driver not loaded，则很可能是拷贝的libmysql动态库版本不对或者位数不对导致的。
 - 以上都是在Qt环境中个人测试得出的结论，结果未必正确，作为参考即可，其他编程环境比如C#、JAVA请忽略，也许差别可能在中间通信的效率造成的；
 
 155. Qt5.10以后提供了新的类 QRandomGenerator QRandomGenerator64 管理随机数，使用更方便，尤其是取某个区间的随机数。
@@ -3123,6 +3127,98 @@ QTableView::item:hover{background:#00FF00;}
 QTableView::item:selected{background:#FF0000;}
 ```
 
+226. qtc开发工具内置了不少的函数，可以很方便的进行一些判断和处理。
+```cpp
+//最小版本要求
+!minQtVersion(5, 15, 2) {
+    message("Cannot build Qt Installer Framework with Qt version $${QT_VERSION}.")
+    error("Use at least Qt 5.15.2.")
+}
+```
+
+227. 有时候文本框中的内容过长，而文本框默认光标在尾部，所以要主动设置下将光标移到最前面
+```cpp
+//三种方法都可以
+ui->lineEdit->setSelection(0, 0);
+ui->lineEdit->setCursorPosition(0);
+//样式表方式
+"QLineEdit{qproperty-cursorPosition:0;}
+```
+
+228. 关于Qt浏览器模块的几点说明。
+- Qt5.6以前用的是webkit，Qt5.6版本以后分两种情况，一种是mingw编译器（windows系统）对应的Qt库不再提供浏览器模块。
+- Qt5.6以后的版本在linux系统和mac等系统，都不存在没有浏览器控件的情况，都使用的是webengine。
+- 仅仅是windows上的mingw编译器的Qt版本没有，其他系统其实都有的。很多人在这个地方都有疑问，都以为只有msvc编译器有浏览器控件，其实确切的说是在windows上msvc的Qt库带浏览器控件。
+- 安装Qt的时候webengine模块默认不勾选，需要主动勾选才会安装。
+- 也不是所有的msvc的Qt版本都有webengine浏览器模块，哪怕你勾选了也没用，有些版本官方并没有编译，需要自行编译。需要到对应的Qt安装目录查看是否有 Qt5WebEngine.dll 文件。
+- 如果仅仅是为了弥补mingw版本缺失浏览器模块的遗憾，推荐用miniblink。
+- 如果为了统一兼容各种版本和系统，推荐用cef。
+- 如果没有历史包袱，推荐用webengine，与Qt的集成度高。
+- webkit和miniblink默认都不支持gpu，webengine默认走gpu。
+- qwebengine默认不支持MP4，需要自己重新编译。
+
+229. 关于编译数据库插件的几个经验总结。
+- 安装对应的数据库，安装后会有include头文件和lib链接库文件，这是基本的前提，编译数据库插件必须要有这两个东西。务必注意，32位的Qt必须安装32位的数据库才能正常编译成功，位数要一致。
+- 准备好数据库插件源码，比如qt-everywhere-src-5.14.2\qtbase\src\plugins\sqldrivers\mysql，可以在安装Qt的时候勾选src，或者后期直接官网重新下载源码解压出来。
+- 打开你要编译的数据库插件源码，比如mysql就打开mysql.pro，oracle就打开oci.pro。
+- 在pro中注释掉一行 #QMAKE_USE += mysql，如果是oci项目则是#QMAKE_USE += oci。
+- qsqldriverbase.pri文件中注释掉 #include(..shadowed(..PWD)/qtsqldrivers-config.pri)。
+- mysql.pro文件内容下面加上如下代码。
+```cpp
+path = C:/Qt/mysql-5.7.30-winx64
+INCLUDEPATH += $$path/include
+win32:LIBS += -L$$path/lib -llibmysql
+```
+- oci.pro文件内容下面加上如下代码。
+```cpp
+path = C:/app/Administrator/product/11.2.0/client_1
+INCLUDEPATH += $$path/oci/include
+win32:LIBS += -L$$path/oci/lib/msvc -loci
+```
+- psql.pro文件内容下面加上如下代码。
+```cpp
+path = "C:/Program Files/PostgreSQL/13"
+INCLUDEPATH += $$path/include
+win32:LIBS += -L$$path/lib -llibpq
+```
+- 以上写法同时支持mingw和msvc，其他系统编译过程也是类似。编译完成后默认会在你当前源码所在盘符的根目录下，会出现plugins目录，里面sqldrivers目录下就是对应编译生成好的插件动态库。
+- 默认oracle的插件驱动代码是按照oracle12的函数写的，如果链接的是oracle11，则需要改动两行代码才能编译成功。打开qsql_oci.cpp文件大概在1559行代码左右，有个OCIBindByPos2函数改成OCIBindByPos，下面还有一行bindColumn.lengths改成(ub2*)bindColumn.lengths。
+
+230. 关于Qt数据库的一些冷知识。
+- Qt即支持库的形式直接和数据库通信，也支持ODBC数据源的形式和各种数据库通信，这样就涵盖了所有的情况。
+- Qt数据库程序打包发布，所有前提：注意区分32/64位，你的程序是32位的就必须带上32位的库，64位的必须带上64位的库，这点Qt的库也是这个要求。mysql发布最简单，带上一个mysql的动态库文件就行（windows上的是libmysql.dll），非常简单。sqlserver不用带，因为是微软的亲儿子，一般操作系统自带。postgres需要带上libpq.dll、libintl-8.dll、libiconv-2.dll、libeay32.dll、ssleay32.dll这几个文件就行。oracle需要带上oci.dll、oraociei11.dll（这个文件很大有130MB+），如果不行建议直接安装个oracle client客户端软件，然后对应bin目录设置到环境变量就好。
+- 打包发布后测试下来，发现32位的程序也可以正常连接64位的mysql，64位的程序也可以正常连接32位的mysql，因此判断只要和程序的库的位数一致就行（编译的时候也是这个规则，32位的Qt程序编译数据库插件也要用32位的数据库链接库。），不需要和具体的数据库的位数一致，测试过mysql、sqlserver、postgresql数据库都是类似规则。
+- 大量测试对比下来，通过odbc数据源的方式和直连数据库的方式批量插入大量数据记录，直连方式速度更快，约5%左右，所以建议尽量采用此方式，是在没有此方式的环境才采用odbc数据源的方式，Qt默认自带odbc数据库插件。
+- mysql、postgresql数据库在执行sql脚本的时候，会自动将表名和字段名全部转成小写，oracle全部转成大写，这就导致使用QSqlTableModel调用setTable设置数据库表名的时候，一定要和数据库中的表名一致，区分大小写，mysql数据库默认配置设置的不区分大小写所以没有这个问题，所以就是在对postgresql和oracle数据库的时候一定要注意，本人就是在这里卡了很久，差点要把这巨大的屎盆扣在Qt的BUG上。
+```cpp
+void DbHelper::bindTable(const QString &dbType, QSqlTableModel *model, const QString &table)
+{
+    //postgresql全部小写,oracle全部大写,这两个数据库严格区分表名字段名的大小写卧槽
+    QString flag = dbType.toUpper();
+    if (flag == "POSTGRESQL") {
+        model->setTable(table.toLower());
+    } else if (flag == "ORACLE") {
+        model->setTable(table.toUpper());
+    } else {
+        model->setTable(table);
+    }
+}
+```
+- Qt支持不指定数据库名打开数据库，因为有时候是要在连接数据库服务器后，执行sql语句创建数据库。数据库都还没存在怎么连接呢，测试发现sqlite、mysql、sqlserver都支持这个特性。
+```cpp
+QSqlDatabase database = QSqlDatabase::addDatabase("QMYSQL");
+//database.setDatabaseName("iotsystem");
+database.setHostName("127.0.0.1");
+database.setPort(3306);
+database.setUserName("root");
+database.setPassword("root");
+qDebug() << TIMEMS << database.open() << database.lastError().text();
+QString sql = "CREATE DATABASE iotsystem";
+QSqlQuery query(database);
+query.exec(sql);
+```
+
+### 24：231-240
 
 ## 2 升级到Qt6
 ### 00：直观总结

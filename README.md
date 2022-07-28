@@ -1831,7 +1831,7 @@ INCLUDEPATH += $$PWD/ui
 //加上上面这行，在使用头文件的时候可以直接 include "form.h"，没有加则需要 include "ui/form.h"。
 ```
 
-168. 在网络通信中，无论是tcp客户端还是udp客户端，其实都是可以绑定网卡IP和端口的，很多人只知道服务端可以指定网卡监听端口。客户端如果没有绑定通信端口则由客户端所在的操作系统随机递增分配的，这里为啥这么强调，因为无数人，甚至不乏一些多年经验的新时代农名工，以为客户端的端口是服务端分配的，因为他们看到在服务端建立连接后可以打印出不同的端口号。网络通信的双方自己决定自己要用什么端口，服务器端只能决定自己监听的是哪个端口，不能决定客户端的端口，同理客户端也只能决定自己的端口。端口随机分配一般是按照顺序递增的，比如先是45110端口，连接重新建立就用45111端口，只要端口没被占用就这样递增下去，所以很多人会问是否可以复用一些端口，不然端口一直这样频繁的分配下去不妥，甚至有些特定的场景和需求也是会要求客户端绑定网卡和端口来和服务器通信的。
+168. 在网络通信中，无论是tcp客户端还是udp客户端，其实都是可以绑定网卡IP和端口的，很多人只知道服务端可以指定网卡监听端口。客户端如果没有绑定通信端口则由客户端所在的操作系统随机递增分配的，这里为啥这么强调，因为无数人，甚至不乏一些多年经验的新时代农民工，以为客户端的端口是服务端分配的，因为他们看到在服务端建立连接后可以打印出不同的端口号。网络通信的双方自己决定自己要用什么端口，服务器端只能决定自己监听的是哪个端口，不能决定客户端的端口，同理客户端也只能决定自己的端口。端口随机分配一般是按照顺序递增的，比如先是45110端口，连接重新建立就用45111端口，只要端口没被占用就这样递增下去，所以很多人会问是否可以复用一些端口，不然端口一直这样频繁的分配下去不妥，甚至有些特定的场景和需求也是会要求客户端绑定网卡和端口来和服务器通信的。
 ```cpp
 //tcp客户端
 QTcpSocket *socket = new QTcpSocket(this);
@@ -3184,12 +3184,12 @@ win32:LIBS += -L$$path/lib -llibpq
 - 以上写法同时支持mingw和msvc，其他系统编译过程也是类似。编译完成后默认会在你当前源码所在盘符的根目录下，会出现plugins目录，里面sqldrivers目录下就是对应编译生成好的插件动态库。
 - 默认oracle的插件驱动代码是按照oracle12的函数写的，如果链接的是oracle11，则需要改动两行代码才能编译成功。打开qsql_oci.cpp文件大概在1559行代码左右，有个OCIBindByPos2函数改成OCIBindByPos，下面还有一行bindColumn.lengths改成(ub2*)bindColumn.lengths。
 
-230. 关于Qt数据库的一些冷知识。
+230. 关于Qt数据库开发的一些冷知识。
 - Qt即支持库的形式直接和数据库通信，也支持ODBC数据源的形式和各种数据库通信，这样就涵盖了所有的情况。
 - Qt数据库程序打包发布，所有前提：注意区分32/64位，你的程序是32位的就必须带上32位的库，64位的必须带上64位的库，这点Qt的库也是这个要求。mysql发布最简单，带上一个mysql的动态库文件就行（windows上的是libmysql.dll），非常简单。sqlserver不用带，因为是微软的亲儿子，一般操作系统自带。postgres需要带上libpq.dll、libintl-8.dll、libiconv-2.dll、libeay32.dll、ssleay32.dll这几个文件就行。oracle需要带上oci.dll、oraociei11.dll（这个文件很大有130MB+），如果不行建议直接安装个oracle client客户端软件，然后对应bin目录设置到环境变量就好。
 - 打包发布后测试下来，发现32位的程序也可以正常连接64位的mysql，64位的程序也可以正常连接32位的mysql，因此判断只要和程序的库的位数一致就行（编译的时候也是这个规则，32位的Qt程序编译数据库插件也要用32位的数据库链接库。），不需要和具体的数据库的位数一致，测试过mysql、sqlserver、postgresql数据库都是类似规则。
 - 大量测试对比下来，通过odbc数据源的方式和直连数据库的方式批量插入大量数据记录，直连方式速度更快，约5%左右，所以建议尽量采用此方式，是在没有此方式的环境才采用odbc数据源的方式，Qt默认自带odbc数据库插件。
-- mysql、postgresql数据库在执行sql脚本的时候，会自动将表名和字段名全部转成小写，oracle全部转成大写，这就导致使用QSqlTableModel调用setTable设置数据库表名的时候，一定要和数据库中的表名一致，区分大小写，mysql数据库默认配置设置的不区分大小写所以没有这个问题，所以就是在对postgresql和oracle数据库的时候一定要注意，本人就是在这里卡了很久，差点要把这巨大的屎盆扣在Qt的BUG上。
+- 不同数据库在执行sql脚本的时候，会自动将表名或者字段名转成大写或小写，mysql会将表名转成小写、postgresql会将表名和字段名转成小写、oracle会将表名和字段名转成大写。这就导致使用QSqlTableModel调用setTable设置数据库表名的时候，一定要和数据库中的表名一致，区分大小写，所以就是在对postgresql和oracle数据库的时候一定要注意，本人就是在这里卡了很久，差点要把这巨大的屎盆扣在Qt的BUG上。
 ```cpp
 void DbHelper::bindTable(const QString &dbType, QSqlTableModel *model, const QString &table)
 {
@@ -3204,21 +3204,75 @@ void DbHelper::bindTable(const QString &dbType, QSqlTableModel *model, const QSt
     }
 }
 ```
-- Qt支持不指定数据库名打开数据库，因为有时候是要在连接数据库服务器后，执行sql语句创建数据库。数据库都还没存在怎么连接呢，测试发现sqlite、mysql、sqlserver都支持这个特性。
+- Qt支持不指定数据库名打开数据库，因为有时候是要在连接数据库服务器后，执行sql语句创建数据库。数据库都还没存在怎么连接呢，测试发现sqlite、mysql、sqlserver、postgresql都支持这个特性。在删除和创建数据库的前提是该数据库没有被其他程序占用，比如其他程序已经打开了该数据库则会执行失败。这里我就折磨过很多次，为什么执行失败呢？后面发现第三方数据库工具已经打开了该数据库，把工具关掉就ok了。
 ```cpp
 QSqlDatabase database = QSqlDatabase::addDatabase("QMYSQL");
-//database.setDatabaseName("iotsystem");
+//database.setDatabaseName("dbtool");
 database.setHostName("127.0.0.1");
 database.setPort(3306);
 database.setUserName("root");
 database.setPassword("root");
-qDebug() << TIMEMS << database.open() << database.lastError().text();
-QString sql = "CREATE DATABASE iotsystem";
-QSqlQuery query(database);
-query.exec(sql);
+
+if (database.open()) {
+    QSqlQuery query(database);
+    qDebug() << "删除数据库" << query.exec("drop database dbtool");
+    qDebug() << "创建数据库" << query.exec("create database dbtool");
+    if (query.exec("select * from userinfo")) {
+        while (query.next()) {
+            qDebug() << "查询数据库" << query.value(0);
+        }
+    }
+} else {
+     qDebug() << "打开数据库" << database.lastError().text();
+}
 ```
+- 用QSqlQueryModel+QTableView显示数据，int类型的数据，如果超过100万，会变成科学计数显示，这就很恼火了，肯定不是自己想要的结果。找遍网络搜索，终于找到一个同样问题的哥们，需要对这一列加个空的委托就行。后面发现空委托也不行，超过1000万条又屌样了，需要终极大法重载数据模型显示。
+```cpp
+ui->tableView->setItemDelegateForColumn(0, new QItemDelegate);
+
+//下面是终极大法
+QVariant SqlQueryModel::data(const QModelIndex &index, int role) const
+{
+    QVariant value = QSqlQueryModel::data(index, role);
+    //超过100万的数值会被科学计数显示需要这里转成字符串显示
+    if (role == Qt::DisplayRole) {
+        int result = value.toInt();
+        if (result >= 1000000) {
+            value = QString::number(result);
+        }
+    }
+    return value
+}
+```
+- mysql数据库有多种数据库引擎，其中MyIsam不支持数据库事务，默认一般是这个引擎，所以当你使用Qt中的transaction方法后commit提交时候，会发现不成功，其实事实上又是成功的，去数据库里面查看对应的结果又是正确的。有两个办法，第一就是将数据库引擎改成InnoDB，第二就是在提交后做个错误判断 if (database.commit() || !database.lastError().isValid()) ，错误不可用也说明是成功的。
+- 如果采用odbc数据源通信，则只需设置数据库名称setDatabaseName、设置用户名称setUserName、设置用户密码setPassword这三个参数即可，因为数据源配置的时候就已经设置好对应的主机地址和端口以及关联的数据库名称，所以在用odbc数据源通信的时候只需要再次验证用户信息即可。这里特别要注意的是setDatabaseName设置数据库名称要填写数据源配置的名称。
+- 经过大量的对比测试，包括插入、删除、批量、查询、分页等操作，千万量级数据，在Qt数据库部分响应速度这块，友好度排名依次是 sqlite > postgresql > oracle > mysql > odbc 。千万量级以上是 postgresql > oracle > mysql > sqlite > odbc 。亿级别以上是 oracle > postgresql > 其他。以上测试均建立在初学者水平基础上，至于分库分表、联合查询、缓存、内存数据库等各种高级知识点没用上。
+- mysql主要有两个版本，mysql5.7和mysql8，官方说是8比5要快很多，个人测试下来，5.7比8要快很多，无论是查询，还是批量插入数据，不知道为何，网上搜索的也是这个结果（[https://www.coder4.com/archives/7596](https://www.coder4.com/archives/7596)），大家都说8慢了很多。
+- mysql有个分支叫mariadb，比mysql更纯正，据说各方面都吊打mysql（[https://blog.csdn.net/x275920/article/details/123847792](https://blog.csdn.net/x275920/article/details/123847792)），个人对比测试下来也是确实批量插入和查询性能要好不少，并且完全兼容mysql，甚至库文件直接重命名也可以直接使用，比如将libmariadb.dll改成libmysql.dll可以直接使用，而且体积还小了八倍，这个好，发布的时候又少了好几兆。
+- 如果是Qt+mysql程序，发布的时候带的库版本要和插件对应数据库版本一致，否则可能没有数据库事务特性，database.driver()->hasFeature(QSqlDriver::Transactions)为假。
+- QSqlTableModel封装的非常好，并不会一次性加载所有数据，而是随着滚动条的拉动加载需要的数据，测试一亿条的表，速度非常快，和几千条的表速度一样。
+- 在连接网络数据库的时候，如果你本地网络设置了代理，比如使用了代理上github等网站，就会发现Qt的数据库程序连不上，你需要设置下不使用本地代理设置 QNetworkProxyFactory::setUseSystemConfiguration(false) 。这个地方如果不仔细会找问题找到你怀疑人生。
 
 ### 24：231-240
+231. 关于c++中继承多态virtual和override的几点总结。
+- 子类可以直接使用基类中的protected下的变量和函数。
+- 基类函数没加virtual，子类有相同函数，实现的是覆盖。用基类指针调用时，调用到的是基类的函数；用子类指针调用时，调用到的是子类的函数。
+- 基类函数加了virtual时，实现的时重写。用基类指针或子类指针调用时，调用到的都是子类的函数。
+- 函数加上override，强制要求子类相同函数需要是虚函数，而且必须重新实现，否则会编译报错。
+- 子类的virtual可加可不加，建议加override不加virtual。
+- 基类中的纯虚函数（virtual void play() = 0;）在基类中无需在cpp中实现，但是必须在子类实现，否则编译报错。
+- 继承多态最大的好处就是提炼共性，将通用的变量和方法信号等，全部放在基类，子类负责实现自己需要的特殊的部分即可。
+
+232. 关于 QTableView、QTableWidget 悬停整行选中效果，网上大多数都是针对 QTableWidget 的实现，针对 QTableView 的也都是通过委托或者重新painter实现。
+- 前提：设置选中单元格自动选中整行，tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+- 安装事件过滤器，识别到当前坐标处的数据模型，然后设置当前模型为鼠标悬停处的模型即可。这个取巧的办法可以节省大量的工作。
+- 无论 QTableView、QTableWidget 都用此方法都可以。
+
+233. Qt中如何避免和第三方的signals、slots等关键字冲突。
+- 第一步：在pro中加上 CONFIG += no_keywords 。
+- 第二步：项目中之前所有的 signals 改成 Q_SIGNALS，slots 改成 Q_SLOTS 等。
+- 第三步：彻底重新编译项目，这样就关键字不冲突了。
+
 
 ## 2 升级到Qt6
 ### 00：直观总结
@@ -3535,6 +3589,15 @@ QModelIndex indexChild = model->index(i, 0, index);
 #else
     QPixmap pixmap = QPixmap::grabWidget(widget->winId());
 #endif
+```
+
+45. QProcess中的start方法以前直接支持传入完整的命令，到了Qt6严格要求必须拆分后面的参数。
+```cpp
+//Qt6以前支持执行完整命令
+QProcess p;
+p.start("wmic cpu get Name");
+//Qt6需要改成下面的方法，此方法也兼容Qt4、5、6
+p.start("wmic", QStringList() << "cpu" << "get" << "Name");
 ```
 
 ## 3 Qt安卓经验

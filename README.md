@@ -3273,6 +3273,73 @@ QVariant SqlQueryModel::data(const QModelIndex &index, int role) const
 - 第二步：项目中之前所有的 signals 改成 Q_SIGNALS，slots 改成 Q_SLOTS 等。
 - 第三步：彻底重新编译项目，这样就关键字不冲突了。
 
+234. pro中区分不同的操作系统及硬件平台。
+```cpp
+win32 {}
+unix {}
+//Qt5可以直接用 linux{} Qt4切记需要用 unix:!maxc{}
+unix:!maxc{}
+linux {}
+maxc {}
+android {}
+wasm {}
+
+//表示64位平台
+contains(QT_ARCH, x86_64) {}
+//表示arm平台
+contains(QT_ARCH, arm) || contains(QT_ARCH, arm64) {}
+//万能办法直接切换到套件打印下 QT_ARCH 看下什么字符
+message($$QT_ARCH)
+```
+
+235. 在显示视频画面位置的时候，一般会有三种机制作为参考，自动模式(超过则等比例缩放否则原图)、普通模式(任何尺寸都等比例缩放)、填充模式(任何尺寸都拉伸填充)。Qt中图片类QImage都提供了缩放策略的参数设置，比如Qt::KeepAspectRatio表示等比例缩放，但很多时候我们需要的是设置控件的大小，其实QSize类就提供了对应的方法scale专门解决这个问题，这个方法很容易被忽视。
+```cpp
+//缩放显示模式
+enum ScaleMode {
+    //自动模式(超过则等比例缩放否则原图)
+    ScaleMode_auto = 0,
+    //普通模式(任何尺寸都等比例缩放)
+    ScaleMode_normal = 1,
+    //填充模式(任何尺寸都拉伸填充)
+    ScaleMode_fill = 2
+};
+
+//传入图片尺寸和窗体区域及边框大小返回居中区域
+static QRect getCenterRect(const QSize &imageSize, const QRect &widgetRect, int borderWidth = 2, const ScaleMode &scaleMode = ScaleMode_auto)
+{
+    QSize newSize = imageSize;
+    QSize widgetSize = widgetRect.size() - QSize(borderWidth * 2, borderWidth * 2);
+
+    if (scaleMode == ScaleMode_auto) {
+        if (newSize.width() > widgetSize.width() || newSize.height() > widgetSize.height()) {
+            newSize.scale(widgetSize, Qt::KeepAspectRatio);
+        }
+    } else if (scaleMode == ScaleMode_normal) {
+        newSize.scale(widgetSize, Qt::KeepAspectRatio);
+    } else {
+        newSize = widgetSize;
+    }
+
+    int x = widgetRect.center().x() - newSize.width() / 2;
+    int y = widgetRect.center().y() - newSize.height() / 2;
+    return QRect(x, y, newSize.width(), newSize.height());
+}
+
+//传入图片尺寸和窗体尺寸及缩放策略返回合适尺寸的图片
+static void getScaledImage(QImage &image, const QSize &widgetSize, const ScaleMode &scaleMode = ScaleMode_auto, bool fast = true)
+{
+    Qt::TransformationMode mode = fast ? Qt::FastTransformation : Qt::SmoothTransformation;
+    if (scaleMode == ScaleMode_auto) {
+        if (image.width() > widgetSize.width() || image.height() > widgetSize.height()) {
+            image = image.scaled(widgetSize, Qt::KeepAspectRatio, mode);
+        }
+    } else if (scaleMode == ScaleMode_normal) {
+        image = image.scaled(widgetSize, Qt::KeepAspectRatio, mode);
+    } else {
+        image = image.scaled(widgetSize, Qt::IgnoreAspectRatio, mode);
+    }
+}
+```
 
 ## 2 升级到Qt6
 ### 00：直观总结

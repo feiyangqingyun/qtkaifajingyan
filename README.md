@@ -3341,6 +3341,72 @@ static void getScaledImage(QImage &image, const QSize &widgetSize, const ScaleMo
 }
 ```
 
+236. 关于在头文件中定义函数使用static关键字的血的教训。
+- 有时候我们需要将一些常用函数写在一个文件中供很多地方调用，如果写的是 int doxxx{} 这种，在你多个地方引用的时候，肯定会编译报错提示 “重复定义” 的错误。
+- 此时你需要在函数前面加上static关键字，变成 static int doxxx{} 这种，能够正常编译和运行，以为一切万事大吉，还是我太年轻。
+- 如果仅仅是一个类中在使用，或者函数中没有静态变量，也不会出问题，问题就在static修饰的函数在每个引入头文件的时候都会拷贝一份，导致函数里面的static静态变量会重复初始化，这样就不正确了。
+- 为了解决这个问题，终极办法就是在外面套个类，所有的函数和变量放到类中，完美，再也不会睡不着了，真香。
+- 关于C/C++ 中的static关键字，建议大家参考这篇文章写得 https://zhuanlan.zhihu.com/p/37439983，醍醐灌顶。
+```cpp
+//文件名 test.h
+
+//下面这个函数 编译报错提示 “重复定义”
+void test() {}
+
+//下面4个函数在每个引入头文件的时候都会被拷贝一份
+static void test1() {}
+inline void test2() {}
+static inline void test3() {}
+inline static void test4() {}
+
+//保证没问题的写法
+class tt {
+    void test() {}
+    static void test1() {}
+    inline void test2() {}
+    static inline void test3() {}
+    inline static void test4() {}
+}
+```
+
+237. 在数据库查询中，一般会建立索引以便加快查询速度，比如常用的条件字段作为索引字段。但是有些时候如果查询语句没写好，就算where中有索引字段也会引起全表扫描，也就是说根本没用上索引，这点要积极的避免。
+- 模糊查询like，全模糊 like '%...%' 和左模糊 like '%...' 无法直接使用索引，右模糊查询 like '...%' 会使用索引。
+- 查询条件中含有is null的select语句执行慢，is not null 时永远不会使用索引，一般数据量大的表不要用is null查询。
+- 不等于操作符 <> 和 != 会限制索引，引起全表扫描，即使比较的字段上有索引。
+- where子句中比较的两个条件，一个有索引，一个没索引，使用or则会引起全表扫描。
+- select count(*) from table 这样不带任何条件的count会引起全表扫描。
+- in 和 not in 也要慎用，否则会导致全表扫描，能用 between 就不要用 in。
+- 用 >= 替代 >，比如 高效写法：select * from table where id >= 4，低效写法：select * from table where id > 3。
+- 如果表数据量很小，比如就几千行，请忽略上述警告，加不加索引问题不大，甚至某些时候加索引反而大大增加了数据库文件的体积，影响更新数据库的速度。
+
+238. 由于Qt在不断的更新换代，各种组件轮子也在增加、拆分、调整等，所以我们在编写项目的时候，如果有版本兼容的问题，就需要在pro项目文件和代码文件中做对应的判断处理。根据多年的经验总结，一个万能的办法就是在pro中增加一个DEFINES标识，然后根据这个DEFINES标识引入对应模块，最后在代码中通过#ifdef判断标识执行对应代码。经过这样倒腾几下你的代码可以在低版本和高版本编译运行。
+```cpp
+//pro pri 文件
+//下面表示主版本>4子版本>6 即版本>=5.7
+greaterThan(QT_MAJOR_VERSION, 4) {
+greaterThan(QT_MINOR_VERSION, 6) {
+DEFINES += qchart
+}}
+
+//由于Qt6的发布以及以后Qt7、Qt8等，光有上面这个判断是不够的的
+//下面表示Qt主版本>5 即版本>=6.0
+greaterThan(QT_MAJOR_VERSION, 5) {
+DEFINES += qchart
+}
+
+//判断有定义则导入对应模块
+contains(DEFINES, qchart) {
+QT += charts
+}
+
+//代码文件
+#ifdef qchart
+//要执行的代码
+#endif
+```
+
+239. 
+
 ## 2 升级到Qt6
 ### 00：直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
@@ -3665,6 +3731,19 @@ QProcess p;
 p.start("wmic cpu get Name");
 //Qt6需要改成下面的方法，此方法也兼容Qt4、5、6
 p.start("wmic", QStringList() << "cpu" << "get" << "Name");
+```
+
+46. 在qss中对属性的枚举值写法到了Qt6换成了数值表示（需要翻阅枚举值的定义找到对应的值），这个改动挺大，切记需要切换过来，而且这种写法不兼容Qt5。
+```cpp
+//Qt4/5 通过样式表设置标签右上角对齐
+ui->label->setStyleSheet("qproperty-alignment:AlignRight;");
+//Qt4/5 通过样式表设置标签居中对齐
+ui->label->setStyleSheet("qproperty-alignment:AlignHCenter|AlignVCenter;");
+
+//Qt6 通过样式表设置标签右上角对齐 翻阅 AlignRight 的枚举值=2
+ui->label->setStyleSheet("qproperty-alignment:2;");
+//Qt6 通过样式表设置标签居中对齐 翻阅 AlignHCenter|AlignVCenter 的枚举值=0x04|0x80=0x84=132
+ui->label->setStyleSheet("qproperty-alignment:132;");
 ```
 
 ## 3 Qt安卓经验

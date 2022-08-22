@@ -3427,6 +3427,7 @@ QByteArray data = socket->readAll();
 data = qUncompress(data);
 ```
 
+### 24：241-250
 241. QString类是我个人认为Qt所有类中的精华，封装的无可挑剔。内置了各种进制数据的转换，比如将数据转成10进制、16进制显示，或者将10进制、16进制数据转成字符串显示。这里很容易忽略的一点就是，很多人以为就是支持2进制、10进制、16进制之类的，其实不是的，里面实现了 2-36 之间的任意进制转换，可以自行翻阅源码查看实现。
 ```cpp
 char data[2];
@@ -3443,7 +3444,7 @@ qDebug() << "10进制显示" << QString::number(data[0]) << QString::number(data
 qDebug() << "16进制显示" << QString::number(data[0], 16) << QString::number(data[1], 16);
 ```
 
-242. QtSql模块封装了各种数据库操作，使得Qt操作各种数据库非常的简单，支持各种各样的数据库，最基础的ODBC方式也支持连接到各种数据库。
+242. QtSql模块封装了各种数据库操作，使得Qt操作各种数据库非常的简单，支持各种各样的数据库，最基础的ODBC方式也支持连接到各种数据库。有个很容易忽视的要点就是在连接sqlserver数据库的时候，你会发现第三方的数据库工具也没有配置数据库，但是可以连接成功，而在Qt中的常规数据库连接写法却不行，那是因为你代码写错了，要用另外一种写法。
 ```cpp
 //连接sqlite数据库
 QSqlDatabase database = QSqlDatabase::addDatabase("QSQLITE");

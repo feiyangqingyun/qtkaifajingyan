@@ -3405,7 +3405,106 @@ QT += charts
 #endif
 ```
 
-239. 
+239. 在使用QChart图表控件的时候，你会发现默认的边距好大，很多时候我们希望能显示更多的信息，紧凑型的界面，所以需要设置边距。
+```cpp
+//设置背景区域圆角角度
+chart->setBackgroundRoundness(0);
+//设置内边界边距
+chart->setMargins(QMargins(0, 0, 0, 0));
+//设置外边界边距
+chart->layout()->setContentsMargins(0, 0, 0, 0);
+```
+
+240. Qt内置了数据压缩和解压的功能，如果遇到图片、音频数据、文件等转base64传输这种，采用qCompress压缩后大概可以节省30%的数据传输量，压缩性能可观。前提是双方都是Qt程序，因为收到数据的时候还要用qUncompress解压出来，成对出现的。
+```cpp
+//发送的时候压缩下数据
+QByteArray buffer = "...";
+buffer = qCompress(buffer);
+socket->write(buffer);
+
+//收到数据后务必记得先解压再使用
+QByteArray data = socket->readAll();
+data = qUncompress(data);
+```
+
+241. QString类是我个人认为Qt所有类中的精华，封装的无可挑剔。内置了各种进制数据的转换，比如将数据转成10进制、16进制显示，或者将10进制、16进制数据转成字符串显示。这里很容易忽略的一点就是，很多人以为就是支持2进制、10进制、16进制之类的，其实不是的，里面实现了 2-36 之间的任意进制转换，可以自行翻阅源码查看实现。
+```cpp
+char data[2];
+data[0] = 0x10;
+data[1] = 25;
+
+//输出 2进制显示 "10000" "11001"
+qDebug() << "2进制显示" << QString::number(data[0], 2) << QString::number(data[1], 2);
+//输出 5进制显示 "31" "100"
+qDebug() << "5进制显示" << QString::number(data[0], 5) << QString::number(data[1], 5);
+//输出 10进制显示 "16" "25"
+qDebug() << "10进制显示" << QString::number(data[0]) << QString::number(data[1]);
+//输出 16进制显示 "10" "19"
+qDebug() << "16进制显示" << QString::number(data[0], 16) << QString::number(data[1], 16);
+```
+
+242. QtSql模块封装了各种数据库操作，使得Qt操作各种数据库非常的简单，支持各种各样的数据库，最基础的ODBC方式也支持连接到各种数据库。
+```cpp
+//连接sqlite数据库
+QSqlDatabase database = QSqlDatabase::addDatabase("QSQLITE");
+//只需要指定数据库文件的绝对路径即可
+database.setDatabaseName("d:/test.db");
+
+//连接mysql数据库
+QSqlDatabase database = QSqlDatabase::addDatabase("QMYSQL");
+database.setDatabaseName("test");
+database.setHostName("127.0.0.1");
+database.setPort(3306);
+database.setUserName("root");
+database.setPassword("root");
+
+//连接到sqlserver数据库
+//方式一通过odbc数据源，前提是必须配置好数据源。
+QSqlDatabase database = QSqlDatabase::addDatabase("QODBC");
+database.setDatabaseName("数据源名称");
+database.setUserName("sa");
+database.setPassword("123456");
+
+//方式二通过驱动字符串，无需配置数据源。设置数据库名称就带了主机地址端口和用户信息所有后面这些设置不需要，强烈建议推荐此方法。
+QSqlDatabase database = QSqlDatabase::addDatabase("QODBC");
+QStringList list;
+list << QString("DRIVER={%1}").arg("SQL SERVER");
+list << QString("SERVER=%1,%2").arg("127.0.0.1").arg(1433);
+list << QString("DATABASE=%1").arg("test");
+list << QString("UID=%1").arg("sa");
+list << QString("PWD=%1").arg("123456");
+database.setDatabaseName(list.join(";"));
+
+//连接到postgresql数据库
+QSqlDatabase database = QSqlDatabase::addDatabase("QPSQL");
+database.setDatabaseName("test");
+database.setHostName("127.0.0.1");
+database.setPort(5432);
+database.setUserName("postgres");
+database.setPassword("123456");
+
+//连接到oracle数据库
+QSqlDatabase database = QSqlDatabase::addDatabase("QOCI");
+database.setDatabaseName("test");
+database.setHostName("127.0.0.1");
+database.setPort(1521);
+database.setUserName("system");
+database.setPassword("123456");
+
+//连接到人大金仓kingbase数据库（内核就是postgresql）
+QSqlDatabase database = QSqlDatabase::addDatabase("QPSQL");
+database.setDatabaseName("test");
+database.setHostName("127.0.0.1");
+database.setPort(54321);
+database.setUserName("SYSTEM");
+database.setPassword("123456");
+
+//通过odbc数据源连接到各种数据库，前提是必须配置好数据源，只需要设置数据库名称为数据源的名称，填写用户名和密码就行，其他的主机地址和端口不需要。
+QSqlDatabase database = QSqlDatabase::addDatabase("QODBC");
+database.setDatabaseName("数据源名称");
+database.setUserName("system");
+database.setPassword("123456");
+```
 
 ## 2 升级到Qt6
 ### 00：直观总结

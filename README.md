@@ -468,7 +468,14 @@ connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
 loop.exec();
 ```
 
-47. 多种预定义变量 #if (defined webkit) || (defined webengine)，去掉生成空的debug和release目录，在pro文件中加一行 CONFIG -= debug_and_release。
+47. Qt中也支持多种预定义变量组合判断，去掉生成空的debug和release目录，在pro文件中加一行 CONFIG -= debug_and_release。
+```cpp
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+#endif
+
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+#endif
+```
 
 48. 新版的Qtcreator增强了语法检查，会弹出很多警告提示等，可以在插件列表中关闭clang打头的几个即可，Help》About Plugins。也可以设置代码检查级别，Tools》Options 》C++ 》Code Model。
 
@@ -511,7 +518,7 @@ void Widget::paintEvent(QPaintEvent *)
 
 55. 在使用QFile的过程中，不建议频繁的打开文件写入然后再关闭文件，比如间隔5ms输出日志，IO性能瓶颈很大，这种情况建议先打开文件不要关闭，等待合适的时机比如析构函数中或者日期变了需要重新变换日志文件的时候关闭文件。不然短时间内大量的打开关闭文件会很卡，文件越大越卡。
 
-56. 在很多网络应用程序，需要自定义心跳包来保持连接，不然断电或者非法关闭程序，对方识别不到，需要进行超时检测，但是有些程序没有提供心跳协议，此时需要启用系统层的保活程序，此方法适用于TCP连接。
+56. 在很多网络应用程序，需要自定义心跳包来保持连接，不然断电或者非法关闭程序，对方不能立即识别或者要很久（一般至少要30s）才能识别到，需要进行超时检测，但是有些程序没有提供心跳协议，此时需要启用系统层的保活程序，此方法适用于TCP连接。
 ```cpp
 int fd = tcpSocket->socketDescriptor();
 int keepAlive = 1;      //开启keepalive属性,缺省值:0(关闭)
@@ -932,7 +939,7 @@ private:
 //构造函数关联信号槽
 connect(this, SIGNAL(sig_test(int, double)), this, SLOT(slot_test(int, double)));
 
-//单击按钮触发信号和槽,这里是同时举例信号槽都可以
+//单击按钮触发信号和槽，这里是同时举例信号槽都可以
 void MainWindow::on_pushButton_clicked()
 {
     QMetaObject::invokeMethod(this, "sig_test", Q_ARG(int, 66), Q_ARG(double, 66.66));
@@ -946,7 +953,7 @@ void MainWindow::slot_test(int type, double value)
     qDebug() << type << value;
 }
 
-//会打印 99.99
+//会打印 99 99.99
 void MainWindow::fun_test(int type, double value)
 {
     qDebug() << type << value;
@@ -3427,7 +3434,7 @@ QByteArray data = socket->readAll();
 data = qUncompress(data);
 ```
 
-### 24：241-250
+### 25：241-250
 241. QString类是我个人认为Qt所有类中的精华，封装的无可挑剔。内置了各种进制数据的转换，比如将数据转成10进制、16进制显示，或者将10进制、16进制数据转成字符串显示。这里很容易忽略的一点就是，很多人以为就是支持2进制、10进制、16进制之类的，其实不是的，里面实现了 2-36 之间的任意进制转换，可以自行翻阅源码查看实现。
 ```cpp
 char data[2];
@@ -3505,6 +3512,241 @@ QSqlDatabase database = QSqlDatabase::addDatabase("QODBC");
 database.setDatabaseName("数据源名称");
 database.setUserName("system");
 database.setPassword("123456");
+```
+
+243. 如果信号槽关联函数 connect(obj, SIGNAL(), this, SLOT()); 执行多次则会重复关联（意味着会执行多次），而取消信号槽关联函数 disconnect(obj, SIGNAL(), this, SLOT()); 只需要执行一次就可以将之前关联的（哪怕是重复关联过）全部清除。很多初学者会遇到为什么点一下居然执行多次的原因就在这里，很可能代码中写了 on_objName_clicked(); 这种Qt内置自动生成关联的槽函数，然后自己又在代码中调用 connect 绑定了一次，导致重复绑定。提个建议：其实Qt可以过滤下如果是完全一样的绑定则认为是一个而不是多个。
+```cpp
+//为了保证永远只有一个关联可以在关联前面执行一次取消关联
+disconnect(obj, SIGNAL(), this, SLOT());
+connect(obj, SIGNAL(), this, SLOT());
+
+//经过群里大佬提示，原来connect第五个参数填 UniqueConnection 就可以避免这个问题，按照官方文档说明这个参数会过滤重复的信号。
+connect(obj, SIGNAL(), this, SLOT(), Qt::UniqueConnection);
+```
+
+244. 通过对Qt自带Examples的源码研究你会发现，越往后的版本，越喜欢用智能指针QScopedPointer来定义对象，这样有个好处就是用的地方只管new就行，一直new下去，不用担心资源释放问题，智能指针会给你在合适的时机释放，相当于可以少些一行代码 xxx->deleteLater(); ，而且避免不必要的麻烦，不然很多地方你要判断 if (!xxx) 看下对象是否ok。
+```cpp
+QWidget *widget;
+//用的地方先new
+widget = new QWidget;
+//用完释放对象
+widget->deleteLater();  
+    
+//智能指针写法
+QScopedPointer<QWidget> widget;
+//只管new尽管new不用管释放
+widget.reset(new QWidget);
+```
+
+245. 如果控件中存在布局，在调用setLayout重新设置布局的时候，会提示 QWidget::setLayout: Attempting to set QLayout ... 之类的信息，说是已经存在了布局，需要删除之前的布局才能重新设置布局，按道理Qt推荐的是调用 layout()->deleteLater() 方法去删除对象，更安全，但是在这里不起作用，你需要用 delete layout() 来删除，着实奇怪。
+
+246. 在编写类中有时候需要对变量进行赋值和取值，这时候一般用 setxxx、getxxx 之类的函数进行处理，而且往往里面就一行代码，这时候你可能会思考为何不直接将变量改成public暴露出来使用，还可以省两个函数几行代码。其实用set get这样处理主要还是为了拓展性，比如后期如果需要对赋值进行过滤处理，或者该变量只允许读写中的一个，如果之前是直接使用的变量外，则使用的地方都要去修改规则，反而变得很糟糕。 参考文章 [https://blog.csdn.net/ChineseSoftware/article/details/122923485](https://blog.csdn.net/ChineseSoftware/article/details/122923485) 。
+
+247. 关于如何快速结束线程，调用terminate暴力结束容易出问题。一般来说我们都是采用标志位来结束线程，但是如果执行过程中的函数很耗时，或者在run中msleep休息的时间过久，容易导致要很长一段时间才能正确停止，此时可以考虑一个策略就是分割线程执行体，如果是函数体耗时可以在耗时的函数体中增加停止标志位的判断，使其快速跳出；如果是延时时间过久可以将延时时间拆分成多个小的时间轮片，每个小的休息间隔都判断停止标志位，这样也可以大大加快线程正常退出的速度而不用等待太久。
+```cpp
+void Thread::run()
+{
+    while (!stopped) {
+        doTask();
+
+        //下面这个延时太久导致退出很慢
+        //msleep(3000);
+
+        //特意每次做个小延时每次都去判断标志位等可以大大加快关闭速度
+        int count = 0;
+        while (!stopped) {
+            msleep(100);
+            count++;
+            //如果到了30次=30*100=3000毫秒也跳出
+            if (count == 30) {
+                break;
+            }
+        }  
+    }     
+    stopped = false;    
+}
+
+void Thread::doTask()
+{
+    while(1) {
+        if (stopped) {
+            return;
+        }
+
+        doTask1();
+        doTask2();
+    }    
+}
+```
+
+248. Qt中如果指定了同一个父类窗体，则控件都会覆盖在该父类窗体中，这就需要设置窗口小部件覆盖遮挡与层叠顺序。
+```cpp
+//Qt对有共同父类窗体的控件优化到了极致，下面生成了1000个widget才新增不到3mb的内存。
+for (int i = 0; i < 1000; ++i) {
+    QWidget *w = new QWidget(this);
+    w->setGeometry(0, 0, 100, 100);
+    w->show();
+}
+
+QWidget *w1, *w2, *w3;
+//将w1控件移到最前面相当于在该父窗体中置顶
+w1->raise();
+//将w1控件移到最后面相当于在该父窗体中置底
+w1->lower();
+//将w1控件移到w2控件下面
+w1->stackUnder(w2);
+```
+
+249. 当我们关闭窗体的时候，按道理来说都会执行对应窗体的析构函数 ~MainWindow() 之类的，这是理想状态，当你的窗体还弹出了子窗体，就算你关闭了主窗体，会发现子窗体依然在，而且根本没有去析构主窗体，对应的子窗体也没有设置 setParent ，通常情况下，我们都是希望关闭了主窗体，对应子窗体自动关闭，这个时候怎么办呢？你需要重载 closeEvent 拿到关闭消息，主动去把子窗体释放。
+```cpp
+class MainWindow : public QMainWindow
+{
+    Q_OBJECT
+
+public:
+    MainWindow(QWidget *parent = 0);
+    ~MainWindow();
+
+protected:
+    void closeEvent(QCloseEvent *);
+
+private slots:
+    void on_pushButton_clicked();
+
+private:
+    Ui::MainWindow *ui;
+    QLabel *lab;
+};
+
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow)
+{
+    ui->setupUi(this);
+    lab = new QLabel;
+    lab->resize(400, 300);
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+
+void MainWindow::closeEvent(QCloseEvent *)
+{
+    //先把子窗体释放
+    lab->deleteLater();
+}
+
+void MainWindow::on_pushButton_clicked()
+{
+    lab->show();
+}
+```
+
+250. 关于Qt中 sendEvent 和 postEvent 主动模拟发送鼠标键盘事件的几点说明。
+- sendEvent是阻塞式，代码会立即执行，支持栈空间和堆空间事件对象的发送（局部对象和new分配的对象）。
+- postEvent是非阻塞式，会发送到事件队列中等待处理，只支持栈堆空间事件对象的发送（new分配的对象）。
+- new分配的事件对象被处理后，会由Qt内部自动摧毁，不用担心。
+- 短时间内密集频繁的调用，推荐用postEvent，放入事件队列非常安全。否则用sendEvent很容易导致崩溃。
+```cpp
+//下面这个会立即执行
+QResizeEvent event(size(), size());
+QApplication::sendEvent(this, &event);
+
+//下面这个会立即执行
+QResizeEvent *event = new QResizeEvent(size(), size());
+QApplication::sendEvent(this, event);
+
+//下面这个不会报错但是也不会执行因为事件对象是局部变量
+QResizeEvent event(size(), size());
+QApplication::postEvent(this, &event);
+
+//下面的方式非常安全
+QResizeEvent *event = new QResizeEvent(size(), size());
+QApplication::postEvent(this, event);
+```
+
+251. 今天在一个头文件中，发现 #ifdef Q_OS_WIN #ifdef Q_CC_MSVC 之类的都失效了，搞得差点怀疑人生了。经历过之前类似的教训后，排查原来是没有提前引入 qglobal.h 头文件导致的。切记如果要使用Qt的东西，哪怕是最基础的标识宏定义 Q_OS_WIN 之类的，都要保证该前面至少包含了 qglobal.h ，否则都是失败的。很多人和我一样天真的以为编译器会自动处理。
+```cpp
+//必须要先引入这个头文件
+#include "qglobal.h"
+
+#ifdef Q_OS_WIN
+...
+#else
+...
+#endif
+
+#ifdef Q_CC_MSVC
+#pragma execution_character_set("utf-8")
+#endif
+```
+
+252. 有一个场景经常遇到，那就是在符合某个条件下，延时一段时间去执行一段代码，如果短时间内触发多次又不需要频繁执行，只需要执行一次就行。如果选择用QTimer::singleShot无法终止已经触发的，这个时候就要主动实例化一个单次定时器，每次调用前都停止之前的（只要是还没执行都会取消），完美解决。
+```cpp
+//QTimer::singleShot(1000, thread, SLOT(xxx()));
+
+static QTimer *timer = NULL;
+if (!timer) {
+    timer = new QTimer;
+    QObject::connect(timer, SIGNAL(timeout()), thread, SLOT(xxx()));
+    timer->setSingleShot(true);
+    timer->setInterval(1000);
+}
+timer->stop();
+timer->start();
+```
+
+253. 有时候我们发现控件设置透明后背景变成黑色，你可以尝试设置透明度值1而不是完全透明0，这样看起来是透明的但是又保留了窗体的特性。如果想要不应用系统阴影边框可以设置属性 w.setWindowFlags(w.windowFlags() | Qt::NoDropShadowWindowHint); 
+
+254. Qt中的事件过滤器相当于万能大法（终极秘密武器），尤其是对整个应用程序安装事件过滤器，则可以拿到所有的事件。比如可以拿到系统标题栏鼠标按下松开，对所有需要移动的无边框窗体统一拦截进行移动处理。个人建议不到万不得已不建议使用，有一定性能损耗，毕竟这个是从最初源头拦截事件，意味着所有的事件都会到这里过一遍。如果你在收到对应事件后还做了一定耗时的处理，很容易就卡主了UI主线程。
+```cpp
+void AppInit::start()
+{
+    qApp->installEventFilter(this);
+}
+
+bool AppInit::eventFilter(QObject *watched, QEvent *event)
+{
+    if (event->type() == QEvent::NonClientAreaMouseButtonPress) {
+        qDebug() << "系统标题栏按下";
+    } else if (event->type() == QEvent::NonClientAreaMouseButtonRelease) {
+        qDebug() << "系统标题栏松开";
+    }
+    
+    QWidget *w = (QWidget *)watched;
+    if (!w->property("canMove").toBool()) {
+        return QObject::eventFilter(watched, event);
+    }
+
+    static QPoint mousePoint;
+    static bool mousePressed = false;
+
+    QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+    if (mouseEvent->type() == QEvent::MouseButtonPress) {
+        if (mouseEvent->button() == Qt::LeftButton) {
+            mousePressed = true;
+            mousePoint = mouseEvent->globalPos() - w->pos();
+        }
+    } else if (mouseEvent->type() == QEvent::MouseButtonRelease) {
+        mousePressed = false;
+    } else if (mouseEvent->type() == QEvent::MouseMove) {
+        if (mousePressed) {
+            w->move(mouseEvent->globalPos() - mousePoint);
+            return true;
+        }
+    }
+
+    return QObject::eventFilter(watched, event);
+}
+```
+
+255. linux上可执行文件默认从系统环境变量查找动态库，而windows上默认是从可执行文件所在目录查找，所以有时候为了统一，希望动态库就指定放在可执行文件同一目录下或者相对目录比如lib文件夹，这就需要编译的时候做特殊设置，在pro项目文件中指定rpath（也可以用命令或者第三方工具进行设置），指定好以后默认先从指定的rpath查找动态库是否在，不在然后再去环境变量中的路径查找。
+```cpp
+linux {
+QMAKE_LFLAGS += "-Wl,-rpath,\'\$$ORIGIN\'"
+QMAKE_LFLAGS += "-Wl,-rpath,\'\$$ORIGIN/lib\'"
+QMAKE_LFLAGS += "-Wl,-rpath,\'\$$ORIGIN/../lib\'"
+}
 ```
 
 ## 2 升级到Qt6
@@ -3845,6 +4087,28 @@ ui->label->setStyleSheet("qproperty-alignment:2;");
 //Qt6 通过样式表设置标签居中对齐 翻阅 AlignHCenter|AlignVCenter 的枚举值=0x04|0x80=0x84=132
 ui->label->setStyleSheet("qproperty-alignment:132;");
 ```
+
+47. Qt6中多媒体模块的类做了巨大调整改动，有些是类名的变化，比如音频输出（也叫播放）之前是 QAudioOutput 现在是 QAudioSink ，音频输入（也叫录音）之前是 QAudioInput 现在是 QAudioSource ，默认音频输入输出设备集合之前是 QAudioDeviceInfo::defaultInputDevice()、QAudioDeviceInfo::defaultOutputDevice()，现在是 QMediaDevices::defaultAudioInput()、QMediaDevices::defaultAudioOutput()。感觉这个名字改的没有以前贴切。
+```cpp
+#if (QT_VERSION >= QT_VERSION_CHECK(6,2,0))
+#define AudioInput QAudioSource
+#define AudioOutput QAudioSink
+#else
+#define AudioInput QAudioInput
+#define AudioOutput QAudioOutput
+#endif
+//使用的时候只需要new就行
+AudioInput *input = new AudioInput(format, this);
+
+#if (QT_VERSION >= QT_VERSION_CHECK(6,2,0))
+#define QAudioInput QAudioSource
+#define QAudioOutput QAudioSink
+#endif
+//使用的时候只需要new就行
+QAudioInput *input = new QAudioInput(format, this);
+```
+
+48. Qt6开始默认用cmake，所以现在新版的qtcreator在新建项目的时候默认选择的就是cmake，很多初学者首次用的时候会发现，怎么突然之间生成的项目，结构都不一样，突然之间懵逼了，所以要在新建项目的过程中选择qmake，选择一次以后就默认qmake了。
 
 ## 3 Qt安卓经验
 ### 01：01-05
@@ -4230,7 +4494,9 @@ for (int i = 0; i < count; ++i) {
 
 17. 后期的Qt版本，大致从5.15开始，就不在提供离线版本下载，需要自行通过在线安装器安装，由于默认服务器在国外，很多人反映下载的时候很慢，或者选择晚上的时候下载要快很多，为了解决这个烦人的问题，不至于时间都浪费在没有意义的等待上，有个极其简单的方法可以将速度提升几万倍，甚至冲坏你的硬盘。先下载 Fiddler5（尽量选择中文版本不然小白看不懂），双击打开程序后（可能win10自带的杀毒软件会报毒删除，临时停用杀毒软件或者恢复可信任文件即可），在底部的输入栏中输入 urlreplace download.qt.io mirrors.ustc.edu.cn/qtproject/ 回车应用，然后再去打开安装器在线安装，世界突然变得非常美好。
 
-18.  最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
+18. Qt绝对是个非常牛逼的项目，源码非常庞大，而且分模块设计，对于有足够精力的可以花时间学习源码中的具体实现，如果时间不多，个人推荐看 QObject、QWidget、QPainter、QString、QColor、QList、QVariant、QAbstractButton、QAbstractItemModel、qnamespace.h（整个Qt中所有的全局的枚举值）、这些类的源码即可，看看他们有哪些方法和属性，对自己的编程会有莫大的帮助。
+
+19.  最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
 
 ## 7 杂七杂八
 ### 7.1 推荐开源主页

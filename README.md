@@ -26,6 +26,7 @@ QTimer::singleShot(10, this, SLOT(load()));
 - 方法二：在构建套件的环境中增加，工具->选项->构建套件(kits)->选中一个构建套件->environment->右侧change按钮->打开的输入框中填入 MAKEFLAGS=-j4 ， 这样就可以不用每次设置多线程编译，只要是应用该构件套件的项目都会加上这个编译参数；
 - 注意：-j后面接的是电脑的核心数，写多了不会有效果，要自己看下电脑的参数，或者填个-j4就行，毕竟现在电脑4核心应该是最基本的；
 - 大概从2019年开始的新版本的QtCreator默认已经会根据电脑的核心自动设置多线程编译，比如识别到你的电脑是16核心的就会默认设置-j16参数进行编译；
+- QtCreator8版本开始，选项配置菜单从工具移到了编辑菜单中，很多人有点不适应说怎么没有了，其实稍微鼠标划一划找一找就看到了。
 
 4. 如果你想顺利用QtCreator部署安卓程序，首先你要在 Android Studio 里面配置成功，编译一个程序能够在手机上或者模拟器中跑起来，把坑全部趟平。
 
@@ -1888,6 +1889,7 @@ socket->setLocalPort(6005);
 - 可以用 QCPBarsGroup 实现柱状分组图，这个类在官方demo中没有，所以非常容易忽略。
 - V2.0开始支持数据排序设置，默认是交给QCustomPlot排序，也可以设置setData第三个参数为true表示已经排序过，这样可以绘制往回走的曲线。
 - 频繁绘制数据可以设置排队绘制参数 replot(QCustomPlot::rpQueuedReplot)，可以避免重复的replot和提高性能。如果不开启很可能绘制出错。
+- 可以将多个plot图表合并到一个QCustomPlot控件中，极大提升绘制效率，而不是实例化多个QCustomPlot控件。合并后也是分开对应不同的坐标轴不同位置排列显示，和多个QCustomPlot控件效果一样并且极大提升性能。
 
 ```cpp
 //对调XY轴，在最前面设置
@@ -1971,6 +1973,19 @@ double origin = (upper - lower) / 2;
 axis->ticker()->setTickStepStrategy(QCPAxisTicker::tssMeetTickCount);
 //设置原点值为范围值的中心点
 axis->ticker()->setTickOrigin(origin);
+
+//下面演示如何在一个控件中多个不同的曲线对应不同坐标轴
+//拿到布局对象指针
+QCPLayoutGrid *layout = customPlot->plotLayout();
+//实例化坐标轴区域s
+QCPAxisRect *axisRect = new QCPAxisRect(customPlot);
+//拿到XY坐标轴对象
+QCPAxis *xAxis = axisRect->axis(QCPAxis::atBottom);
+QCPAxis *yAxis = axisRect->axis(QCPAxis::atLeft);
+//将坐标轴指定行列位置添加到布局中
+layout->addElement(i, 0, axisRect);
+//添加对应的画布到指定坐标轴
+QCPGraph *graph = customPlot->addGraph(xAxis, yAxis);
 ```
 
 ### 18：171-180
@@ -3132,6 +3147,9 @@ QTableView::item:hover{background:#00FF00;}
 //下面这样设置则当鼠标停留在选中的item上时背景颜色=#FF0000
 QTableView::item:hover{background:#00FF00;}
 QTableView::item:selected{background:#FF0000;}
+
+//左上角样式很容易忽略
+QTableCornerButton:section{background:#FF0000;}
 ```
 
 226. qtc开发工具内置了不少的函数，可以很方便的进行一些判断和处理。
@@ -3746,6 +3764,15 @@ linux {
 QMAKE_LFLAGS += "-Wl,-rpath,\'\$$ORIGIN\'"
 QMAKE_LFLAGS += "-Wl,-rpath,\'\$$ORIGIN/lib\'"
 QMAKE_LFLAGS += "-Wl,-rpath,\'\$$ORIGIN/../lib\'"
+}
+```
+
+256. 默认QDialog窗体右下角有个拉伸尺寸的手柄，通过它可以对窗体拉伸大小，这个控件很容易被遗忘但是又经常可以看到，他的名字叫QSizeGrip，可以通过setSizeGripEnabled来启用或者禁用，也可以用qss对外观进行设置。
+```cpp
+QSizeGrip{
+	image:url(:/image/sizegrip.png);
+	width:10px;
+	height:10px;
 }
 ```
 
@@ -4444,7 +4471,7 @@ for (int i = 0; i < count; ++i) {
 
 5. 如果出现崩溃和段错误，80%都是因为要么越界，要么未初始化，死扣这两点，80%的问题解决了。
 
-6. Qt一共有几百个版本，关于如何选择Qt版本的问题，我一般保留四个版本，为了兼容Qt4用4.8.7，最后的支持XP的版本5.7.0，最新的长期支持版本比如5.15，最高的新版本比如5.15.2。强烈不建议使用4.7以前和5.0到5.3之间的版本（Qt6.0到Qt6.2之间、不含6.2的版本也不建议，很多模块还没有集成），太多bug和坑，稳定性和兼容性相比于之后的版本相当差，能换就换，不能换睡服领导也要换。如果没有历史包袱建议用5.15.2，目前新推出的6.0版本也强烈不建议使用，官方还在整合当中，好多类和模块暂时没有整合，需要等到6.2.2版本再用。
+6. Qt一共有几百个版本，关于如何选择Qt版本的问题，我一般保留四个版本，为了兼容Qt4用4.8.7，最后的支持XP的版本5.7.0，最新的长期支持版本比如5.15，最高的新版本比如5.15.2。强烈不建议使用4.7以前和5.0到5.3之间的版本（Qt6.0到Qt6.2之间、不含6.2的版本也不建议，很多模块还没有集成），太多bug和坑，稳定性和兼容性相比于之后的版本相当差，能换就换，不能换睡服领导也要换。如果没有历史包袱建议用5.15.2，目前新推出的6.0版本也强烈不建议使用，官方还在整合当中，好多类和模块暂时没有整合，需要等到6.2.2版本再用。考虑到qss性能以及自带mysql驱动的因素，最终Qt5选用5.12.3，Qt4选用4.8.7，Qt6选用6.5.x。
 
 7. Qt和msvc编译器常见搭配是Qt5.7+VS2013、Qt5.9+VS2015、Qt5.12+VS2017、Qt5.15+VS2019、Qt6.2+VS2019，按照这些搭配来，基本上常用的模块都会有，比如webengine模块，如果选用的Qt5.12+msvc2015，则很可能官方没有编译这个模块，只是编译了Qt5.12+msvc2017的，如果一定要用msvc2015不想换msvc2017则只能选择Qt5.9+msvc2015套件，或者自行源码重新编译（这个难度超大，初学者绕过）。
 

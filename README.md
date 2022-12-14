@@ -1975,9 +1975,9 @@ axis->ticker()->setTickStepStrategy(QCPAxisTicker::tssMeetTickCount);
 axis->ticker()->setTickOrigin(origin);
 
 //下面演示如何在一个控件中多个不同的曲线对应不同坐标轴
-//拿到布局对象指针
+//拿到图表布局对象
 QCPLayoutGrid *layout = customPlot->plotLayout();
-//实例化坐标轴区域s
+//实例化坐标轴区域
 QCPAxisRect *axisRect = new QCPAxisRect(customPlot);
 //拿到XY坐标轴对象
 QCPAxis *xAxis = axisRect->axis(QCPAxis::atBottom);
@@ -3773,6 +3773,91 @@ QSizeGrip{
 	image:url(:/image/sizegrip.png);
 	width:10px;
 	height:10px;
+}
+```
+
+257. 在有些没有opengl环境的Qt开发中，比如一些嵌入式板子为了节省资源没有编译opengl所以不会有opengl相关的头文件，在编译项目过程中可能遇到提示 GLES3/gl3.h: No such file or directory，尽管你的项目中也没有用到opengl的任何东西，那是因为你包含了一个大模块 #include <QtWidgets> ，而这个大模块中包含了 #include "qopenglwidget.h" ，你需要做的是在引入大模块前面加一行。
+```cpp
+//下面两个定义看具体需求调整
+#define QT_NO_OPENGL
+#define QT_NO_OPENGL_ES_3
+#include <QtWidgets>
+```
+
+258. 可以通过设置过滤机制，将代码中的部分打印类别屏蔽掉，比如只保留qdebug打印的信息，也可以将Qt内部类的警告信息屏蔽，只保留自己程序写的打印信息。
+```cpp
+//代码写在main函数最前面
+int main(int argc, char *argv[])
+{
+	QLoggingCategory::setFilterRules("*.critical=false");
+	QApplication a(argc, argv);
+}
+
+//下面表示将所有的debug打印信息屏蔽
+QLoggingCategory::setFilterRules("*.debug=false");
+//下面最终打印 222
+qDebug() << "111";
+qInfo() << "222";
+
+//下面表示将所有的打印信息屏蔽
+QLoggingCategory::setFilterRules("*=false");
+
+//下面可以将所有警告提示屏蔽(Qt内部类中出现的警告信息都用的这个qErrnoWarning对应的就是critical)
+QLoggingCategory::setFilterRules("*.critical=false");
+
+//支持多个规则写法(有部分警告信息用的qWarning所以也要加进去)
+QLoggingCategory::setFilterRules("*.critical=false\n*.warning=false");
+```
+
+259. 官方的Qt安装包基本上都带了各种高级模块比如浏览器模块webengine以及多媒体模块q，有些嵌入式的环境或者厂家提供好的Qt环境，未必有这些模块，需要单独打命令安装。
+```cpp
+//如果找不到音频输入输出设备需要执行下面这个命令
+sudo apt-get install libqt5multimedia5-plugins
+//也可以一次性安装所有
+sudo apt-get install libqt5*
+```
+
+260. 项目大了以后，经常需要将某些类做成单例类，在整个项目中唯一存在，供多个地方使用，如果一个就一个类需要写成单例模式，那直接写在那个类中即可，如果类多了的话，会发现都是一些重复的定义代码，此时可以考虑用个宏定义，传入类名即可，代码量虽然少了可能绩效低了，但是水平提升了。
+```cpp
+#ifndef QUISINGLETON_H
+#define QUISINGLETON_H
+
+#include <QScopedPointer>
+#include <QMutex>
+
+#define SINGLETON_DECL(Class) \
+    public: \
+        static Class *Instance(); \
+    private: \
+        Q_DISABLE_COPY(Class) \
+        static QScopedPointer<Class> self;
+
+#define SINGLETON_IMPL(Class) \
+    QScopedPointer<Class> Class::self; \
+    Class *Class::Instance() { \
+        if (self.isNull()) { \
+            static QMutex mutex; \
+            QMutexLocker locker(&mutex); \
+            if (self.isNull()) { \
+                self.reset(new Class); \
+            } \
+        } \
+        return self.data(); \
+    }
+
+#endif // QUISINGLETON_H
+
+//使用的时候在头文件和实现文件各加一行代码即可
+#include "quisingleton.h"
+class Form : public QWidget
+{
+    Q_OBJECT SINGLETON_DECL(Form)
+}
+
+SINGLETON_IMPL(Form)
+Form::Form(QWidget *parent) : QWidget(parent), ui(new Ui::Form)
+{
+    ui->setupUi(this);
 }
 ```
 

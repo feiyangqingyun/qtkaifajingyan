@@ -3769,7 +3769,7 @@ QMAKE_LFLAGS += "-Wl,-rpath,\'\$$ORIGIN/../lib\'"
 
 256. 默认QDialog窗体右下角有个拉伸尺寸的手柄，通过它可以对窗体拉伸大小，这个控件很容易被遗忘但是又经常可以看到，他的名字叫QSizeGrip，可以通过setSizeGripEnabled来启用或者禁用，也可以用qss对外观进行设置。
 ```cpp
-QSizeGrip{
+QSizeGrip {
 	image:url(:/image/sizegrip.png);
 	width:10px;
 	height:10px;
@@ -4222,6 +4222,10 @@ QAudioInput *input = new QAudioInput(format, this);
 
 48. Qt6开始默认用cmake，所以现在新版的qtcreator在新建项目的时候默认选择的就是cmake，很多初学者首次用的时候会发现，怎么突然之间生成的项目，结构都不一样，突然之间懵逼了，所以要在新建项目的过程中选择qmake，选择一次以后就默认qmake了。
 
+41. Qt6.4开始对应类QString/QByteArray的count函数废弃了，改用size/length函数，估计可能描述更准确吧。
+
+42. Qt6.4.1新增了N多BUG，强烈不建议使用，比如QAudioSink播放声音没有声音 [https://bugreports.qt.io/browse/QTBUG-108383](https://bugreports.qt.io/browse/QTBUG-108383)，DPI缩放严重变形 [https://bugreports.qt.io/browse/QTBUG-108593](https://bugreports.qt.io/browse/QTBUG-108593)。这些BUG在6.4.0/6.5.0是不存在的，KPI害死人啊。
+
 ## 3 Qt安卓经验
 ### 01：01-05
 1. pro中引入安卓拓展模块 QT += androidextras 。
@@ -4473,6 +4477,7 @@ int AndroidJar::add(int a, int b)
 - 对安卓最低sdk有要求，所以建议在配置AndroidManifest.xml文件的时候不要带上最低版本要求。
 - 对AndroidManifest.xml文件内容有要求，之前Qt5安卓的不能在Qt6安卓下使用，具体内容参见示例下的文件。
 - 对应示例demo在 C:\Qt\Examples\Qt-6.3.0\corelib\platform 目录下，之前是 C:\Qt\Examples\Qt-5.15.2\androidextras ，目前就一个示例，可能因为其他类还没有移植好。
+- Qt6中安卓模块介绍在这里 https://doc.qt.io/qt-6/qtandroidprivate.html
 
 25. 如果想要安卓全屏遮挡住顶部状态栏，可以在main函数中将show改成showFullScreen即可，当然也可以采用java的方式在onCreate函数中加一行 getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 

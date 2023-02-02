@@ -239,7 +239,7 @@ QMainWindow > .QWidget {
 
 29. 如果发现QtCreator中的构建套件不正常了或者坏了（比如不能正确识别环境中的qmake或者编译器、打开项目不能正常生成影子构建目录），请找到两个目录（C:\Users\Administrator\AppData\Local\QtProject、C:\Users\Administrator\AppData\Roaming\QtProject）删除即可，删除后重新打开QtCreator进行构建套件的配置就行。
 
-30. QMediaPlayer是个壳（也可以叫框架），依赖本地解码器，视频这块默认基本上就播放个MP4甚至连MP4都不能播放，如果要支持其他格式需要下载k-lite或者LAV Filters安装即可（k-lite或者LAV Filters是指windows上的，其他系统上自行搜索，貌似嵌入式linux上依赖GStreamer，并未完整验证，报错提示 Your GStreamer installation is missing a plug-in，需要命令安装 sudo apt-get install ubuntu-restricted-extras）。如果需要做功能强劲的播放器，初学者建议用vlc、mpv，终极万能大法用ffmpeg（解码出来的视频可以用QOpenGLWidget走GPU绘制或者转成QImage绘制，音频数据可以用QAudioOutput播放）。
+30. QMediaPlayer是个壳（也可以叫框架），依赖本地解码器，视频这块默认基本上就播放个MP4甚至连MP4都不能播放，如果要支持其他格式需要下载k-lite或者LAV Filters安装即可（k-lite或者LAV Filters是指windows上的，其他系统上自行搜索，貌似嵌入式linux上依赖GStreamer（sudo apt-get install gstreamer1.0-libav ubuntu-restricted-extras），并未完整验证，报错提示 Your GStreamer installation is missing a plug-in，需要命令安装 sudo apt-get install ubuntu-restricted-extras）。如果需要做功能强劲的播放器，初学者建议用vlc、mpv，终极万能大法用ffmpeg（解码出来的视频可以用QOpenGLWidget走GPU绘制或者转成QImage绘制，音频数据可以用QAudioOutput播放）。
 
 ### 04：031-040
 31. 判断编译器类型、编译器版本、操作系统。
@@ -1293,6 +1293,8 @@ struct FunctionInfo {
 WindowsArguments = dpiawareness=0
 //下面这行用来解决Qt高DPI下文字显示有锯齿的问题
 WindowsArguments = fontengine=freetype
+//2023-2-2 经过建波（简称JB大佬）亲测两行分开写没有效果，需要逗号分开
+WindowsArguments = dpiawareness=0, fontengine=freetype
 
 //方法3：在main函数最前面设置Qt内部的环境变量
 qputenv("QT_AUTO_SCREEN_SCALE_FACTOR", "1.5");
@@ -3860,6 +3862,10 @@ Form::Form(QWidget *parent) : QWidget(parent), ui(new Ui::Form)
     ui->setupUi(this);
 }
 ```
+
+261. 代码中判断当前Qt库是32位还是64位，用QSysInfo::WordSize=32/64。
+
+262. QTreeView控件设置左侧branch图标大小，无法通过qss设置，万能大法查看源码得知控制宽度最后取决于indentation参数，indentation的默认值根据系统环境不同而不同，比如1080P分辨率下是20，你要放大可以通过 setIndentation(30) 来设置。
 
 ## 2 升级到Qt6
 ### 00：直观总结

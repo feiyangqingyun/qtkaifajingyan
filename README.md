@@ -293,6 +293,9 @@ MSVC++ 14.16 _MSC_VER == 1916 (Visual Studio 2017 version 15.9)
 MSVC++ 14.2  _MSC_VER == 1920 (Visual Studio 2019 Version 16.0)
 MSVC++ 14.21 _MSC_VER == 1921 (Visual Studio 2019 Version 16.1)
 MSVC++ 14.22 _MSC_VER == 1922 (Visual Studio 2019 Version 16.2)
+MSVC++ 14.30 _MSC_VER == 1930 (Visual Studio 2022 Version 17.0)
+MSVC++ 14.31 _MSC_VER == 1931 (Visual Studio 2022 Version 17.1)
+MSVC++ 14.32 _MSC_VER == 1932 (Visual Studio 2022 Version 17.2)
 
 //Borland C++
 #ifdef __BORLANDC__
@@ -2149,6 +2152,7 @@ camera = new QCamera(cameraName.toUtf8(), this);
 ```cpp
 void Widget::showEvent(QShowEvent *)
 {
+    //这里为了演示代码方便直接写的static，如果new多个窗体则需要定义在头文件中。
     static bool isLoad = false;
     if (!isLoad) {
         isLoad = true;
@@ -2173,6 +2177,8 @@ QString compilerString = "<unknown>";
 #elif defined(Q_CC_MSVC)
     if (_MSC_VER > 1999) {
         compilerString = QLatin1String("MSVC <unknown>");
+    } else if (_MSC_VER >= 1930) {
+        compilerString = QLatin1String("MSVC 2022");
     } else if (_MSC_VER >= 1920) {
         compilerString = QLatin1String("MSVC 2019");
     } else if (_MSC_VER >= 1910) {

@@ -479,6 +479,22 @@ loop.exec();
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
 #endif
+
+#ifdef Q_OS_WIN
+//windows系统
+#else
+//非windows系统
+#endif
+
+//下面写法编译会报错
+#ifdef Q_OS_WIN
+#elif Q_OS_LINUX
+#endif
+
+//正确写法
+#if defined(Q_OS_WIN)
+#elif defined(Q_OS_LINUX)
+#endif
 ```
 
 48. 新版的Qtcreator增强了语法检查，会弹出很多警告提示等，可以在插件列表中关闭clang打头的几个即可，Help》About Plugins。也可以设置代码检查级别，Tools》Options 》C++ 》Code Model。
@@ -3873,6 +3889,16 @@ Form::Form(QWidget *parent) : QWidget(parent), ui(new Ui::Form)
 
 262. QTreeView控件设置左侧branch图标大小，无法通过qss设置，万能大法查看源码得知控制宽度最后取决于indentation参数，indentation的默认值根据系统环境不同而不同，比如1080P分辨率下是20，你要放大可以通过 setIndentation(30) 来设置。
 
+263. 在对选项卡控件QTabWidget设置样式表的时候，很多人希望能做成类似浏览器或者资源管理器中上面选项卡的样子，就是选中的tab上边左右两边有加粗线条，底部空白的和面板形成一体，有很多方法，方法一就是把底边宽度为0，方法二将底边颜色设置成和面板颜色一样，方法三将tab的底边边距设置成边框的负数（margin-bottom:-3px），这样看起来就是和面板融为一体了。
+```cpp
+//下面几种分别对应选项卡不同位置的效果
+//注意Qt5.12版本后tabbar选项卡左右反过来的
+QTabWidget::pane:top{top:-1px;}
+QTabWidget::pane:bottom{bottom:-1px;}
+QTabWidget::pane:left{right:-1px;}
+QTabWidget::pane:right{left:-1px;}
+```
+
 ## 2 升级到Qt6
 ### 00：直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
@@ -4234,9 +4260,9 @@ QAudioInput *input = new QAudioInput(format, this);
 
 48. Qt6开始默认用cmake，所以现在新版的qtcreator在新建项目的时候默认选择的就是cmake，很多初学者首次用的时候会发现，怎么突然之间生成的项目，结构都不一样，突然之间懵逼了，所以要在新建项目的过程中选择qmake，选择一次以后就默认qmake了。
 
-41. Qt6.4开始对应类QString/QByteArray的count函数废弃了，改用size/length函数，估计可能描述更准确吧。
+49. Qt6.4开始对应类QString/QByteArray的count函数废弃了，改用size/length函数，估计可能描述更准确吧。
 
-42. Qt6.4.1新增了N多BUG，强烈不建议使用，比如QAudioSink播放声音没有声音 [https://bugreports.qt.io/browse/QTBUG-108383](https://bugreports.qt.io/browse/QTBUG-108383)，DPI缩放严重变形 [https://bugreports.qt.io/browse/QTBUG-108593](https://bugreports.qt.io/browse/QTBUG-108593)。这些BUG在6.4.0/6.5.0是不存在的，KPI害死人啊。
+50. Qt6.4.1新增了N多BUG，强烈不建议使用，比如QAudioSink播放声音没有声音 [https://bugreports.qt.io/browse/QTBUG-108383](https://bugreports.qt.io/browse/QTBUG-108383)，DPI缩放严重变形 [https://bugreports.qt.io/browse/QTBUG-108593](https://bugreports.qt.io/browse/QTBUG-108593)。这些BUG在6.4.0/6.5.0是不存在的，KPI害死人啊。
 
 ## 3 Qt安卓经验
 ### 01：01-05

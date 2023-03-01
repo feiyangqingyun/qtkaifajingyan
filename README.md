@@ -982,7 +982,7 @@ void MainWindow::fun_test(int type, double value)
 
 113. Qt5中的信号是public的，可以在需要的地方直接emit即可，而在Qt4中信号是protected的，不能直接使用，需要定义一个public函数来emit。
 
-114. Qt5.15版本开始官方不再提供安装包，只提供源码，可以自行编译或者在线安装，估计每次编译各种版本太麻烦，更多的是为了统计收集用户使用信息比如通过在线安装，后期可能会逐步加大商业化力度。
+114. Qt5.15版本开始官方不再提供安装包，只提供源码，可以自行编译或者在线安装（也可以将在线安装好的离线文件打包拷贝到电脑上使用），估计每次编译各种版本太麻烦，更多的是为了统计收集用户使用信息比如通过在线安装，后期可能会逐步加大商业化力度。
 
 115. 有时候我们需要判断当前Qt版本有没有某个模块可以使用qtHaveModule（Qt5新引入的判断）来判断，如果要判断自己的项目中有没有 QT += 的方式添加的模块，可以用 contains来判断。
 ```cpp
@@ -4673,8 +4673,7 @@ for (int i = 0; i < count; ++i) {
 |yafeilinux|[http://www.qter.org](http://www.qter.org)|
 |feiyangqingyun|[https://blog.csdn.net/feiyangqingyun](https://blog.csdn.net/feiyangqingyun)|
 |**Qt作品大全**|[https://qtchina.blog.csdn.net/article/details/97565652](https://qtchina.blog.csdn.net/article/details/97565652)|
-|Qt系列文章|[https://blog.csdn.net/feiyangqingyun/category_11460485.html](https://blog.csdn.net/feiyangqingyun/category_11460485.html)|
-|一去二三里|[http://blog.csdn.net/liang19890820](http://blog.csdn.net/liang19890820)|
+|龚建波|[https://gongjianbo1992.blog.csdn.net/](https://gongjianbo1992.blog.csdn.net/)|
 |乌托邦2号|[http://blog.csdn.net/taiyang1987912](http://blog.csdn.net/taiyang1987912)|
 |foruok|[http://blog.csdn.net/foruok](http://blog.csdn.net/foruok)|
 |jason|[http://blog.csdn.net/wsj18808050](http://blog.csdn.net/wsj18808050)|

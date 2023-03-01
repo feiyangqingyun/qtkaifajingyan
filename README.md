@@ -4657,10 +4657,7 @@ for (int i = 0; i < count; ++i) {
 ### 7.1 推荐开源主页
 |名称|网址|
 |:------ |:------|
-|Qt技术交流群1|46679801(已满员)|
-|Qt技术交流群2|573199610(未满员)|
-|Qt高级学习群 |951393302(未满员，推荐此群)|
-|Qt交流大会群 |853086607(已满员)|
+|Qt/C++学习高级群|951393302|
 |QtWidget开源demo集合|[https://gitee.com/feiyangqingyun/QWidgetDemo](https://gitee.com/feiyangqingyun/QWidgetDemo)|
 |QtQuick/Qml开源demo集合|[https://gitee.com/jaredtao/TaoQuick](https://gitee.com/jaredtao/TaoQuick)|
 |QtQuick/Qml开源demo集合|[https://gitee.com/zhengtianzuo/QtQuickExamples](https://gitee.com/zhengtianzuo/QtQuickExamples)|

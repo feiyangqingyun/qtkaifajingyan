@@ -3306,7 +3306,7 @@ QVariant SqlQueryModel::data(const QModelIndex &index, int role) const
 231. 关于c++中继承多态virtual和override的几点总结。
 - 子类可以直接使用基类中的protected下的变量和函数。
 - 基类函数没加virtual，子类有相同函数，实现的是覆盖。用基类指针调用时，调用到的是基类的函数；用子类指针调用时，调用到的是子类的函数。
-- 基类函数加了virtual时，实现的时重写。用基类指针或子类指针调用时，调用到的都是子类的函数。
+- 基类函数加了virtual，子类有相同函数，实现的是重写。用基类指针或子类指针调用时，调用到的都是子类的函数。
 - 函数加上override，强制要求子类相同函数需要是虚函数，而且必须重新实现，否则会编译报错。
 - 子类的virtual可加可不加，建议加override不加virtual。
 - 基类中的纯虚函数（virtual void play() = 0;）在基类中无需在cpp中实现，但是必须在子类实现，否则编译报错。
@@ -3899,6 +3899,8 @@ QTabWidget::pane:left{right:-1px;}
 QTabWidget::pane:right{left:-1px;}
 ```
 
+264. 在linux上编译动态库文件，可能会生成一堆软连接文件（图标上有个小箭头/libuntitled.so/libuntitled.so.1/libuntitled.so.1.0libuntitled.so.1.0.0），很多时候看起来很烦，习惯了windows上就生成一个文件，你只需要在你的pro或者pri中加上一行 CONFIG += plugin 即可，这样只会生成一个libuntitled.so文件。
+
 ## 2 升级到Qt6
 ### 00：直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
@@ -4263,6 +4265,8 @@ QAudioInput *input = new QAudioInput(format, this);
 49. Qt6.4开始对应类QString/QByteArray的count函数废弃了，改用size/length函数，估计可能描述更准确吧。
 
 50. Qt6.4.1新增了N多BUG，强烈不建议使用，比如QAudioSink播放声音没有声音 [https://bugreports.qt.io/browse/QTBUG-108383](https://bugreports.qt.io/browse/QTBUG-108383)，DPI缩放严重变形 [https://bugreports.qt.io/browse/QTBUG-108593](https://bugreports.qt.io/browse/QTBUG-108593)。这些BUG在6.4.0/6.5.0是不存在的，KPI害死人啊。
+
+51. Qt6.5版本开始取消了QVariant的默认构造函数，之前return QVariant() 现在必须改成 QVariant(QVariant::Invalid) 才不会有警告提示。通过打印值发现QVariant()本身就=QVariant(QVariant::Invalid)，所以统一写成QVariant(QVariant::Invalid)兼容Qt456。
 
 ## 3 Qt安卓经验
 ### 01：01-05
@@ -4657,7 +4661,7 @@ for (int i = 0; i < count; ++i) {
 ### 7.1 推荐开源主页
 |名称|网址|
 |:------ |:------|
-|Qt/C++学习高级群|951393302|
+|Qt/C++学习高级群|751439350|
 |QtWidget开源demo集合|[https://gitee.com/feiyangqingyun/QWidgetDemo](https://gitee.com/feiyangqingyun/QWidgetDemo)|
 |QtQuick/Qml开源demo集合|[https://gitee.com/jaredtao/TaoQuick](https://gitee.com/jaredtao/TaoQuick)|
 |QtQuick/Qml开源demo集合|[https://gitee.com/zhengtianzuo/QtQuickExamples](https://gitee.com/zhengtianzuo/QtQuickExamples)|

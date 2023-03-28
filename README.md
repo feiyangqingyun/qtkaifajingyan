@@ -3707,6 +3707,7 @@ QResizeEvent *event = new QResizeEvent(size(), size());
 QApplication::postEvent(this, event);
 ```
 
+### 26：251-260
 251. 今天在一个头文件中，发现 #ifdef Q_OS_WIN #ifdef Q_CC_MSVC 之类的都失效了，搞得差点怀疑人生了。经历过之前类似的教训后，排查原来是没有提前引入 qglobal.h 头文件导致的。切记如果要使用Qt的东西，哪怕是最基础的标识宏定义 Q_OS_WIN 之类的，都要保证该前面至少包含了 qglobal.h ，否则都是失败的。很多人和我一样天真的以为编译器会自动处理。
 ```cpp
 //必须要先引入这个头文件
@@ -3885,6 +3886,7 @@ Form::Form(QWidget *parent) : QWidget(parent), ui(new Ui::Form)
 }
 ```
 
+### 27：261-270
 261. 代码中判断当前Qt库是32位还是64位，用QSysInfo::WordSize=32/64。
 
 262. QTreeView控件设置左侧branch图标大小，无法通过qss设置，万能大法查看源码得知控制宽度最后取决于indentation参数，indentation的默认值根据系统环境不同而不同，比如1080P分辨率下是20，你要放大可以通过 setIndentation(30) 来设置。

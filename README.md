@@ -3889,7 +3889,7 @@ Form::Form(QWidget *parent) : QWidget(parent), ui(new Ui::Form)
 ### 27：261-270
 261. 代码中判断当前Qt库是32位还是64位，用QSysInfo::WordSize=32/64。
 
-262. QTreeView控件设置左侧branch图标大小，无法通过qss设置，万能大法查看源码得知控制宽度最后取决于indentation参数，indentation的默认值根据系统环境不同而不同，比如1080P分辨率下是20，你要放大可以通过 setIndentation(30) 来设置。
+262. QTreeView控件设置左侧branch 图标大小，无法通过qss设置，万能大法查看源码得知控制宽度最后取决于indentation参数，indentation的默认值根据系统环境不同而不同，比如1080P分辨率下是20，你要放大可以通过 setIndentation(30) 来设置。
 
 263. 在对选项卡控件QTabWidget设置样式表的时候，很多人希望能做成类似浏览器或者资源管理器中上面选项卡的样子，就是选中的tab上边左右两边有加粗线条，底部空白的和面板形成一体，有很多方法，方法一就是把底边宽度为0，方法二将底边颜色设置成和面板颜色一样，方法三将tab的底边边距设置成边框的负数（margin-bottom:-3px），这样看起来就是和面板融为一体了。
 ```cpp
@@ -3901,7 +3901,10 @@ QTabWidget::pane:left{right:-1px;}
 QTabWidget::pane:right{left:-1px;}
 ```
 
-264. 在linux上编译动态库文件，可能会生成一堆软连接文件（图标上有个小箭头/libuntitled.so/libuntitled.so.1/libuntitled.so.1.0libuntitled.so.1.0.0），很多时候看起来很烦，习惯了windows上就生成一个文件，你只需要在你的pro或者pri中加上一行 CONFIG += plugin 即可，这样只会生成一个libuntitled.so文件。
+264. 在linux上编译动态库文件，可能会生成一堆软连接文件（图标上有个小箭头/libuntitled.so/libuntitled.so.1/libuntitled.so.1.0libuntitled.so.1.0.0），很多时候看起来很烦，习惯了windows上就生成一个文件，你只需要在你的pro或者pri中加上一行 CONFIG += plugin 即可，这样只会生成一个libuntitled.so文件。2023-4-2补充：还可以使用 CONFIG += unversioned_libname unversioned_soname 来实现，unversioned_libname用来去掉lib的各个版本号，unversioned_soname用来去掉链接里的版本号（不加这个的话尽管生成的是libuntitled.so，但是链接编译的时候还会报错提示依赖带版本号的）。具体文章可以参考 [https://blog.csdn.net/gongjianbo1992/article/details/129889588](https://blog.csdn.net/gongjianbo1992/article/details/129889588) 。
+
+265. 关于Qt在线安装过程中出现报错提示：下载“http://mirrors.aliyun.com...“时出现网络错误 的解决方法，打开命令行运行安装程序，比如C:\Users\Administrator>D:\Qt\Qt6\MaintenanceTool.exe，后面主动加上参数 --mirror https://mirrors.aliyun.com/qt，完整命令行是 C:\Users\Administrator>D:\Qt\Qt6\MaintenanceTool.exe --mirror https://mirrors.aliyun.com/qt，回车运行即可。同理也可以换成国内其他的镜像地址。
+
 
 ## 2 升级到Qt6
 ### 00：直观总结

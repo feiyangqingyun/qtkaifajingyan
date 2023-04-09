@@ -3838,6 +3838,8 @@ QLoggingCategory::setFilterRules("*.critical=false\n*.warning=false");
 ```cpp
 //如果找不到音频输入输出设备需要执行下面这个命令
 sudo apt-get install libqt5multimedia5-plugins
+//安装浏览器模块
+sudo apt-get install libqt5web*
 //也可以一次性安装所有
 sudo apt-get install libqt5*
 ```
@@ -3905,6 +3907,19 @@ QTabWidget::pane:right{left:-1px;}
 
 265. 关于Qt在线安装过程中出现报错提示：下载“http://mirrors.aliyun.com...“时出现网络错误 的解决方法，打开命令行运行安装程序，比如C:\Users\Administrator>D:\Qt\Qt6\MaintenanceTool.exe，后面主动加上参数 --mirror https://mirrors.aliyun.com/qt，完整命令行是 C:\Users\Administrator>D:\Qt\Qt6\MaintenanceTool.exe --mirror https://mirrors.aliyun.com/qt，回车运行即可。同理也可以换成国内其他的镜像地址。
 
+266. 从Qt6.4版本开始多媒体模块提供了ffmpeg作为后端解码使用（6.5版本默认就是ffmpeg），可以通过设置环境变量来更改使用哪种后端解码，在main函数的第一行 qputenv("QT_MEDIA_BACKEND", "ffmpeg"); 目前已知的问题是如果选用ffmpeg则暂时不支持中文目录以及中文名称，如果一定要支持中文则需要改成windows。
+```cpp
+//设置后端解码为ffmpeg/所有系统都支持
+qputenv("QT_MEDIA_BACKEND", "ffmpeg");
+//windows系统专用
+qputenv("QT_MEDIA_BACKEND", "windows");
+//linux系统专用
+qputenv("QT_MEDIA_BACKEND", "gstreamer");
+//mac系统专用
+qputenv("QT_MEDIA_BACKEND", "darwin");
+//android系统专用
+qputenv("QT_MEDIA_BACKEND", "android");
+```
 
 ## 2 升级到Qt6
 ### 00：直观总结

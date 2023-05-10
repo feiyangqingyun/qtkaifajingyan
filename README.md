@@ -3921,6 +3921,8 @@ qputenv("QT_MEDIA_BACKEND", "darwin");
 qputenv("QT_MEDIA_BACKEND", "android");
 ```
 
+267. 下拉框控件QComboBox默认会根据item的字符宽度调整下拉框的宽度，比如其中某个item文本很长，则下拉框会变的很宽，甚至把整个界面撑大看起来变形的感觉，有时候我们不希望是这样，有多个方法可以去掉，方法一就是设置下拉框的拉伸策略为QSizePolicy::Ignored，然后将下拉框放到一个容器中，保证容器布局中的其他控件都是有固定尺寸或者fix填充尺寸，这样下拉框就是默认自动拉伸的而且保证不会跟着item的宽度变宽。这个方法并不友好，因为需要调整容器布局中其他控件的拉伸策略，最佳方法就是设置 ui->comboBox->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon); ，当item宽度超过的时候中间部分会自动省略号显示，要的就是这个效果，为了使得整个全局都能应用，可以样式表设置 qApp->setStyleSheet("QComboBox{qproperty-sizeAdjustPolicy:AdjustToMinimumContentsLengthWithIcon}"); 即可，整个项目中所有下拉框都会自动应用这个策略。
+
 ## 2 升级到Qt6
 ### 00：直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
@@ -4718,7 +4720,7 @@ for (int i = 0; i < count; ++i) {
 |Qt官方下载新地址|[https://download.qt.io/new_archive/qt/](https://download.qt.io/new_archive/qt/)|
 |Qt国内镜像下载地址|[https://mirrors.cloud.tencent.com/qt](https://mirrors.cloud.tencent.com/qt)|
 |Qt安装包下载地址|[http://qthub.com/download/](http://qthub.com/download/)|
-|Qt最新版二进制包|[https://build-qt.fsu0413.me/](https://build-qt.fsu0413.me/)|
+|Qt最新版二进制包|[https://fsu0413.gitee.io/qtcompile/](https://fsu0413.gitee.io/qtcompile/)|
 |Qt版本更新内容|[https://doc-snapshots.qt.io/qt6-6.2/whatsnew62.html](https://doc-snapshots.qt.io/qt6-6.2/whatsnew62.html)|
 |Qt中qmake变量说明|[https://doc.qt.io/qt-5/qmake-variable-reference.html](https://doc.qt.io/qt-5/qmake-variable-reference.html)|
 |Qt入门最简单教程|[http://c.biancheng.net/qt/](http://c.biancheng.net/qt/)|

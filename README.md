@@ -3923,6 +3923,13 @@ qputenv("QT_MEDIA_BACKEND", "android");
 
 267. 下拉框控件QComboBox默认会根据item的字符宽度调整下拉框的宽度，比如其中某个item文本很长，则下拉框会变的很宽，甚至把整个界面撑大看起来变形的感觉，有时候我们不希望是这样，有多个方法可以去掉，方法一就是设置下拉框的拉伸策略为QSizePolicy::Ignored，然后将下拉框放到一个容器中，保证容器布局中的其他控件都是有固定尺寸或者fix填充尺寸，这样下拉框就是默认自动拉伸的而且保证不会跟着item的宽度变宽。这个方法并不友好，因为需要调整容器布局中其他控件的拉伸策略，最佳方法就是设置 ui->comboBox->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon); ，当item宽度超过的时候中间部分会自动省略号显示，要的就是这个效果，为了使得整个全局都能应用，可以样式表设置 qApp->setStyleSheet("QComboBox{qproperty-sizeAdjustPolicy:AdjustToMinimumContentsLengthWithIcon}"); 即可，整个项目中所有下拉框都会自动应用这个策略。
 
+268. 用QSettings类保存float类型的时候，内容会变成 @Variant 开头的一个值，后面根本看不懂什么值，比如 1.0 = @Variant(\0\0\0\x87?\x80\0\0) 一个非常奇怪的值，这样的话如果想直接修改配置文件来更改参数就无从下手。有两个办法解决问题，办法一就是在写入值的时候强制转换成double类型数据即可，set.setValue("SaveVideoRatio", (double)SaveVideoRatio);，办法二就是将float参数类型改成double，比如 float SaveVideoRatio 改成 double SaveVideoRatio，推荐方法一，不用更改数据类型，就改动一行即可。**在Qt6中彻底修复了这个问题，不需要转double。**
+
+269. 大概从Qt5.12开始，新增了平台外观插件platformthemes，意味着打包发布的时候需要带上他才能应用系统层风格的外观样式，如果不带，在win上可能是windows2000风格的古老外观，看起来非常诧异。
+
+270. 有时候我们设置开机运行程序后，如果该程序用又用QProcess等方式调用了程序B，而程序B又需要读取目录下的配置文件，此时你会发现根本读取不到，因为开机后的默认目录不在可执行文件所在目录（如果我们是双击程序运行的那就不存在这个问题，会自动将可执行文件所在目录作为当前目录。）所以我们需要执行代码 QDir::setCurrent(qApp->applicationDirPath()); 主动设置当前目录在哪，告诉操作系统。QProcess中有个setWorkingDirectory本人也各种对比测试过，对开启启动后的程序调用QProcess无效，必须用QDir::setCurrent。
+
+
 ## 2 升级到Qt6
 ### 00：直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。

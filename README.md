@@ -3963,6 +3963,22 @@ void test(const char *data)
 const QByteArray data;
 //浅拷贝
 const char *d = data.data();
+
+//酷码大佬补充：自Qt 5.7版本以来，引入了qAsConst函数，专用于无脑转换。
+//这个函数实现了C++17标准中的std::as_const()函数的功能，将一个非常量的左值转为常量的左值。
+//增加qAsConst函数是为了Qt自己的非const 的容器能实现C++11标准的基于范围的循环。
+//该函数主要用于qt容器在隐式共享中不被detach。
+QString s = "abc";
+//下面会深拷贝引起性能损失
+for (QChar ch : s)
+//不会深拷贝
+for (QChar ch : qAsConst(s))
+//下面也是浅拷贝，但是在编程时、在现实中，声明为const往往不容易做到。
+const QString s;
+for (QChar ch : s)
+
+//总结：对Qt自己实现的容器如：QVector、QMap、 QHash、QLinkedList、QList等，如果一定要用基于for（var : container）范围的循环，则请用如下形式：
+for (var : qAsConst(container))
 ```
 
 ## 2 升级到Qt6

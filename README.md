@@ -3981,6 +3981,95 @@ for (QChar ch : s)
 for (var : qAsConst(container))
 ```
 
+272. 新版的Qt6.5在ubuntu上编译运行程序后会提示 qt.qpa.plugin: Could not load the Qt platform plugin "xcb" in "" even though it was found. ，无法正常弹出窗体程序，你需要主动安装xcb的相关库。sudo apt install libxcb* 
+
+273. 有些场景下我们需要在 QApplication a(argc, argv); 前面执行一些处理，比如 QApplication::setAttribute 就必须在最前面执行，而很多时候这个设置的参数不能改写死，毕竟现场的环境千差万别，希望通过配置文件来配置，那么问题来了，读取配置文件一般需要指定路径才能正常读取到，如果是 ./ 这种，很可能未必是应用程序的当前路径，如果你是双击运行的程序，那肯定是应用程序的当前路径，不是双击运行那就是系统环境中的当前路径，意味着你开机启动或者用system、QProcess等方式在开机后调用启动的话，就未必正确了。为了保证这个路径的正确，必须从main函数的 argv 第一个值获取，通过查阅Qt自身代码中获取路径，也是从这个参数获取。
+```cpp
+//程序最前面获取应用程序路径和名称
+static void getCurrentInfo(char *argv[], QString &path, QString &name);
+//程序最前面读取配置文件节点的值
+static QString getIniValue(const QString &fileName, const QString &key);
+static QString getIniValue(char *argv[], const QString &key, const QString &dir = QString());
+
+void QUIHelper::getCurrentInfo(char *argv[], QString &path, QString &name)
+{
+    //必须用fromLocal8Bit保证中文路径正常
+    QString argv0 = QString::fromLocal8Bit(argv[0]);
+    QFileInfo file(argv0);
+    path = file.path();
+    name = file.baseName();
+}
+
+QString QUIHelper::getIniValue(const QString &fileName, const QString &key)
+{
+    QString value;
+    QFile file(fileName);
+    if (file.open(QFile::ReadOnly | QFile::Text)) {
+        while (!file.atEnd()) {
+            QString line = file.readLine();
+            if (line.startsWith(key)) {
+                line = line.replace("\n", "");
+                line = line.trimmed();
+                value = line.split("=").last();
+                break;
+            }
+        }
+    }
+    return value;
+}
+
+QString QUIHelper::getIniValue(char *argv[], const QString &key, const QString &dir)
+{
+    QString path, name;
+    QUIHelper::getCurrentInfo(argv, path, name);
+    QString fileName = QString("%1/%2%3.ini").arg(path).arg(dir).arg(name);
+    return getIniValue(fileName, key);
+}
+
+int main(int argc, char *argv[])
+{
+    int openGLType = QUIHelper::getIniValue(argv, "OpenGLType").toInt();
+    QUIHelper::initOpenGL(openGLType);
+    QApplication a(argc, argv);
+    ...
+}
+```
+
+274. 当我们对QTableView/QTreeView/QTableWidget/QTreeWidget某行选中后，会发现某些单元格设置的前景色被覆盖了，比如设置的红色，一旦选中就变成了白色，这肯定不是我们想要的，需要用自定义委托将其去掉。
+```cpp
+class ItemDelegate : public QItemDelegate
+{
+    Q_OBJECT
+public:
+    explicit ItemDelegate(QObject *parent = 0);
+
+protected:
+    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
+};
+
+#include "itemdelegate.h"
+
+ItemDelegate::ItemDelegate(QObject *parent) : QItemDelegate(parent)
+{
+
+}
+
+void ItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+    QStyleOptionViewItem option2 = option;
+    QColor color = index.data(Qt::ForegroundRole).value<QColor>();
+    if (color.isValid() && color != option.palette.color(QPalette::WindowText)) {
+        option2.palette.setColor(QPalette::HighlightedText, color);
+    }
+
+    QItemDelegate::paint(painter, option2, index);
+}
+
+//对所有单元格设置该委托
+ui->tableWidget->setItemDelegate(new ItemDelegate);
+```
+
+
 ## 2 升级到Qt6
 ### 00：直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。

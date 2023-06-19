@@ -4069,6 +4069,22 @@ void ItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
 ui->tableWidget->setItemDelegate(new ItemDelegate);
 ```
 
+275. 有些时候我们需要在项目文件比如pro/pri中识别当前Qt套件是否存在某个模块以及是否引入过某个模块，存在则引入，同时也希望代码中也能识别是否引入过某个模块比如sql模块，判断后再进行对应的处理。
+```cpp
+//项目文件中判断
+//如果当前套件中有multimedia模块则引入multimedia模块
+qtHaveModule(multimedia) {QT += multimedia}
+//在项目文件中已经通过 QT += multimedia 引入过模块
+contains(QT, multimedia) {}
+
+//代码文件判断
+#ifdef QT_MULTIMEDIA_LIB
+    qDebug() << "multimedia module is enabled";
+#else
+    qDebug() << "multimedia module is not enabled";
+#endif
+```
+
 
 ## 2 升级到Qt6
 ### 00：直观总结

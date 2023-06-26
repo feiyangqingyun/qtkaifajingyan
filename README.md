@@ -3,12 +3,13 @@
 1. **项目作品：[https://blog.csdn.net/feiyangqingyun/article/details/97565652](https://blog.csdn.net/feiyangqingyun/article/details/97565652)**
 2. **网店地址：https://shop244026315.taobao.com/**
 3. **联系方式：QQ（517216493）微信（feiyangqingyun）推荐加微信。**
-4. **版本支持：所有项目已经全部支持Qt4/5/6所有版本以及后续版本。**
-5. 监控作品体验：[https://pan.baidu.com/s/1d7TH_GEYl5nOecuNlWJJ7g](https://pan.baidu.com/s/1d7TH_GEYl5nOecuNlWJJ7g) 提取码：01jf
-6. 其他作品体验：[https://pan.baidu.com/s/1ZxG-oyUKe286LPMPxOrO2A](https://pan.baidu.com/s/1ZxG-oyUKe286LPMPxOrO2A) 提取码：o05q
-7. 监控系统在线文档：[https://feiyangqingyun.gitee.io/QWidgetDemo/video_system/](https://feiyangqingyun.gitee.io/QWidgetDemo/video_system/)
-8. 大屏系统在线文档：[https://feiyangqingyun.gitee.io/QWidgetDemo/bigscreen/](https://feiyangqingyun.gitee.io/QWidgetDemo/bigscreen/)
-9. 物联网系统在线文档：[https://feiyangqingyun.gitee.io/QWidgetDemo/iotsystem/](https://feiyangqingyun.gitee.io/QWidgetDemo/iotsystem/)
+4. **公 众 号：Qt教程（民间）  Qt软件（官方）**
+5. **版本支持：所有项目已经全部支持Qt4/5/6所有版本以及后续版本。**
+6. 监控作品体验：[https://pan.baidu.com/s/1d7TH_GEYl5nOecuNlWJJ7g](https://pan.baidu.com/s/1d7TH_GEYl5nOecuNlWJJ7g) 提取码：01jf
+7. 其他作品体验：[https://pan.baidu.com/s/1ZxG-oyUKe286LPMPxOrO2A](https://pan.baidu.com/s/1ZxG-oyUKe286LPMPxOrO2A) 提取码：o05q
+8. 监控系统在线文档：[https://feiyangqingyun.gitee.io/QWidgetDemo/video_system/](https://feiyangqingyun.gitee.io/QWidgetDemo/video_system/)
+9. 大屏系统在线文档：[https://feiyangqingyun.gitee.io/QWidgetDemo/bigscreen/](https://feiyangqingyun.gitee.io/QWidgetDemo/bigscreen/)
+10. 物联网系统在线文档：[https://feiyangqingyun.gitee.io/QWidgetDemo/iotsystem/](https://feiyangqingyun.gitee.io/QWidgetDemo/iotsystem/)
 
 ## 1 开发经验
 ### 01：001-010
@@ -4085,6 +4086,10 @@ contains(QT, multimedia) {}
 #endif
 ```
 
+276. 对MDI窗体区域设置背景颜色透明，会发现 QMdiArea{background:transparent;} 无效，哪怕是指定颜色 QMdiArea{background:#ff0000;} 或者 QMdiArea{background-color:#ff0000;} 都不行，这就很无语了，原来要用弱属性机制才行。QMdiArea{qproperty-background:transparent;}
+
+277. 当样式中启用了禁用样式 *:disabled{xxx} 的时候，会发现MDI子窗体无法拉伸了，这应该是Qt内部的BUG，怎么解决呢，只需要重新设置MDI这个类别的禁用样式的边框样式即可。QMdiSubWindow:disabled{border:8px solid rgba(0,0,0,0);}
+
 
 ## 2 升级到Qt6
 ### 00：直观总结
@@ -4895,7 +4900,6 @@ for (int i = 0; i < count; ++i) {
 |免费图标下载|[http://www.easyicon.net/](http://www.easyicon.net/)|
 |图形字体下载|[https://www.iconfont.cn/](https://www.iconfont.cn/)|
 |漂亮界面网站|[https://www.ui.cn/](https://www.ui.cn/)|
-|微信公众号|**官方公众号：Qt软件** &nbsp; **亮哥公众号：高效程序员**|
 
 ## 8 书籍推荐
 1. C++入门书籍推荐《C++ primer plus》，进阶书籍推荐《C++ primer》。

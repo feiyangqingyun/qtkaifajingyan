@@ -1,15 +1,16 @@
 
 ## 0 前言说明
-1. **项目作品：[https://blog.csdn.net/feiyangqingyun/article/details/97565652](https://blog.csdn.net/feiyangqingyun/article/details/97565652)**
-2. **网店地址：https://shop244026315.taobao.com/**
-3. **联系方式：QQ（517216493）微信（feiyangqingyun）推荐加微信。**
-4. **公 众 号：Qt教程（民间）  Qt软件（官方）**
-5. **版本支持：所有项目已经全部支持Qt4/5/6所有版本以及后续版本。**
-6. 监控作品体验：[https://pan.baidu.com/s/1d7TH_GEYl5nOecuNlWJJ7g](https://pan.baidu.com/s/1d7TH_GEYl5nOecuNlWJJ7g) 提取码：01jf
-7. 其他作品体验：[https://pan.baidu.com/s/1ZxG-oyUKe286LPMPxOrO2A](https://pan.baidu.com/s/1ZxG-oyUKe286LPMPxOrO2A) 提取码：o05q
-8. 监控系统在线文档：[https://feiyangqingyun.gitee.io/QWidgetDemo/video_system/](https://feiyangqingyun.gitee.io/QWidgetDemo/video_system/)
-9. 大屏系统在线文档：[https://feiyangqingyun.gitee.io/QWidgetDemo/bigscreen/](https://feiyangqingyun.gitee.io/QWidgetDemo/bigscreen/)
-10. 物联网系统在线文档：[https://feiyangqingyun.gitee.io/QWidgetDemo/iotsystem/](https://feiyangqingyun.gitee.io/QWidgetDemo/iotsystem/)
+1. **项目作品：[https://qtchina.blog.csdn.net/article/details/97565652](https://qtchina.blog.csdn.net/article/details/97565652)**
+2. **视频主页: [https://space.bilibili.com/687803542](https://space.bilibili.com/687803542)**
+3. **网店地址：[https://shop244026315.taobao.com](https://shop244026315.taobao.com)**
+4. **联系方式：QQ（517216493）微信（feiyangqingyun）推荐加微信。**
+5. **公 众 号：Qt教程（民间）  Qt软件（官方）**
+6. **版本支持：所有项目已经全部支持Qt4/5/6所有版本以及后续版本。**
+7. 监控作品体验：[https://pan.baidu.com/s/1d7TH_GEYl5nOecuNlWJJ7g](https://pan.baidu.com/s/1d7TH_GEYl5nOecuNlWJJ7g) 提取码：01jf
+8. 其他作品体验：[https://pan.baidu.com/s/1ZxG-oyUKe286LPMPxOrO2A](https://pan.baidu.com/s/1ZxG-oyUKe286LPMPxOrO2A) 提取码：o05q
+9. 监控系统在线文档：[https://feiyangqingyun.gitee.io/QWidgetDemo/video_system/](https://feiyangqingyun.gitee.io/QWidgetDemo/video_system/)
+10. 大屏系统在线文档：[https://feiyangqingyun.gitee.io/QWidgetDemo/bigscreen/](https://feiyangqingyun.gitee.io/QWidgetDemo/bigscreen/)
+11. 物联网系统在线文档：[https://feiyangqingyun.gitee.io/QWidgetDemo/iotsystem/](https://feiyangqingyun.gitee.io/QWidgetDemo/iotsystem/)
 
 ## 1 开发经验
 ### 01：001-010
@@ -4090,6 +4091,112 @@ contains(QT, multimedia) {}
 
 277. 当样式中启用了禁用样式 *:disabled{xxx} 的时候，会发现MDI子窗体无法拉伸了，这应该是Qt内部的BUG，怎么解决呢，只需要重新设置MDI这个类别的禁用样式的边框样式即可。QMdiSubWindow:disabled{border:8px solid rgba(0,0,0,0);}
 
+278. 用QProcess执行命令或者启动可执行文件，默认写法不支持带空格的路径，比如 Program Files ，需要在这个路径前后加上双引号才行，估计可能内部会用空格分割字符串导致解析失败。普通路径加上引号也能正常执行，所以为了确保以防万一，统一加上引号即可。
+```cpp
+QString cmd = "c:/Program Files/a.exe";
+//下面这个会执行失败
+QProcess::startDetached(cmd);
+
+//前后加上引号就可以正常执行
+cmd = "\"" + cmd + "\"";
+QProcess::startDetached(cmd);
+```
+
+279. 在循环中取值，临时变量的定义尽量在循环外层定义，每次在循环里层定义会增加开销，特别是复杂类型比如QString(基础类型比如int/bool差别不大)，循环次数越多，性能差别越大。
+```cpp
+void MainWindow::on_pushButton_clicked()
+{
+    QElapsedTimer timer;
+    timer.start();
+
+    QString s;
+    QString text = "abc";
+    for (int i = 0; i < 10000; ++i) {
+        s = text.at(0);
+    }
+
+    qDebug() << "方式1" << timer.nsecsElapsed();
+}
+
+
+void MainWindow::on_pushButton_2_clicked()
+{
+    QElapsedTimer timer;
+    timer.start();
+
+    QString text = "abc";
+    for (int i = 0; i < 10000; ++i) {
+        QString s = text.at(0);
+    }
+
+    qDebug() << "方式2" << timer.nsecsElapsed();
+}
+
+//debug模式下方式1比方式2快6倍+
+//release模式下方式1比方式2快30倍+
+```
+
+280. Qt的属性机制非常强大，除了可以用来控制样式表，也可以很方便的用来传值，比如qml中的值传递，有时候我们写了一个通用类，希望这个类可以做很多事情，但是又希望其中有一些特殊变量存取值，一种办法是直接定义私有变量，提供get/set接口函数，还有一种偷懒的办法就是用属性setProperty/property，然Qt内部从元对象数据层面自己管理，这样不用在类中写对应的变量和get/set函数。但是肯定有性能损耗，性能上肯定比变量低，所以要看具体的实际需求，如果不是非常频繁的调用setProperty/property，通用性优先的话，那用属性机制会更方便。个人推荐方式三，继承通用类，在子类中增加set/get。
+```cpp
+void MainWindow::on_pushButton_clicked()
+{
+    QElapsedTimer timer;
+    timer.start();
+
+    for (int i = 0; i < 10000; ++i) {
+        Test *t = new Test;
+        //t->setId(i);
+        //t->setName("test");
+        t->getName();
+    }
+
+    qDebug() << "方式1" << timer.nsecsElapsed();
+}
+
+void MainWindow::on_pushButton_2_clicked()
+{
+    QElapsedTimer timer;
+    timer.start();
+
+    for (int i = 0; i < 10000; ++i) {
+        Test *t = new Test;
+        //t->setProperty("id", i);
+        //t->setProperty("name", "test");
+        t->property("name").toString();
+    }
+
+    qDebug() << "方式2" << timer.nsecsElapsed();
+}
+
+//对比测试和具体的变量类型无关/int和QString类型产生的性能差别一样
+//setProperty比setxxx方式性能差3倍+
+//property比getxxx方式性能差1.3倍
+```
+
+### 29：281-290
+281. 悬停窗体QDockWidget默认在标题栏右键会弹出悬停模块的显示隐藏菜单，如果需要去掉，会发现设置Qt::NoContextMenu或者事件过滤器拦截都是无效的，必须设置 dockWidget->setContextMenuPolicy(Qt::PreventContextMenu); 。
+
+282. Qt中的布局有个默认的margin边距值和spacing间距值，在没有设置该值的情况下，会根据运行的环境自动设置该值，比如1080P分辨率和2k分辨率的电脑，该值的默认值不一样，并不是你在UI设计的时候属性栏中看到的值，这个要特别注意，你看到的7可能在目标平台运行的时候是11，如果一定要按照你想要的值来运行，可以重新设置即可，设置过哪一个就该值按照设定的来。如果不想一个个设置调整布局中的间距边距，你需要用到万能大法样式代理，继承QProxyStyle类然后重新设置样式即可。该方式也是属于斗皇级别的UI外观控制策略，最终所有的qss样式也是要通过该样式去绘制的，意味着这里你可以重新定义和控制所有控件的外观样式，非常的强大。
+```cpp
+//也可以继承Qt内置的样式比如 QFusionStyle/QCleanlooksStyle
+class QCustomStyle : public QProxyStyle
+{
+public:
+    int pixelMetric(PixelMetric metric, const QStyleOption *option = 0, const QWidget *widget = 0) const {
+
+        if (metric == QStyle::PM_LayoutHorizontalSpacing || metric == QStyle::PM_LayoutVerticalSpacing) {
+            //将布局中的横向和垂直间距设置成10
+            return 10;
+        } else if (metric == QStyle::PM_ButtonMargin) {
+            //将所有按钮的margin边距设置成20
+            return 20;
+        }
+        return QProxyStyle::pixelMetric(metric, option, widget);
+    }
+};
+
+qApp->setStyle(new QCustomStyle);
+```
 
 ## 2 升级到Qt6
 ### 00：直观总结

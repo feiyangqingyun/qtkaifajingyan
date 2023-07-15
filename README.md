@@ -1,7 +1,7 @@
 
 ## 0 前言说明
 1. **项目作品：[https://qtchina.blog.csdn.net/article/details/97565652](https://qtchina.blog.csdn.net/article/details/97565652)**
-2. **视频主页: [https://space.bilibili.com/687803542](https://space.bilibili.com/687803542)**
+2. **视频主页：[https://space.bilibili.com/687803542](https://space.bilibili.com/687803542)**
 3. **网店地址：[https://shop244026315.taobao.com](https://shop244026315.taobao.com)**
 4. **联系方式：QQ（517216493）微信（feiyangqingyun）推荐加微信。**
 5. **公 众 号：Qt教程（民间）  Qt软件（官方）**

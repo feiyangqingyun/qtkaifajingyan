@@ -3806,7 +3806,7 @@ QSizeGrip {
 }
 ```
 
-257. 在有些没有opengl环境的Qt开发中，比如一些嵌入式板子为了节省资源没有编译opengl所以不会有opengl相关的头文件，在编译项目过程中可能遇到提示 GLES3/gl3.h: No such file or directory，尽管你的项目中也没有用到opengl的任何东西，那是因为你包含了一个大模块 #include <QtWidgets> ，而这个大模块中包含了 #include "qopenglwidget.h" ，你需要做的是在引入大模块前面加一行。
+257. 在有些没有opengl环境的Qt开发中，比如一些嵌入式板子为了节省资源没有编译opengl所以不会有opengl相关的头文件，在编译项目过程中可能遇到提示 GLES3/gl3.h: No such file or directory，尽管你的项目中也没有用到opengl的任何东西，那是因为你包含了一个大模块 #include "QtWidgets" ，而这个大模块中包含了 #include "qopenglwidget.h" ，你需要做的是在引入大模块前面加一行。
 ```cpp
 //下面两个定义看具体需求调整
 #define QT_NO_OPENGL
@@ -4332,7 +4332,7 @@ QRect QUIHelper::getScreenRect(bool available)
 }
 ```
 
-18. QRegExp类移到了core5compat模块，需要主动引入头文件 #include <QRegExp>。
+18. QRegExp类移到了core5compat模块，需要主动引入头文件 #include "QRegExp"。
 ```cpp
     //设置限制只能输入数字+小数位
     QString pattern = "^-?[0-9]+([.]{1}[0-9]+){0,1}$";

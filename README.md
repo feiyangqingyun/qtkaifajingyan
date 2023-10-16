@@ -3880,7 +3880,7 @@ sudo apt-get install libqt5*
 #endif // QTSINGLETON_H
 
 //使用的时候在头文件和实现文件各加一行代码即可
-#include "quisingleton.h"
+#include "qtsingleton.h"
 class Form : public QWidget
 {
     Q_OBJECT SINGLETON_DECL(Form)

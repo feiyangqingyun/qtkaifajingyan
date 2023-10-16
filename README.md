@@ -831,7 +831,7 @@ while (it.hasNext()) {
 
 103. Qt表格控件一些常用的设置封装，QTableWidget继承自QTableView，所以下面这个函数支持传入QTableWidget。
 ```cpp
-void QUIHelper::initTableView(QTableView *tableView, int rowHeight, bool headVisible, bool edit)
+void QtHelper::initTableView(QTableView *tableView, int rowHeight, bool headVisible, bool edit)
 {
     //奇数偶数行颜色交替
     tableView->setAlternatingRowColors(false);
@@ -1077,13 +1077,13 @@ videoWidget->setAttribute(Qt::WA_OpaquePaintEvent);
 
 124. Qt视图中默认排序是按照字符串的ASCII排序的，如果是IP地址的话会出现192.168.1.117排在192.168.1.2前面的情况，如果要规避这种情况，一种做法是取末尾的地址转成整型再比较大小，缺点是跨网段就歇菜了，又会出现192.168.2.65出现在192.168.1.70前面，终极大法是将IP地址转成整型再比较大小。
 ```cpp
-QString QUIHelper::ipv4IntToString(quint32 ip)
+QString QtHelper::ipv4IntToString(quint32 ip)
 {
     QString result = QString("%1.%2.%3.%4").arg((ip >> 24) & 0xFF).arg((ip >> 16) & 0xFF).arg((ip >> 8) & 0xFF).arg(ip & 0xFF);
     return result;
 }
 
-quint32 QUIHelper::ipv4StringToInt(const QString &ip)
+quint32 QtHelper::ipv4StringToInt(const QString &ip)
 {
     int result = 0;
     if (isIP(ip)) {
@@ -1407,7 +1407,7 @@ int main(int argc, char *argv[])
 - 第二步：在有中文汉字的代码文件顶部加一行（一般是cpp文件） #pragma execution_character_set("utf-8") 可以考虑放在head.h中，然后需要的地方就引入head头文件就行，而不是这行代码写的到处都是；这行代码是为了告诉msvc编译器当前代码文件用utf8去编译。
 - 第三步：main函数中加入设置编码的代码，以便兼容Qt4，如果没有Qt4的场景可以不用，从Qt5开始默认就是utf8编码。
 ```cpp
-void QUIHelper::setCode()
+void QtHelper::setCode()
 {
 #if (QT_VERSION <= QT_VERSION_CHECK(5,0,0))
 #if _MSC_VER
@@ -2698,7 +2698,7 @@ WindowsArguments = dpiawareness=0
 
 196. 关于Qt延时的几种方法。
 ```cpp
-void QUIHelperCore::sleep(int msec)
+void QtHelperCore::sleep(int msec)
 {
     if (msec <= 0) {
         return;
@@ -2964,7 +2964,7 @@ void frmMain::dragEnterEvent(QDragEnterEvent *event)
 215. 对于QString去除空格，有多种场景，可能需要去除左侧、右侧、所有等位置的空格。
 ```cpp
 //字符串去空格 -1=移除左侧空格 0=移除所有空格 1=移除右侧空格 2=移除首尾空格 3=首尾清除中间留一个空格
-QString QUIHelperData::trimmed(const QString &text, int type)
+QString QtHelperData::trimmed(const QString &text, int type)
 {
     QString temp = text;
     QString pattern;
@@ -2996,15 +2996,15 @@ QString QUIHelperData::trimmed(const QString &text, int type)
 //测试代码
 QString text = "  a  b  c d  ";
 //结果：a  b  c d  
-QUIHelper::trimmed(text, -1);
+QtHelper::trimmed(text, -1);
 //结果：abcd  
-QUIHelper::trimmed(text, 0);
+QtHelper::trimmed(text, 0);
 //结果：  a  b  c d
-QUIHelper::trimmed(text, 1);
+QtHelper::trimmed(text, 1);
 //结果：a  b  c d
-QUIHelper::trimmed(text, 2);
+QtHelper::trimmed(text, 2);
 //结果：a b c d
-QUIHelper::trimmed(text, 3);
+QtHelper::trimmed(text, 3);
 ```
 
 216. Qt的网络库支持udp广播搜索和组播搜索，其中组播搜索可以跨网段搜索，有时候你会发现失灵，此时你可以尝试把本地的虚拟机的网卡禁用试试，估计就好了。还有就是在本地开启了代理啥的，先关掉试试。近期在使用tcpsocket连接的时候，发现在Qt4和Qt5中正常的程序，到了Qt6中就不行了，报错提示 The proxy type is invalid for this operation ，原来是本地设置了代理导致的，可能在Qt6以前会默认跳过去不处理。
@@ -3851,8 +3851,8 @@ sudo apt-get install libqt5*
 
 260. 项目大了以后，经常需要将某些类做成单例类，在整个项目中唯一存在，供多个地方使用，如果一个就一个类需要写成单例模式，那直接写在那个类中即可，如果类多了的话，会发现都是一些重复的定义代码，此时可以考虑用个宏定义，传入类名即可，代码量虽然少了可能绩效低了，但是水平提升了。
 ```cpp
-#ifndef QUISINGLETON_H
-#define QUISINGLETON_H
+#ifndef QTSINGLETON_H
+#define QTSINGLETON_H
 
 #include <QScopedPointer>
 #include <QMutex>
@@ -3877,7 +3877,7 @@ sudo apt-get install libqt5*
         return self.data(); \
     }
 
-#endif // QUISINGLETON_H
+#endif // QTSINGLETON_H
 
 //使用的时候在头文件和实现文件各加一行代码即可
 #include "quisingleton.h"
@@ -3910,9 +3910,9 @@ QTabWidget::pane:right{left:-1px;}
 
 264. 在linux上编译动态库文件，可能会生成一堆软连接文件（图标上有个小箭头/libuntitled.so/libuntitled.so.1/libuntitled.so.1.0libuntitled.so.1.0.0），很多时候看起来很烦，习惯了windows上就生成一个文件，你只需要在你的pro或者pri中加上一行 CONFIG += plugin 即可，这样只会生成一个libuntitled.so文件。2023-4-2补充：还可以使用 CONFIG += unversioned_libname unversioned_soname 来实现，unversioned_libname用来去掉lib的各个版本号，unversioned_soname用来去掉链接里的版本号（不加这个的话尽管生成的是libuntitled.so，但是链接编译的时候还会报错提示依赖带版本号的）。具体文章可以参考 [https://blog.csdn.net/gongjianbo1992/article/details/129889588](https://blog.csdn.net/gongjianbo1992/article/details/129889588) 。
 
-265. 关于Qt在线安装过程中出现报错提示：下载“http://mirrors.aliyun.com...“时出现网络错误 的解决方法，打开命令行运行安装程序，比如C:\Users\Administrator>D:\Qt\Qt6\MaintenanceTool.exe，后面主动加上参数 --mirror https://mirrors.aliyun.com/qt，完整命令行是 C:\Users\Administrator>D:\Qt\Qt6\MaintenanceTool.exe --mirror https://mirrors.aliyun.com/qt，回车运行即可。同理也可以换成国内其他的镜像地址。
+265. 关于Qt在线安装过程中出现报错提示：下载“http://mirrors.aliyun.com...“时出现网络错误 的解决方法，打开命令行运行安装程序，比如C:\Users\Administrator>D:\Qt\Qt6\MaintenanceTool.exe，后面主动加上参数 --mirror https://mirrors.cloud.tencent.com/qt，完整命令行是 C:\Users\Administrator>D:\Qt\Qt6\MaintenanceTool.exe --mirror https://mirrors.cloud.tencent.com/qt，回车运行即可。同理也可以换成国内其他的镜像地址（腾讯云 https://mirrors.cloud.tencent.com/qt /阿里云 https://mirrors.aliyun.com/qt），有时候镜像的更新要慢一些，可以进入到目录 https://mirrors.aliyun.com/qt/online/qtsdkrepository/ 看下有没有对应的版本。
 
-266. 从Qt6.4版本开始多媒体模块提供了ffmpeg作为后端解码使用（6.5版本默认就是ffmpeg），可以通过设置环境变量来更改使用哪种后端解码，在main函数的第一行 qputenv("QT_MEDIA_BACKEND", "ffmpeg"); 目前已知的问题是如果选用ffmpeg则暂时不支持中文目录以及中文名称，如果一定要支持中文则需要改成windows。
+266. 从Qt6.4版本开始多媒体模块提供了ffmpeg作为后端解码使用（6.5版本默认就是ffmpeg），可以通过设置环境变量来更改使用哪种后端解码，在main函数的第一行 qputenv("QT_MEDIA_BACKEND", "ffmpeg"); 目前已知的问题是如果选用ffmpeg则暂时不支持中文目录以及中文名称（在6.5.1修复了），如果一定要支持中文则需要改成windows。
 ```cpp
 //设置后端解码为ffmpeg/所有系统都支持
 qputenv("QT_MEDIA_BACKEND", "ffmpeg");
@@ -3993,7 +3993,7 @@ static void getCurrentInfo(char *argv[], QString &path, QString &name);
 static QString getIniValue(const QString &fileName, const QString &key);
 static QString getIniValue(char *argv[], const QString &key, const QString &dir = QString());
 
-void QUIHelper::getCurrentInfo(char *argv[], QString &path, QString &name)
+void QtHelper::getCurrentInfo(char *argv[], QString &path, QString &name)
 {
     //必须用fromLocal8Bit保证中文路径正常
     QString argv0 = QString::fromLocal8Bit(argv[0]);
@@ -4002,7 +4002,7 @@ void QUIHelper::getCurrentInfo(char *argv[], QString &path, QString &name)
     name = file.baseName();
 }
 
-QString QUIHelper::getIniValue(const QString &fileName, const QString &key)
+QString QtHelper::getIniValue(const QString &fileName, const QString &key)
 {
     QString value;
     QFile file(fileName);
@@ -4020,18 +4020,18 @@ QString QUIHelper::getIniValue(const QString &fileName, const QString &key)
     return value;
 }
 
-QString QUIHelper::getIniValue(char *argv[], const QString &key, const QString &dir)
+QString QtHelper::getIniValue(char *argv[], const QString &key, const QString &dir)
 {
     QString path, name;
-    QUIHelper::getCurrentInfo(argv, path, name);
+    QtHelper::getCurrentInfo(argv, path, name);
     QString fileName = QString("%1/%2%3.ini").arg(path).arg(dir).arg(name);
     return getIniValue(fileName, key);
 }
 
 int main(int argc, char *argv[])
 {
-    int openGLType = QUIHelper::getIniValue(argv, "OpenGLType").toInt();
-    QUIHelper::initOpenGL(openGLType);
+    int openGLType = QtHelper::getIniValue(argv, "OpenGLType").toInt();
+    QtHelper::initOpenGL(openGLType);
     QApplication a(argc, argv);
     ...
 }
@@ -4198,6 +4198,83 @@ public:
 qApp->setStyle(new QCustomStyle);
 ```
 
+283. 养成良好的编程习惯至关重要，尤其是对变量的初始化，包括一些类对象的定义后也务必记得初始化，否则在不初始化的时候，默认值飘忽不定，比如int默认值在debug/release下以及不同编译器下默认值都不一样，甚至在头文件定义以及函数中定义都可能不同的默认值，下面表格中整理的测试的值，对应的int值飘忽不定的。常见的默认初始化定义建议 int i = 0; bool b = false; class a = NULL;
+
+|版本|定义位置|debug/release|int|bool|
+|:------|:------|:------|:------|:------|
+|Qt4.7/mingw|头文件|debug|7077464|true|
+|Qt4.7/mingw|头文件|release|48|true|
+|Qt4.7/mingw|函数中|debug|2162216|false|
+|Qt4.7/mingw|函数中|release|0|false|
+|Qt5.7/msvc|头文件|debug|-1|true|
+|Qt5.7/msvc|头文件|release|-1|true|
+|Qt5.7/msvc|函数中|debug|1898108572|false|
+|Qt5.7/msvc|函数中|release|18872512|true|
+|Qt6.5/mingw|头文件|debug|-1305540880|true|
+|Qt6.5/mingw|头文件|release|-1124044992|true|
+|Qt6.5/mingw|函数中|debug|0|false|
+|Qt6.5/mingw|函数中|release|0|false|
+
+284. 对QTableView进行全部选中、全部不选、反向选中操作。
+```cpp
+void frmXXX::initAction()
+{
+    QAction *actionAll = new QAction("全部选中");
+    QAction *actionInvert = new QAction("反向选中");
+    QAction *actionClear = new QAction("清空选中");
+    connect(actionAll, SIGNAL(triggered(bool)), this, SLOT(doAction()));
+    connect(actionInvert, SIGNAL(triggered(bool)), this, SLOT(doAction()));
+    connect(actionClear, SIGNAL(triggered(bool)), this, SLOT(doAction()));
+
+    ui->tableView->addAction(actionAll);
+    ui->tableView->addAction(actionInvert);
+    ui->tableView->addAction(actionClear);
+    ui->tableView->setContextMenuPolicy(Qt::ActionsContextMenu);
+}
+
+void frmXXX::doAction()
+{
+    QAction *action = (QAction *)sender();
+    QString text = action->text();
+    if (text == "全部选中") {
+        ui->tableView->selectAll();
+    } else if (text == "反向选中") {
+        //找到所有选中的行集合
+        QList<int> rows;
+        QModelIndexList list = ui->tableView->selectionModel()->selectedRows();
+        int count = list.count();
+        for (int i = 0; i < count; ++i) {
+            rows << list.at(i).row();
+        }
+
+        //先清空所有选中
+        ui->tableView->clearSelection();
+        //不在选中行集合的则选中
+        count = ui->tableView->model()->rowCount();
+        for (int i = 0; i < count; ++i) {
+            if (!rows.contains(i)) {
+                ui->tableView->selectRow(i);
+            }
+        }
+    } else if (text == "清空选中") {
+        ui->tableView->clearSelection();
+    }
+}
+```
+
+285. pro文件中多重条件判断，前面 ! 表示非，中间 | 表示或（两个条件满足其一），中间 :: 表示与（两个条件都要满足）。
+```cpp
+//下面表示安卓或者ios平台
+android|ios {}
+
+//下面表示非安卓和ios平台
+!android::!ios {}
+```
+
+286. 很多时候项目越写越大，然后就可能遇到，明明之前很简单的一段代码，运行的好好的，就那么几行几十行，为何一旦加入到当前项目中，就不行了，百思不得其解。一般遇到这种情况，建议两种处理办法，办法一就是注释大法，从main函数入口开始，将不相关的都注释掉，仔细检查运行流程，直到本来不会出问题但是出问题的代码。办法二就是单独写个最简单的有问题的可以直接编译运行的示例，化繁为简，这样查找问题速度快。往往你会发现，写完这个简单的你怀疑的有问题的代码后，运行是完全正常的，他自己就好了，此时你可以安心的去排查其他代码了。
+
+287. 现在很多linux用wayland作为桌面显示，这样会出现一个问题，由于没有坐标系统，导致无边框窗体无法拖动和定位（一般是Qt6开始强制默认优先用wayland，之前Qt5是默认有xcb则优先用xcb），你需要在main函数前面加一行 qputenv("QT_QPA_PLATFORM", "xcb");
+
 ## 2 升级到Qt6
 ### 00：直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
@@ -4283,7 +4360,7 @@ greaterThan(QT_MAJOR_VERSION, 5): QT += core5compat
 17. 获取当前屏幕索引以及尺寸需要分别处理。
 ```cpp
 //获取当前屏幕索引
-int QUIHelper::getScreenIndex()
+int QtHelper::getScreenIndex()
 {
     //需要对多个屏幕进行处理
     int screenIndex = 0;
@@ -4311,10 +4388,10 @@ int QUIHelper::getScreenIndex()
 }
 
 //获取当前屏幕尺寸区域
-QRect QUIHelper::getScreenRect(bool available)
+QRect QtHelper::getScreenRect(bool available)
 {
     QRect rect;
-    int screenIndex = QUIHelper::getScreenIndex();
+    int screenIndex = QtHelper::getScreenIndex();
     if (available) {
 #if (QT_VERSION >= QT_VERSION_CHECK(5,0,0))
         rect = qApp->screens().at(screenIndex)->availableGeometry();
@@ -4806,7 +4883,7 @@ int AndroidJar::add(int a, int b)
     return result;
 #endif
 }
-```
+```  
 
 24. Qt6中对安卓支持部分做了大的改动，目前还不完善，如果是不涉及到与java交互的纯Qt项目，可以正常移植，涉及到的暂时不建议移植到Qt6，等所有类完善了再说。
 - 移除了安卓插件androidextras，将其中部分功能类移到core模块中，不需要额外引入。
@@ -4830,6 +4907,8 @@ int AndroidJar::add(int a, int b)
 29. 安卓项目配置文件是固定的名字 AndroidManifest.xml ，改成其他名字就不认识，不要想当然改成其他名字导致无法正常识别。
 
 30. AndroidManifest.xml文件中的package="org.qtproject.example"是包名，也是整个apk程序的内部唯一标识，如果多个apk这个包名一样，则会覆盖，所以一定要注意不同的程序记得把这个包名改成你自己的。这个包名也决定了java文件中需要使用资源文件时候的引入包名 import org.qtproject.example.R; 如果包名不一样则编译都通不过。
+
+31. 新版的qtc搭建安卓开发环境非常简单，早期版本的非常复杂，要东下载西下载，折腾好多天才行。现在只需要安装jdk文件（jdk_8.0.1310.11_64.exe），全部默认一步到位，然后在qtc中安卓配置界面，设置jdk的安装目录。然后打开 D:\Qt\Qt6\Tools\QtCreator\share\qtcreator\android\sdk_definitions.json 和 C:\Users\Administrator\AppData\Roaming\QtProject\qtcreator\android\sdk_definitions.json，将里面的 cmdline-tools;latest 修改为 cmdline-tools;6.0  ，这一步非常关键，默认是latest导致待会自动下载sdk/ndk的时候会下载不全。改好以后，设置sdk保存目录，单击右侧的 Set Up SDK 按钮，自动下载一堆文件，最后下面有个openssl的目录文件也设置下。该文件网上可以非常简单就能直接下载到，右侧就有按钮单击打开下载页面。然后就可以开始愉快的安卓开发之旅了。
 
 ## 4 Qt设计模式
 **读《c++ Qt设计模式》书籍整理的一点经验。此书和官方的《C++ GUI Qt4编程》一起的。**
@@ -4918,7 +4997,7 @@ for (int i = 0; i < count; ++i) {
 - Qml无缝支持js，可以利用现在各种js轮子，指数级提升qml的项目范围。
 - 支持将程序转成web运行，比如转成cgi之类的程序，目前Qt for WebAssembly很鸡肋，功能极其有限，sql/network/本地访问等都不支持，首次加载速度超慢，大部分Qt类还不支持。
 
-13. Qt自从4.7以后引入的QML。从此以后，Qt开发就分成了两种流派，一者使用原来的C++ 语言进行开发，另外一种使用QML语言进行开发。这下搞得嘞，经常吵吵不亦乐乎，在Qt界从此就有两大阵营产生激烈的纷争，那就是选用qml还是widget好，大量初学者也会问这个问题，有以下几点总结。
+13. Qt自从4.7以后引入的QML。从此以后，Qt开发就分成了两种流派，一种使用原来的C++ 语言进行开发，另外一种使用QML语言进行开发。这下搞得嘞，经常吵吵不亦乐乎，在Qt界从此就有两大阵营产生激烈的纷争，那就是选用qml还是widget好，大量初学者也会问这个问题，有以下几点总结。
 - widget属于传统界面开发，和VB/VC/Delphi等拖曳控件开发类似，走CPU绘制，能最大化的兼容现有的硬件和过去的相对偏低性能的硬件。
 - qml属于新时代的产物，大概从2010年开始，和flutter/Electron等web开发框架及移动开发框架类似，为了适应各种移动端开发及动画流畅性触摸丝滑体验、充分利用和“榨干”现在的GPU性能，把CPU留出来给用户最大化发挥。
 - 硬件性能越好，GPU越是强劲，qml的综合性能越是完爆widget，反之对比也是指数级的。除了极其省成本的嵌入式硬件领域或者国产CPU等，其他领域的硬件性能都是暴增。

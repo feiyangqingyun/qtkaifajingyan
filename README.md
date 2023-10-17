@@ -669,7 +669,7 @@ if (variant.typeName() == "QColor") {
 }
 ```
 
-83. Qt中的QString和const char *之间转换，最好用toStdString().c_str()而不是toLocal8Bit().constData()，比如在setProperty中如果用后者，字符串中文就会不正确，英文正常。
+83. Qt中的QString和const char \*之间转换，最好用toStdString().c_str()而不是toLocal8Bit().constData()，比如在setProperty中如果用后者，字符串中文就会不正确，英文正常。
 
 84. Qt的信号槽机制非常牛逼，也是Qt的独特的核心功能之一，有时候我们在很多窗体中传递信号来实现更新或者处理，如果窗体层级比较多，比如窗体A的父类是窗体B，窗体B的父类是窗体C，窗体C有个子窗体D，如果窗体A一个信号要传递给窗体D，问题来了，必须先经过窗体B中转到窗体C再到窗体D才行，这样的话各种信号关联信号的connect会非常多而且管理起来比较乱，可以考虑增加一个全局的单例类AppEvent，公共的信号放这里，然后窗体A对应信号绑定到AppEvent，窗体D绑定AppEvent的信号到对应的槽函数即可，干净清爽整洁。
 
@@ -708,7 +708,7 @@ file.close();
 writer->close();
 ```
 
-89. 理论上串口和网络收发数据都是默认异步的，操作系统自动调度，完全不会卡住界面，网上那些说收发数据卡住界面主线程的都是扯几把蛋，真正的耗时是在运算以及运算后的处理，而不是收发数据，在一些小数据量运算处理的项目中，一般不建议动用线程去处理，线程需要调度开销的，不要什么东西都往线程里边扔，线程不是万能的。只有当真正需要将一些很耗时的操作比如编码解码等，才需要移到线程处理。
+89. 理论上串口和网络收发数据都是默认异步的，操作系统自动调度，完全不会卡住界面，网上那些说收发数据卡住界面主线程的都是不正确的，真正的耗时是在运算以及运算后的处理，而不是收发数据，在一些小数据量运算处理的项目中，一般不建议动用线程去处理，线程需要调度开销的，不要什么东西都往线程里边扔，线程不是万能的。只有当真正需要将一些很耗时的操作比如编码解码等，才需要移到线程处理。
 
 90. 在构造函数中获取控件的宽高很可能是不正确的，需要在控件首次显示以后再获取才是正确的，控件是在首次显示以后才会设置好正确的宽高值，记住是在首次显示以后，而不是构造函数或者程序启动好以后，如果程序启动好以后有些容器控件比如QTabWidget中的没有显示的页面的控件，你去获取宽高很可能也是不正确的，万无一失的办法就是首次显示以后去获取。
 
@@ -1935,7 +1935,7 @@ customPlot->setNoAntialiasingOnDrag(true);
 customPlot->graph()->setAntialiased(false);
 customPlot->graph()->setAntialiasedFill(false);
 customPlot->graph()->setAntialiasedScatters(false);
-//设置快速绘制可以大大加快画笔宽度大于1的线条
+//设置快速绘制可以极大加快画笔宽度大于1的线条
 customPlot->setPlottingHint(QCP::phFastPolylines);
 
 //多种设置数据的方法
@@ -2252,7 +2252,7 @@ locale.toString(QDateTime::currentDateTime(), "ddd");
 locale.toString(QDateTime::currentDateTime(), "dddd");
 ```
 
-180. QSqlTableModel大大简化了对数据库表的显示、添加、删除、修改等，唯独对数据库分页操作有点绕弯。
+180. QSqlTableModel极大简化了对数据库表的显示、添加、删除、修改等，唯独对数据库分页操作有点绕弯。
 ```cpp
 //实例化数据库表模型
 QSqlTableModel *model = new QSqlTableModel(this);
@@ -2460,10 +2460,10 @@ MainWindow::MainWindow(QWidget *parent)
 #endif
 ```
 
-185. 在使用QString转换到char *或者const char *的时候，务必记得分两步来完成，血的教训，在一个场景中，就因为没有分两步走，现象是msvc的debug异常release正常，mingw和gcc的debug和release都正常，这就很无语了，找问题找半天，对比法排除法按道理要么都有问题才对。
+185. 在使用QString转换到char \*或者const char \*的时候，务必记得分两步来完成，血的教训，在一个场景中，就因为没有分两步走，现象是msvc的debug异常release正常，mingw和gcc的debug和release都正常，这就很无语了，找问题找半天，对比法排除法按道理要么都有问题才对。
 - 转换前QString的内容无关中文还是英文，要出问题都一样。
 - 转换中QByteArray无关具体类型，toUtf8、toLatin1、toLocal8Bit、toStdString等方法，要出问题都一样。
-- 转换后无关char *还是const char *，要出问题都一样。
+- 转换后无关char \*还是const char \*，要出问题都一样。
 - 出问题的随机性的，概率出现，理论上debug的概率更大。
 - 根据酷码大佬分析可能的原因(不确定)是msvc为了方便调试，debug会在内存释放后做填充，release则不会。
 ```cpp
@@ -3035,7 +3035,7 @@ tcpSocket->setProxy(QNetworkProxy::NoProxy);
 - 交叉编译qt5.9.8命令：./configure -prefix host -xplatform linux-arm-g++ -recheck-all -opensource -confirm-license -optimized-qmake -release -no-separate-debug-info -strip -shared -static -c++std c++1z -no-sse2 -pch -compile-examples -gui -widgets -no-dbus -no-openssl -no-cups -no-opengl -linuxfb -qt-zlib -qt-libpng -qt-libjpeg -qt-freetype
 - 综上所述交叉编译和常规的编译就一个区别，需要手动指定交叉编译器路径。ffmpeg是通过--cross-prefix=指定，qt比较庞大是通过更改配置文件最后通过-xplatform指定配置文件名称。
 - Qt6的编译比较繁琐，默认用cmake编译，在linux上先用cmake3.19以上版本的源码，用make编译生成cmake，然后再用cmake编译qt生成qmake，最后调用qmake来编译你的qt项目。
-- 编译Qt其实只是想用其中的库，至于demo、doc、tool、example等统统不用，费时费力。所以强烈建议编译的时候去掉，大大加快编译速度。
+- 编译Qt其实只是想用其中的库，至于demo、doc、tool、example等统统不用，费时费力。所以强烈建议编译的时候去掉，极大加快编译速度。
 - 编译建议用普通用户编译即可，包括解压源码，因为这样编译出来的库普通用户就能用，如果是root管理员编译的则以后都需要管理员权限才行。
 - 很多系统都提供了直接鼠标右键解压，其实也是可以的，就是速度慢，建议用命令行解压和删除目录。
 - Qt的编译参数每个版本都可能有出入，毕竟一直在更新代码，甚至有些分类描述变了，比如之前-qt-xcb到了5.15改成了-xcb，之前-qt-sql-sqlite改成了-qt-sqlite，一定要看源码下的readme，里面约定了编译环境要求的最低版本，后面qt5开始具体的配置参数有哪些放到了qtbase目录下的config说明。
@@ -3151,7 +3151,7 @@ int DataCsv::findCode(const QString &fileName)
 }
 ```
 
-223. 在连接远程数据库进行查询数据的时候，有时候会发现很慢，尤其是表数据量越多越慢，本地的话同等数据量快很多，可以尝试开启只前进属性，query.setForwardOnly(true);这样的话只会缓存一次的数据，大大提高远程数据库的查询效率，据说可以提高几十倍百倍的速度。当然前提是对查询的数据之前向前取数据的需求，如果还要往后取数据或者在数据模型QSqlQueryModel中使用，则不能开启此属性。原因在每次利用QSqlQuery获取下一条记录时，若不开启isForwardOnly属性（很遗憾默认就是不开启），则每次都开辟新的内存空间，来存储已经访问及未访问的记录，这样，每次都会浪费好多存储空间。
+223. 在连接远程数据库进行查询数据的时候，有时候会发现很慢，尤其是表数据量越多越慢，本地的话同等数据量快很多，可以尝试开启只前进属性，query.setForwardOnly(true);这样的话只会缓存一次的数据，极大提高远程数据库的查询效率，据说可以提高几十倍百倍的速度。当然前提是对查询的数据之前向前取数据的需求，如果还要往后取数据或者在数据模型QSqlQueryModel中使用，则不能开启此属性。原因在每次利用QSqlQuery获取下一条记录时，若不开启isForwardOnly属性（很遗憾默认就是不开启），则每次都开辟新的内存空间，来存储已经访问及未访问的记录，这样，每次都会浪费好多存储空间。
 
 224. Qt中的painter绘制非常灵活强大，接口丰富，但是对于很多初学者来说还是有一定的难度，尤其是各种奇奇怪怪的复杂格式，而这些格式用html确很好描述，比如控制行间距、字符间距等，此时可以用QTextDocument传入html格式内容交给QPainter绘制，非常完美、简单、强大，包括一些数学公式啥的。
 ```cpp
@@ -3431,7 +3431,7 @@ class tt {
 - select count(*) from table 这样不带任何条件的count会引起全表扫描。
 - in 和 not in 也要慎用，否则会导致全表扫描，能用 between 就不要用 in。
 - 用 >= 替代 >，比如 高效写法：select * from table where id >= 4，低效写法：select * from table where id > 3。
-- 如果表数据量很小，比如就几千行，请忽略上述警告，加不加索引问题不大，甚至某些时候加索引反而大大增加了数据库文件的体积，影响更新数据库的速度。
+- 如果表数据量很小，比如就几千行，请忽略上述警告，加不加索引问题不大，甚至某些时候加索引反而极大增加了数据库文件的体积，影响更新数据库的速度。
 
 238. 由于Qt在不断的更新换代，各种组件轮子也在增加、拆分、调整等，所以我们在编写项目的时候，如果有版本兼容的问题，就需要在pro项目文件和代码文件中做对应的判断处理。根据多年的经验总结，一个万能的办法就是在pro中增加一个DEFINES标识，然后根据这个DEFINES标识引入对应模块，最后在代码中通过#ifdef判断标识执行对应代码。经过这样倒腾几下你的代码可以在低版本和高版本编译运行。
 ```cpp
@@ -3589,7 +3589,7 @@ widget.reset(new QWidget);
 
 246. 在编写类中有时候需要对变量进行赋值和取值，这时候一般用 setxxx、getxxx 之类的函数进行处理，而且往往里面就一行代码，这时候你可能会思考为何不直接将变量改成public暴露出来使用，还可以省两个函数几行代码。其实用set get这样处理主要还是为了拓展性，比如后期如果需要对赋值进行过滤处理，或者该变量只允许读写中的一个，如果之前是直接使用的变量外，则使用的地方都要去修改规则，反而变得很糟糕。 参考文章 [https://blog.csdn.net/ChineseSoftware/article/details/122923485](https://blog.csdn.net/ChineseSoftware/article/details/122923485) 。
 
-247. 关于如何快速结束线程，调用terminate暴力结束容易出问题。一般来说我们都是采用标志位来结束线程，但是如果执行过程中的函数很耗时，或者在run中msleep休息的时间过久，容易导致要很长一段时间才能正确停止，此时可以考虑一个策略就是分割线程执行体，如果是函数体耗时可以在耗时的函数体中增加停止标志位的判断，使其快速跳出；如果是延时时间过久可以将延时时间拆分成多个小的时间轮片，每个小的休息间隔都判断停止标志位，这样也可以大大加快线程正常退出的速度而不用等待太久。
+247. 关于如何快速结束线程，调用terminate暴力结束容易出问题。一般来说我们都是采用标志位来结束线程，但是如果执行过程中的函数很耗时，或者在run中msleep休息的时间过久，容易导致要很长一段时间才能正确停止，此时可以考虑一个策略就是分割线程执行体，如果是函数体耗时可以在耗时的函数体中增加停止标志位的判断，使其快速跳出；如果是延时时间过久可以将延时时间拆分成多个小的时间轮片，每个小的休息间隔都判断停止标志位，这样也可以极大加快线程正常退出的速度而不用等待太久。
 ```cpp
 void Thread::run()
 {
@@ -3599,7 +3599,7 @@ void Thread::run()
         //下面这个延时太久导致退出很慢
         //msleep(3000);
 
-        //特意每次做个小延时每次都去判断标志位等可以大大加快关闭速度
+        //特意每次做个小延时每次都去判断标志位等可以极大加快关闭速度
         int count = 0;
         while (!stopped) {
             msleep(100);
@@ -3935,7 +3935,7 @@ qputenv("QT_MEDIA_BACKEND", "android");
 270. 有时候我们设置开机运行程序后，如果该程序用又用QProcess等方式调用了程序B，而程序B又需要读取目录下的配置文件，此时你会发现根本读取不到，因为开机后的默认目录不在可执行文件所在目录（如果我们是双击程序运行的那就不存在这个问题，会自动将可执行文件所在目录作为当前目录。）所以我们需要执行代码 QDir::setCurrent(qApp->applicationDirPath()); 主动设置当前目录在哪，告诉操作系统。QProcess中有个setWorkingDirectory本人也各种对比测试过，对开启启动后的程序调用QProcess无效，必须用QDir::setCurrent。
 
 ### 28：271-280
-271. 编程的过程中经常遇到需要将QString转成char *或者const char *的情况，在转换成QByteArray后调用.data()或者.constData()函数进行转换，这里需要注意的是，如果转换类型是const char *尽管用data()不会出错，会给你自动转换，但是还是不建议，因为深拷贝了一份，理论上增加了内存开销，如果字符串长度小还好，一旦很长，这个开销挺大，这是个好的编程习惯。
+271. 编程的过程中经常遇到需要将QString转成char \*或者const char \*的情况，在转换成QByteArray后调用.data()或者.constData()函数进行转换，这里需要注意的是，如果转换类型是const char \*尽管用data()不会出错，会给你自动转换，但是还是不建议，因为深拷贝了一份，理论上增加了内存开销，如果字符串长度小还好，一旦很长，这个开销挺大，这是个好的编程习惯。
 ```cpp
 //查阅代码得知data函数有两个重载
 inline char *QByteArray::data()
@@ -4883,7 +4883,7 @@ int AndroidJar::add(int a, int b)
     return result;
 #endif
 }
-```  
+```
 
 24. Qt6中对安卓支持部分做了大的改动，目前还不完善，如果是不涉及到与java交互的纯Qt项目，可以正常移植，涉及到的暂时不建议移植到Qt6，等所有类完善了再说。
 - 移除了安卓插件androidextras，将其中部分功能类移到core模块中，不需要额外引入。

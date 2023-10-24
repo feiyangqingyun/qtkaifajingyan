@@ -1252,10 +1252,10 @@ void App::writeConfig()
 136. 用Qt做安卓开发都会遇到权限的问题，早期的安卓版本可以直接通过 AndroidManifest.xml 配置文件来添加需要的权限，这样在安装app的时候就会提示该app需要哪些权限让用户同意，现在的安卓版本都改成了动态权限，需要在app运行的时候弹出提示让用户确认再有权限，Qt迎合了这种策略内置了动态申请权限的方法 QtAndroid::requestPermissionsSync。
 ```cpp
 //动态设置权限
-bool checkPermission(const QString &permission)
+bool AndroidHelper::checkPermission(const QString &permission)
 {
 #ifdef Q_OS_ANDROID
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 10, 0))
+#if (QT_VERSION >= QT_VERSION_CHECK(5,10,0) && QT_VERSION < QT_VERSION_CHECK(6,0,0))
     QtAndroid::PermissionResult result = QtAndroid::checkPermission(permission);
     if (result == QtAndroid::PermissionResult::Denied) {
         QtAndroid::requestPermissionsSync(QStringList() << permission);
@@ -1263,6 +1263,11 @@ bool checkPermission(const QString &permission)
         if (result == QtAndroid::PermissionResult::Denied) {
             return false;
         }
+    }
+#else
+    QFuture<QtAndroidPrivate::PermissionResult> result = QtAndroidPrivate::requestPermission(permission);
+    if (result.resultAt(0) == QtAndroidPrivate::PermissionResult::Denied) {
+        return false;
     }
 #endif
 #endif

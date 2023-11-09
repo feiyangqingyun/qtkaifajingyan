@@ -557,7 +557,7 @@ setsockopt(fd, SOL_TCP, TCP_KEEPCNT, (void *)&keepCount, sizeof(keepCount));
 
 58. 非常不建议tr中包含中文，尽管现在的新版Qt支持中文到其他语言的翻译，但是很不规范，也不知道TMD是谁教的（后面发现我在刚学Qt的时候也发布了一些demo到网上也是tr包含中文的，当时就狠狠的打了自己一巴掌），tr的本意是包含英文，然后翻译到其他语言比如中文，现在大量的初学者滥用tr，如果没有翻译的需求，禁用tr，tr需要开销的，Qt默认会认为他需要翻译，会额外进行特殊处理。
 
-59. 很多人Qt和Qt Creator傻傻分不清楚，经常问Qt什么版本结果发一个Qt Creator的版本过来，Qt Creator是使用Qt编写的集成开发环境IDE，和宇宙第一的Visual Studio一样，他可以是msvc编译器的（WIN对应的Qt集成安装环境中自带的Qt Cerator是msvc的），也可以是mingw编译的，还可以是gcc的。如果是自定义控件插件，需要集成到Qt Creator中，必须保证该插件的动态库文件（dll或者so等文件）对应的编译器和Qt版本以及位数和Qt Creator的版本完全一致才行，否则基本不大可能集成进去。特别注意的是Qt集成环境安装包中的Qt版本和Qt Creator版本未必完全一致，必须擦亮眼睛看清楚，有些是完全一致的。
+59. 很多人Qt和Qt Creator傻傻分不清楚，经常问Qt什么版本结果发一个Qt Creator的版本过来，Qt Creator是使用Qt编写的集成开发环境IDE，和宇宙第一的Visual Studio一样，他可以是msvc编译器的（windows对应的Qt集成安装环境中自带的Qt Cerator是msvc的），也可以是mingw编译的，还可以是gcc的。如果是自定义控件插件，需要集成到Qt Creator中，必须保证该插件的动态库文件（dll或者so等文件）对应的编译器和Qt版本以及位数和Qt Creator的版本完全一致才行，否则基本不大可能集成进去。特别注意的是Qt集成环境安装包中的Qt版本和Qt Creator版本未必完全一致，必须擦亮眼睛看清楚，有些是完全一致的。由于新版的Qt要求在线安装，而且在线安装选择器中Qt Creator的版本无法选择，新版的Qt Creator用的是Qt6编译的，所以就出现了win7系统不支持的情况，推荐用win10或者win11系统做开发环境。你可以在高版本的Qt Creator中做开发，选择支持win7的套件版本比如5.15或者选择支持xp的套件版本5.6即可，发布后依然可以正常在低版本的系统运行。
 
 60. 超过两处相同处理的代码，建议单独写成函数。代码尽量规范精简，比如 if(a == 123) 要写成 if (123 == a)，值在前面，再比如 if (ok == true) 要写成 if (ok)，if (ok == false) 要写成 if (!ok)等。
 
@@ -1249,7 +1249,7 @@ void App::writeConfig()
 }
 ```
 
-136. 用Qt做安卓开发都会遇到权限的问题，早期的安卓版本可以直接通过 AndroidManifest.xml 配置文件来添加需要的权限，这样在安装app的时候就会提示该app需要哪些权限让用户同意，现在的安卓版本都改成了动态权限，需要在app运行的时候弹出提示让用户确认再有权限，Qt迎合了这种策略内置了动态申请权限的方法 QtAndroid::requestPermissionsSync。
+136. 用Qt做安卓开发都会遇到权限的问题，早期的安卓版本可以直接通过 AndroidManifest.xml 配置文件来添加需要的权限，这样在安装app的时候就会提示该app需要哪些权限让用户同意，现在的安卓版本都改成了动态权限，需要在app运行的时候弹出提示让用户确认才有权限，Qt迎合了这种策略内置了动态申请权限的方法 QtAndroid::requestPermissionsSync。
 ```cpp
 //动态设置权限
 bool AndroidHelper::checkPermission(const QString &permission)
@@ -4269,16 +4269,49 @@ void frmXXX::doAction()
 
 285. pro文件中多重条件判断，前面 ! 表示非，中间 | 表示或（两个条件满足其一），中间 :: 表示与（两个条件都要满足）。
 ```cpp
-//下面表示安卓或者ios平台
+//表示安卓或者ios平台
 android|ios {}
 
-//下面表示非安卓和ios平台
+//表示非安卓和非ios平台
 !android::!ios {}
+
+//表示非ios系统的mac系统
+maxc:!ios {}
+
+//表示非mac系统的unix系统
+unix:!macx {}
 ```
 
 286. 很多时候项目越写越大，然后就可能遇到，明明之前很简单的一段代码，运行的好好的，就那么几行几十行，为何一旦加入到当前项目中，就不行了，百思不得其解。一般遇到这种情况，建议两种处理办法，办法一就是注释大法，从main函数入口开始，将不相关的都注释掉，仔细检查运行流程，直到本来不会出问题但是出问题的代码。办法二就是单独写个最简单的有问题的可以直接编译运行的示例，化繁为简，这样查找问题速度快。往往你会发现，写完这个简单的你怀疑的有问题的代码后，运行是完全正常的，他自己就好了，此时你可以安心的去排查其他代码了。
 
 287. 现在很多linux用wayland作为桌面显示，这样会出现一个问题，由于没有坐标系统，导致无边框窗体无法拖动和定位（一般是Qt6开始强制默认优先用wayland，之前Qt5是默认有xcb则优先用xcb），你需要在main函数前面加一行 qputenv("QT_QPA_PLATFORM", "xcb");
+
+288. 有时候导出文件后，希望直接打开文件管理器并选中刚才打开的文件，以便用户打开处理，需要通过执行命令来实现。
+```cpp
+QString path = "file:///e:/1.txt";
+QProcess::startDetached("explorer.exe", QStringList() << "/select," << path);
+```
+
+289. 在QTreeWidget/QTableWidget的信号currentItemChanged中，执行对应的clear方法也会触发该信号，这就需要特别注意了，对应该信号的两个参数 current/previous 表示当前节点和上一个节点，两个参数的值都为空，所以在该信号对应槽参数处理中，必须先判断该值是否为空指针，不判断的话很可能导致程序崩溃。
+
+290. 关于Qt中 += 和 *= 的区别，+=表示添加，不会去重，而*=是去重添加，存在则不添加。建议用*=，尽管+=也能正常使用，毕竟多一个重复的不影响编译器识别。
+```cpp
+QT += core gui
+QT += core gui
+message($$QT) //会打印 core gui core gui
+
+QT *= core gui
+QT *= core gui
+message($$QT) //会打印 core gui
+
+DEFINES += abc
+DEFINES += abc
+message($$DEFINES) //会打印 abc abc
+
+DEFINES *= abc
+DEFINES *= abc
+message($$DEFINES) //会打印 abc
+```
 
 ## 2 升级到Qt6
 ### 00：直观总结
@@ -5086,9 +5119,9 @@ for (int i = 0; i < count; ++i) {
 |qss学习地址1|[http://47.100.39.100/qtwidgets/stylesheet-reference.html](http://47.100.39.100/qtwidgets/stylesheet-reference.html)|
 |qss学习地址2|[http://47.100.39.100/qtwidgets/stylesheet-examples.html](http://47.100.39.100/qtwidgets/stylesheet-examples.html)|
 |qss学习地址3|[https://doc.qt.io/qt-6/qstyle.html](https://doc.qt.io/qt-6/qstyle.html)|
-|精美图表控件QWT|[http://qwt.sourceforge.net/](http://qwt.sourceforge.net/)|
+|精美图表控件Qwt|[http://qwt.sourceforge.net/](http://qwt.sourceforge.net/)|
 |精美图表控件QCustomPlot|[https://www.qcustomplot.com/](https://www.qcustomplot.com/)|
-|免费图标下载|[http://www.easyicon.net/](http://www.easyicon.net/)|
+|精美图表控件JKQtPlotter|[https://github.com/jkriege2/JKQtPlotter/](https://github.com/jkriege2/JKQtPlotter/)| 
 |图形字体下载|[https://www.iconfont.cn/](https://www.iconfont.cn/)|
 |漂亮界面网站|[https://www.ui.cn/](https://www.ui.cn/)|
 

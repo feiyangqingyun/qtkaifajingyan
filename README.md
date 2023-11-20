@@ -246,6 +246,10 @@ QMainWindow > .QWidget {
 ### 04：031-040
 31. 判断编译器类型、编译器版本、操作系统。
 ```cpp
+//pro中判断编译器版本
+greaterThan(MSC_VER, 1900) {
+}
+
 //GCC编译器
 #ifdef __GNUC__
 #if __GNUC__ >= 3   // GCC3.0  以上
@@ -2809,6 +2813,10 @@ CONFIG(debug, debug|release) {
     mac:        TARGET = $$join(TARGET,,,_debug)
     unix:!mac:  TARGET = $$join(TARGET,,,d)
 }
+
+#判断当前套件是debug还是release
+CONFIG(debug, debug|release) {}
+CONFIG(release, debug|release) {}
 ```
 
 202. QtCreator中pro项目文件格式说明。
@@ -3462,6 +3470,18 @@ QT += charts
 #ifdef qchart
 //要执行的代码
 #endif
+
+//查阅Qt项目代码发现如下判断可以直接判断大于某个版本而不需要多次分主版本判断
+//下面用 4.8/5.5/5.7/5.15/6.2/6.7 等版本测试全部正常
+//还有个缺陷就是必须保证传入的大版本号必须小于等于第一个参数中指定的大版本号
+greaterThan(QT_MAJOR_VERSION, 4)|greaterThan(QT_MINOR_VERSION, 7) {
+message(当前版本大于4.7)
+}
+
+//同样用作对编译器版本判断还有 QT_GCC_MAJOR_VERSION/QT_GCC_MINOR_VERSION/QT_CLANG_MAJOR_VERSION/QT_CLANG_MINOR_VERSION
+//打印当前编译器名称 QMAKE_CXX  结果 cl / g++
+//打印当前编译器定义 QMAKE_COMPILER_DEFINES  结果 _MSC_VER=1800 _WIN32 / __GNUC__ WIN32
+//打印编译器版本 MSVC_VER  结果 msvc2013=12.0 / msvc2015=14.0
 ```
 
 239. 在使用QChart图表控件的时候，你会发现默认的边距好大，很多时候我们希望能显示更多的信息，紧凑型的界面，所以需要设置边距。
@@ -4294,7 +4314,7 @@ QProcess::startDetached("explorer.exe", QStringList() << "/select," << path);
 
 289. 在QTreeWidget/QTableWidget的信号currentItemChanged中，执行对应的clear方法也会触发该信号，这就需要特别注意了，对应该信号的两个参数 current/previous 表示当前节点和上一个节点，两个参数的值都为空，所以在该信号对应槽参数处理中，必须先判断该值是否为空指针，不判断的话很可能导致程序崩溃。
 
-290. 关于Qt中 += 和 *= 的区别，+=表示添加，不会去重，而*=是去重添加，存在则不添加。建议用*=，尽管+=也能正常使用，毕竟多一个重复的不影响编译器识别。
+290. 关于Qt中 += 和 \*= 的区别，+= 表示添加，不会去重，而 \*= 是去重添加，存在则不添加。建议用  \*=，尽管 += 也能正常使用，毕竟多一个重复的不影响编译器识别。
 ```cpp
 QT += core gui
 QT += core gui
@@ -4311,6 +4331,61 @@ message($$DEFINES) //会打印 abc abc
 DEFINES *= abc
 DEFINES *= abc
 message($$DEFINES) //会打印 abc
+```
+
+### 30：291-300
+291. 关于在pro中区分linux系统，在Qt4套件是不认识 linux 标记的，需要用 unix:!macx 表示。所以如果有兼容Qt4的需求，建议用 unix:!macx 表示。
+```cpp
+//如果是linux上的Qt4套件则下面只会打印 unix linux
+//如果是linux上的Qt5/Qt6套件则下面会打印 linux unix linux
+linux {message(linux)}
+unix {message(unix)}
+unix:!macx {message(linux)}
+```
+
+292. 对于一些跨平台的项目，尤其是需要引入第三方库，需要根据不同的系统不同的位数引入对应文件夹中的库文件，这就需要项目中去识别处理。
+```cpp
+#区分不同的系统
+path_sys = win
+win32 {
+path_sys = win
+}
+
+linux {
+path_sys = linux
+}
+
+#Qt4套件不认识linux标记
+unix:!macx {
+path_sys = linux
+}
+
+macx {
+path_sys = mac
+}
+
+android {
+path_sys = android
+}
+
+#区分不同的位数 x86_64/amd64/arm64/arm64-v8a
+path_bit = 32
+contains(QT_ARCH, x.*64) {
+path_bit = 64
+} else:contains(QT_ARCH, a.*64) {
+path_bit = 64
+} else:contains(QT_ARCH, a.*64.*) {
+path_bit = 64
+}
+
+#对应系统和位数的库目录
+path_lib = lib$$path_sys$$path_bit
+//下面会打印 libwin32/libwin64/liblinux32/liblinux64/libmac32/libmac64/libandroid32/libandroid64
+message($$path_lib)
+
+//使用方式
+INCLUDEPATH += $$PWD/include
+LIBS += -L$$PWD/$$path_lib/ -lxxx
 ```
 
 ## 2 升级到Qt6
@@ -5124,6 +5199,8 @@ for (int i = 0; i < count; ++i) {
 |精美图表控件JKQtPlotter|[https://github.com/jkriege2/JKQtPlotter/](https://github.com/jkriege2/JKQtPlotter/)| 
 |图形字体下载|[https://www.iconfont.cn/](https://www.iconfont.cn/)|
 |漂亮界面网站|[https://www.ui.cn/](https://www.ui.cn/)|
+|基于Qt+ffmpeg的多媒体组件QtAV|[https://github.com/wang-bin/QtAV/](https://github.com/wang-bin/QtAV/)|
+|QtAV作者最新力作mdk-sdk|[https://github.com/wang-bin/mdk-sdk/](https://github.com/wang-bin/mdk-sdk/)|
 
 ## 8 书籍推荐
 1. C++入门书籍推荐《C++ primer plus》，进阶书籍推荐《C++ primer》。

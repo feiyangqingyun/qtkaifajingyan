@@ -1841,6 +1841,7 @@ mingw {
 #ifdef QT_ARCH_ARM
 //多个条件判断
 #if defined(QT_ARCH_ARM) || defined(QT_ARCH_WINDOWSCE)
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
 ```
 
 166. 有时候需要暂时停止某个控件发射信号（比如下拉框combobox添加数据的时候会触发当前元素改变信号），有多种处理，推荐用 blockSignals 方法。
@@ -2475,6 +2476,7 @@ MainWindow::MainWindow(QWidget *parent)
 - 转换后无关char \*还是const char \*，要出问题都一样。
 - 出问题的随机性的，概率出现，理论上debug的概率更大。
 - 根据酷码大佬分析可能的原因(不确定)是msvc为了方便调试，debug会在内存释放后做填充，release则不会。
+- 总之建议分两步，如果是传参数则可以直接放在参数中传入也行。
 ```cpp
 QString text = "xxxxx";
 //下面这样转换很可能会有问题
@@ -2483,6 +2485,14 @@ char *data = text.toUtf8().data();
 QByteArray buffer = text.toUtf8();
 char *data = buffer.data();
 const char *data = buffer.constData();
+
+void test(const char *text) {}
+//分两步走可以确保万无一失
+QByteArray buffer = QString("xxx").toUtf8();
+const char *text = buffer.constData();
+test(text);
+//可以直接作为参数传入也是正确的
+test(QString("xxx").toUtf8().constData());
 ```
 
 186. 关于是使用QList还是QVector的问题，一直是众多Qter的选择问题，主要是这两个玩意提供的的接口函数基本一致，比如插入、删除、取值等。
@@ -4388,6 +4398,36 @@ INCLUDEPATH += $$PWD/include
 LIBS += -L$$PWD/$$path_lib/ -lxxx
 ```
 
+293. 当检测到某些qt构建环境不满足当前项目要求，避免项目编译失败，可以禁用项目。
+```cpp
+#禁用项目后整个项目的代码文件是灰色的不可用，编译会跳过。
+lessThan(QT_MAJOR_VERSION, 6) {
+error("最低要求Qt6才能用")
+}
+```
+
+294. 在使用QButtonGroup按钮组添加按钮的时候，如果需要使用buttonClicked(int)信号，则添加按钮的时候必须手动指定按钮编号，否则默认编号都是-1，这样在触发buttonClicked(int)的时候值是负数，导致和预期不一致，原本以为默认按照添加按钮的顺序自动递增设置索引，其实不是的，不会这样处理。务必记得指定按钮编号。
+```cpp
+QButtonGroup *btnGroup = new QButtonGroup(this);
+connect(btnGroup, SIGNAL(buttonClicked(int)), ui->stackedWidget, SLOT(setCurrentIndex(int)));
+//第二个参数指定按钮编号
+btnGroup->addButton(ui->btn1, 0);
+btnGroup->addButton(ui->btn2, 1);
+```
+
+295. 关于QCustomplot绘图性能的改善。
+- 尽量避免笔宽度大于1的线，默认是1，如果绘制的数据量很大，强烈不建议设置线条宽度大于1，性能会大大降低。
+- 避免复杂的填充，例如在具有数千个点的图形之间进行通道填充。
+- 在图表拖动期间，可以设置 setNoAntialiasingOnDrag(true)，可以提高响应速度。
+- 避免使用任何类型的alpha（透明）颜色，尤其是在填充中。
+- 尽量不要开启抗锯齿，setNotAntialiasedElements(true)。
+- 避免重复设置完整的数据集，例如使用setData。如果大多数数据点保持不变，例如在运行的测量中，请改用addData。
+- 推荐通过QCPGraph::data()访问和操作现有数据，效率更高。
+- 开启opengl加速，第一步，开启标记，在pro中加上一行 DEFINES += QCUSTOMPLOT_USE_OPENGL 。第二步，链接opengl库，LIBS += -lopengl32 -lglu32 。有些Qt版本还可能需要主动引入 QT += widgets。经过实测发现，高频率的绘制比如60fps在开启opengl有性能提升，主要是降低了CPU占用。低频率的绘制还增加了CPU占用。所以建议根据实际场景来处理。这个和数据量好像无关，和绘制数据速度有关。
+- 画布关闭抗锯齿属性，graph->setAntialiased(false) graph->setAntialiasedFill(false) graph->setAntialiasedScatters(false) 。默认是true。
+- 画布开启自适应采样，graph->setAdaptiveSampling(true)。默认是true，所以不用主动设置。
+
+
 ## 2 升级到Qt6
 ### 00：直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
@@ -5189,6 +5229,7 @@ for (int i = 0; i < count; ++i) {
 |Qt安装包下载地址|[http://qthub.com/download/](http://qthub.com/download/)|
 |Qt最新版二进制包|[https://fsu0413.gitee.io/qtcompile/](https://fsu0413.gitee.io/qtcompile/)|
 |Qt版本更新内容|[https://doc-snapshots.qt.io/qt6-6.2/whatsnew62.html](https://doc-snapshots.qt.io/qt6-6.2/whatsnew62.html)|
+|Qt版本更新内容|[https://code.qt.io/cgit/qt/qtreleasenotes.git/about/qt/6.6.1/release-note.md](https://code.qt.io/cgit/qt/qtreleasenotes.git/about/qt/6.6.1/release-note.md)|
 |Qt中qmake变量说明|[https://doc.qt.io/qt-5/qmake-variable-reference.html](https://doc.qt.io/qt-5/qmake-variable-reference.html)|
 |Qt入门最简单教程|[http://c.biancheng.net/qt/](http://c.biancheng.net/qt/)|
 |qss学习地址1|[http://47.100.39.100/qtwidgets/stylesheet-reference.html](http://47.100.39.100/qtwidgets/stylesheet-reference.html)|

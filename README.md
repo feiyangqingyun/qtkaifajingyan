@@ -5061,7 +5061,51 @@ int AndroidJar::add(int a, int b)
 
 30. AndroidManifest.xml文件中的package="org.qtproject.example"是包名，也是整个apk程序的内部唯一标识，如果多个apk这个包名一样，则会覆盖，所以一定要注意不同的程序记得把这个包名改成你自己的。这个包名也决定了java文件中需要使用资源文件时候的引入包名 import org.qtproject.example.R; 如果包名不一样则编译都通不过。
 
+### 07：31-35
 31. 新版的qtc搭建安卓开发环境非常简单，早期版本的非常复杂，要东下载西下载，折腾好多天才行。现在只需要安装jdk文件（jdk_8.0.1310.11_64.exe），全部默认一步到位，然后在qtc中安卓配置界面，设置jdk的安装目录。然后打开 D:\Qt\Qt6\Tools\QtCreator\share\qtcreator\android\sdk_definitions.json 和 C:\Users\Administrator\AppData\Roaming\QtProject\qtcreator\android\sdk_definitions.json，将里面的 cmdline-tools;latest 修改为 cmdline-tools;6.0  ，这一步非常关键，默认是latest导致待会自动下载sdk/ndk的时候会下载不全。改好以后，设置sdk保存目录，单击右侧的 Set Up SDK 按钮，自动下载一堆文件，最后下面有个openssl的目录文件也设置下。该文件网上可以非常简单就能直接下载到，右侧就有按钮单击打开下载页面。然后就可以开始愉快的安卓开发之旅了。
+
+32. 关于字符串类型的交互，需要用 Ljava/lang/String; 切记后面有个分号表示当前对象类型结束，比如 QJniObject result = QJniObject::callStaticObjectMethod(className, "getVersion", "()Ljava/lang/String;"); ，里面的分号必不可缺，要是换成 QJniObject result = QJniObject::callStaticObjectMethod(className, "getVersion", "()Ljava/lang/String"); 执行是失败的。
+
+33. 可以通过 QJniObject::isClassAvailable("com/example/lib/MyClass") 来判断类是否可用。
+
+34. 在安卓的java类中，如果是独立的一个java类，常规的参数int/float/string之类的，在Qt中都非常容易传递参数，唯独窗体上下文context、活动窗体activity、两种参数比较麻烦，很多人就困在这里。其实Qt就提供了函数获取对应的实例，在Qt5中是QtAndroid::androidActivity()/QtAndroid::androidContext()，在Qt6中是QNativeInterface::QAndroidApplication::context()。但是有没有发现，如果每次都这么传，如果很多函数都需要这个参数，感觉重复代码不少，所以强烈推荐第二个方法，新建的java类中，搞个private static Context context，然后提供一个public static setContext(Context context)函数，在主窗体activity开始创建的onCreate函数中，赋值xxx.setContext即可。这样就相当于在java这边传递好了对应的上下文或者窗体参数，然后暴露出来的接口就无须context这些参数了，省去了不少麻烦。
+```cpp
+//java类中函数原型
+public static void getBattery(Context context)
+//qt5类中调用
+QAndroidJniObject::callStaticMethod<void>("org/qt/QtAndroidReceiver", "getBattery", "(Landroid/content/Context;)V", QtAndroid::androidActivity().object());
+//qt6类中调用
+QJniObject::callStaticMethod<void>("org/qt/QtAndroidReceiver", "getBattery", "(Landroid/content/Context;)V", QNativeInterface::QAndroidApplication::context());
+
+//方法2通过启动窗体赋值再调用
+public class abc
+{
+  private static Context context;
+  public static void setContext(Context context)
+  {
+    abc.context = context;
+  }
+
+  public static void getBattery() 
+  {
+    abc.context.xxx;
+  }
+}
+
+//下面这个窗体作为启动窗体
+public class QtAndroidActivity extends QtActivity
+{
+  //必须在窗体创建的时候下面赋值
+  @Override
+  public void onCreate(Bundle savedInstanceState)
+  {
+    abc.setContext(getApplicationContext());
+  }
+}
+
+//qt类中调用就方便了/如果有很多个函数都需要传入context则效率可以大大提升
+QJniObject::callStaticMethod<void>("org/qt/QtAndroidReceiver", "getBattery", "()V");
+```
 
 ## 4 Qt设计模式
 **读《c++ Qt设计模式》书籍整理的一点经验。此书和官方的《C++ GUI Qt4编程》一起的。**
@@ -5130,7 +5174,7 @@ for (int i = 0; i < count; ++i) {
 
 4. Qt在开发阶段不支持中文目录（运行阶段可以，比如打包发布的程序放到中文目录运行是ok的），切记，这是无数人可能犯的错误，在安装Qt集成开发环境以及编译器的时候，务必记得目录必须英文，Qt项目源码也必须是英文目录，否则很可能不正常，建议尽量用默认的安装位置。
 
-5. 如果出现崩溃和段错误，80%都是因为要么越界，要么未初始化，死扣这两点，80%的问题解决了。
+5. 程序如果出现崩溃和段错误，90%都是因为要么越界（一般是指索引越界，比如数组或队列大小5，取第6个值），要么未初始化（一般指指针没有new分配，或者分配后又释放了，然后又去使用这个指针），死扣这两点，90%的问题解决了。
 
 6. Qt一共有几百个版本，关于如何选择Qt版本的问题，我一般保留四个版本，为了兼容Qt4用4.8.7，最后的支持XP的版本5.7.0，最新的长期支持版本比如5.15，最高的新版本比如5.15.2。强烈不建议使用4.7以前和5.0到5.3之间的版本（Qt6.0到Qt6.2之间、不含6.2的版本也不建议，很多模块还没有集成），太多bug和坑，稳定性和兼容性相比于之后的版本相当差，能换就换，不能换睡服领导也要换。如果没有历史包袱建议用5.15.2，目前新推出的6.0版本也强烈不建议使用，官方还在整合当中，好多类和模块暂时没有整合，需要等到6.2.2版本再用。考虑到qss性能以及自带mysql驱动的因素，最终Qt5选用5.12.3，Qt4选用4.8.7，Qt6选用6.5.x。
 

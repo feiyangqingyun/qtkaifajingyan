@@ -4,7 +4,7 @@
 2. **视频主页：[https://space.bilibili.com/687803542](https://space.bilibili.com/687803542)**
 3. **网店地址：[https://shop244026315.taobao.com](https://shop244026315.taobao.com)**
 4. **联系方式：QQ（517216493）微信（feiyangqingyun）推荐加微信。**
-5. **公 众 号：CPP软件开发（本人）/Qt教程（民间）/Qt软件（官方）**
+5. **公 众 号：Qt实战（本人）/Qt教程（民间）/Qt软件（官方）**
 6. **版本支持：所有项目已经全部支持Qt4/5/6所有版本以及后续版本。**
 7. 监控作品体验：[https://pan.baidu.com/s/1d7TH_GEYl5nOecuNlWJJ7g](https://pan.baidu.com/s/1d7TH_GEYl5nOecuNlWJJ7g) 提取码：01jf
 8. 其他作品体验：[https://pan.baidu.com/s/1ZxG-oyUKe286LPMPxOrO2A](https://pan.baidu.com/s/1ZxG-oyUKe286LPMPxOrO2A) 提取码：o05q
@@ -1192,18 +1192,26 @@ bool frmMain::winEvent(MSG *message, long *result)
 - QMAKE_PRE_LINK    表示编译前执行内容
 - QMAKE_POST_LINK   表示编译后执行内容
 ```cpp
+
+#也可以用通配符 *.txt / *.* / *
 srcFile1 = $$PWD/1.txt
 srcFile2 = $$PWD/2.txt
-dstDir = $$PWD/../bin
+dstPath = $$PWD/../bin
+
 #windows上需要转换路径斜杠 其他系统不需要
 srcFile1 = $$replace(srcFile1, /, \\);
 srcFile2 = $$replace(srcFile2, /, \\);
-dstDir = $$replace(dstDir, /, \\);
+dstPath = $$replace(dstPath, /, \\);
 
 #编译前执行拷贝 多个拷贝可以通过 && 符号隔开
-QMAKE_PRE_LINK += copy /Y $$srcFile1 $$dstDir && copy /Y $$srcFile2 $$dstDir
+QMAKE_PRE_LINK += copy /Y $$srcFile1 $$dstPath && copy /Y $$srcFile2 $$dstPath
 #编译后执行拷贝 多个拷贝可以通过 && 符号隔开
-QMAKE_POST_LINK += copy /Y $$srcFile1 $$dstDir && copy /Y $$srcFile2 $$dstDir
+QMAKE_POST_LINK += copy /Y $$srcFile1 $$dstPath && copy /Y $$srcFile2 $$dstPath
+
+#下面演示加载pro项目的时候就执行拷贝/很多时候要的就是这种方式
+srcFile ~= s,/,\\,g
+dstPath ~= s,/,\\,g
+system(xcopy $$srcFile $$dstPath /y /e)
 ```
 
 ### 14：131-140
@@ -3967,7 +3975,7 @@ qputenv("QT_MEDIA_BACKEND", "android");
 
 269. 大概从Qt5.12开始，新增了平台外观插件platformthemes，意味着打包发布的时候需要带上他才能应用系统层风格的外观样式，如果不带，在win上可能是windows2000风格的古老外观，看起来非常诧异。
 
-270. 有时候我们设置开机运行程序后，如果该程序用又用QProcess等方式调用了程序B，而程序B又需要读取目录下的配置文件，此时你会发现根本读取不到，因为开机后的默认目录不在可执行文件所在目录（如果我们是双击程序运行的那就不存在这个问题，会自动将可执行文件所在目录作为当前目录。）所以我们需要执行代码 QDir::setCurrent(qApp->applicationDirPath()); 主动设置当前目录在哪，告诉操作系统。QProcess中有个setWorkingDirectory本人也各种对比测试过，对开启启动后的程序调用QProcess无效，必须用QDir::setCurrent。
+270. 有时候我们设置开机运行程序后，如果该程序用又用QProcess等方式调用了程序B，而程序B又需要读取目录下的配置文件，此时你会发现根本读取不到，因为开机后的默认目录不在可执行文件所在目录（如果我们是双击程序运行的那就不存在这个问题，会自动将可执行文件所在目录作为当前目录。）所以我们需要执行代码 QDir::setCurrent(qApp->applicationDirPath()); 主动设置当前目录在哪，告诉操作系统。QProcess中有个setWorkingDirectory本人也各种对比测试过，对开启启动后的程序调用QProcess无效，必须用QDir::setCurrent。但是有个后遗症，那就是一旦调用了QDir::setCurrent，则你的程序中的相对目录都会从设置的路径中取，可能会导致意外的结果。
 
 ### 28：271-280
 271. 编程的过程中经常遇到需要将QString转成char \*或者const char \*的情况，在转换成QByteArray后调用.data()或者.constData()函数进行转换，这里需要注意的是，如果转换类型是const char \*尽管用data()不会出错，会给你自动转换，但是还是不建议，因为深拷贝了一份，理论上增加了内存开销，如果字符串长度小还好，一旦很长，这个开销挺大，这是个好的编程习惯。
@@ -4427,6 +4435,25 @@ btnGroup->addButton(ui->btn2, 1);
 - 画布关闭抗锯齿属性，graph->setAntialiased(false) graph->setAntialiasedFill(false) graph->setAntialiasedScatters(false) 。默认是true。
 - 画布开启自适应采样，graph->setAdaptiveSampling(true)。默认是true，所以不用主动设置。
 
+296. 使用QDir::setCurrent设置当前目录后，会影响程序中的所有相对目录的执行，导致可能的意外发生，一般相对目录都默认是可执行文件所在目录，所以如果程序中为了特殊处理临时调用了QDir::setCurrent设置过相对目录，建议处理完成以后立即切换回来。
+```cpp
+QDir::setCurrent("f:/");
+QImage img(":/image/bg_novideo.png");
+//结果图片保存在f:/1.jpg
+img.save("1.jpg", "jpg");
+img.save("./1.jpg", "jpg");
+
+//下面是正确做法
+//先记住之前的目录
+QString path = QDir::currentPath();
+QDir::setCurrent("f:/");
+xxxxxxx执行任务
+
+//重新设置回默认目录
+QDir::setCurrent(path);
+//结果图片保存在当前目录下
+img.save("1.jpg", "jpg");
+```
 
 ## 2 升级到Qt6
 ### 00：直观总结
@@ -4617,7 +4644,7 @@ int steps = degrees / 15;
 
 26. qcombobox 的 activated(QString) 和 currentIndexChanged(QString) 信号删除了，用int索引参数的那个，然后自己通过索引获取值。个人觉得这个没必要删除。
 
-27. qtscript模块彻底没有了，尽管从Qt5时代的后期版本就提示为废弃模块，一致坚持到Qt6才正式废弃，各种json数据解析全部换成qjson类解析。
+27. qtscript模块彻底没有了，尽管从Qt5时代的后期版本就提示为废弃模块，一直坚持到Qt6才正式废弃，各种json数据解析全部换成qjson类解析。
 
 28. QByteArray 的 append indexOf lastIndexOf 等众多方法的QString参数重载函数废弃了，要直接传 QByteArray，就在原来参数基础上加上 .toUtf8() 。查看源码也看得到以前的QString参数也是转成.toUtf8()再去比较。
 
@@ -5284,6 +5311,7 @@ for (int i = 0; i < count; ++i) {
 |精美图表控件JKQtPlotter|[https://github.com/jkriege2/JKQtPlotter/](https://github.com/jkriege2/JKQtPlotter/)| 
 |图形字体下载|[https://www.iconfont.cn/](https://www.iconfont.cn/)|
 |漂亮界面网站|[https://www.ui.cn/](https://www.ui.cn/)|
+|ffmpeg学习|[https://ffmpeg.xianwaizhiyin.net/](https://ffmpeg.xianwaizhiyin.net/)|
 |基于Qt+ffmpeg的多媒体组件QtAV|[https://github.com/wang-bin/QtAV/](https://github.com/wang-bin/QtAV/)|
 |QtAV作者最新力作mdk-sdk|[https://github.com/wang-bin/mdk-sdk/](https://github.com/wang-bin/mdk-sdk/)|
 

@@ -1188,9 +1188,9 @@ bool frmMain::winEvent(MSG *message, long *result)
 #endif
 ```
 
-130. Qt的pro项目管理配置文件中也可添加各种编译前后的操作及配置，主要通过 QMAKE_POST_LINK和QMAKE_PRE_LINK，他们支持的函数以及写法，可以在QtCreator的帮助中搜索 qmake Function Reference 查看详情说明。
-- QMAKE_PRE_LINK    表示编译前执行内容
-- QMAKE_POST_LINK   表示编译后执行内容
+130. Qt的pro项目管理配置文件中也可添加各种编译链接前后的操作及配置，主要通过 QMAKE_POST_LINK和QMAKE_PRE_LINK，他们支持的函数以及写法，可以在QtCreator的帮助中搜索 qmake Function Reference 查看详情说明。
+- QMAKE_PRE_LINK    表示编译链接前执行内容
+- QMAKE_POST_LINK   表示编译链接后执行内容
 ```cpp
 
 #也可以用通配符 *.txt / *.* / *
@@ -1203,15 +1203,21 @@ srcFile1 = $$replace(srcFile1, /, \\);
 srcFile2 = $$replace(srcFile2, /, \\);
 dstPath = $$replace(dstPath, /, \\);
 
-#编译前执行拷贝 多个拷贝可以通过 && 符号隔开
+#编译链接前执行拷贝 多个拷贝可以通过 && 符号隔开
 QMAKE_PRE_LINK += copy /Y $$srcFile1 $$dstPath && copy /Y $$srcFile2 $$dstPath
-#编译后执行拷贝 多个拷贝可以通过 && 符号隔开
+#编译链接后执行拷贝 多个拷贝可以通过 && 符号隔开
 QMAKE_POST_LINK += copy /Y $$srcFile1 $$dstPath && copy /Y $$srcFile2 $$dstPath
 
 #下面演示加载pro项目的时候就执行拷贝/很多时候要的就是这种方式
+srcFile = $$PWD/qrc/*.*
+dstPath = $$PWD/bin
 srcFile ~= s,/,\\,g
 dstPath ~= s,/,\\,g
+
+#windows使用xcopy命令/unix使用cp命令/unix不需要转换路径
 system(xcopy $$srcFile $$dstPath /y /e)
+system(cp $$srcFile $$dstPath -f)
+system($$QMAKE_COPY $$srcFile $$dstPath)
 ```
 
 ### 14：131-140
@@ -4455,6 +4461,16 @@ QDir::setCurrent(path);
 img.save("1.jpg", "jpg");
 ```
 
+297. 大概从Qt6.4开始，如果项目中同时使用了QOpenGLWidget和QWebEngine浏览器控件，可能会出现QWebEngine加载网页黑屏的情况，6.4.3和6.5.3版本必现。根据官网的描述[https://doc.qt.io/qt-6/qquickwidget.html#graphics-api-support](https://doc.qt.io/qt-6/qquickwidget.html#graphics-api-support) ，你需要额外加一行代码。
+```cpp
+#include "qquickwindow.h"
+int main(int argc, char *argv[])
+{
+    QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+    QApplication a(argc, argv);
+}
+```
+
 ## 2 升级到Qt6
 ### 00：直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
@@ -4822,7 +4838,7 @@ QAudioInput *input = new QAudioInput(format, this);
 
 51. Qt6.5版本开始取消了QVariant的默认构造函数，之前return QVariant() 现在必须改成 QVariant(QVariant::Invalid) 才不会有警告提示。通过打印值发现QVariant()本身就=QVariant(QVariant::Invalid)，所以统一写成QVariant(QVariant::Invalid)兼容Qt456。
 
-## 3 Qt安卓经验
+## 3 安卓开发经验
 ### 01：01-05
 1. pro中引入安卓拓展模块 QT += androidextras 。
 2. pro中指定安卓打包目录 ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android 指定引入安卓特定目录比如程序图标、变量、颜色、java代码文件、jar库文件等。
@@ -5134,7 +5150,21 @@ public class QtAndroidActivity extends QtActivity
 QJniObject::callStaticMethod<void>("org/qt/QtAndroidReceiver", "getBattery", "()V");
 ```
 
-## 4 Qt设计模式
+## 4 ffmpeg业余经验
+1. ffmpeg的库有链接顺序要求，如果不按照顺序来，也许在windows上没有问题，但是到了unix系统很可能有问题，报错提示云里雾里的找不到原因。顺序参照ffmpeg自带示例中的编译链接顺序即可。正确顺序是 LIBS += -L/ -lavformat -lavfilter -lavcodec -lswresample -lswscale -lavutil -lavdevice 。不是所有的库都是必须的，比如avdevice库，如果代码中没用上也没引用，可以不需要。
+2. ffmpeg解码中，av_find_best_stream第五个参数传入AVCodec的话，就直接获取到了值，而不用avcodec_find_decoder来处理。
+3. ffmpeg在解码的时候，avcodec_alloc_context3的参数AVCodec不是必须的，如果这里是NULL，则下面avcodec_open2的时候就必须传入。编码的时候在avcodec_alloc_context3的时候必须传入，否则下面打开失败。
+4. 解码阶段，每次av_read_frame后，使用完对应的packet数据，必须调用av_packet_unref，否则内存泄漏。编码阶段，每次av_write_frame后，里面会自动调用av_packet_unref。
+5. avpacket表示压缩的视音频数据（解码前和编码后），avframe表示未压缩的视音频数据（解码后和编码前），视音频文件以及传输都是使用压缩的数据，收到数据解码后才是未压缩的数据，才能直接绘制和播放。
+6. 解码对应av_read_frame/avcodec_send_packet/avcodec_receive_frame，编码对应avcodec_send_frame/avcodec_receive_packet/av_write_frame。可以看到命名非常规整，编码刚好和解码顺序相反。
+7. avcodec_send_packet和avcodec_receive_frame并不是一一对应的调用关系，而是一个avcodec_send_packet的调用，可能会对应多个avcodec_receive_frame函数的调用。因为解码器内部是有缓存和参考帧的，并不是每送进去一个数据包就能解码出一帧数据，可能出现送进去几个数据包，但是暂时没有数据帧解码输出的情况，也可能会出现某个时间点送进去一个数据包，然后会输出多个数据帧的情况。但是实际使用过程中你会发现你遇到过的99.9%的视音频文件或者流都是一对一关系，一个avcodec_send_packet就对应一次avcodec_receive_frame。
+8. 在ffmpeg函数接口中，有不少带数字结尾的函数，比如avcodec_alloc_context3、avcodec_decode_video2、avcodec_decode_audio4，这种一般就是不断迭代的结果。比如早期版本很可能有个函数avcodec_alloc_context，但是后面又新增了更完善的函数，又希望用户能够快速找到该函数，所以直接后面加个数字用以区分。这基本上都是程序员的惯例。如果是大版本的更新，可能旧的函数会主键废弃，甚至移除。一般建议用新的函数接口。
+9. 众多的音视频格式，是为了各种应用场景需求产生的，也是随着时代的发展需要应运而生的，主要就是为了方便压缩和传输，经过各种各样的算法标准。在ffmpeg中，通用的解码做法都是将任意视频格式解码转换成yuv（软解码）或者nv12（硬解码）数据，任意音频格式转换成pcm数据，yuv/nv12/pcm因为是原始的数据，所以体积非常大，优点就是非常通用，可以直接显示和播放。
+10. 要做音视频格式的转换，通用做法就是视频解码成yuv，音频解码成pcm，然后再由yuv编码成其他视频格式（对应转换对象SwsContext），pcm编码成其他音频格式（对应转换对象SwrContext），万变不离其中，唯一区别就是不同格式对应的各种参数不一样。音频转换这块可能还需要重采样。
+11. 无论是ffmpeg源码本身还是提供的示例demo，会发现里面大部分的代码都是在做判断，比如对象是否分配ok，大部分都提供返回值，负数表示失败，每一步执行后都需要判断是否ok再继续。其实这种写法是非常规范而且有必要的，可以避免程序意外崩溃段错误，而且就算出错也可以非常清晰的知道具体在哪一步，况且还增加了代码行数，何乐而不为。那有些人又要担心这会减慢程序运行速度，毕竟绝大部分的判断都是不会出现的，这里可以很负责任的告诉你，这个if判断，占用时间忽略不计，至少在纳秒级别。而且为了提高程序的健壮性稳定性，很有必要，尤其是C/C++这类程序。
+12. 很多初学者觉得ffmpeg很复杂，函数接口太多，或者流程繁琐，为什么不提供一个简易的接口呢？其实完全可以提供，只是在耦合性这块为了将各个组件独立，所以才会拆分出来各种库和接口。其实就是抽象出来为了各种场景需求，比如解码的时候，需要先通过avformat_find_stream_info获取流信息，然后将流信息中的codecpar复制给AVCodecContext，在av_read_frame读取到数据帧后，在解码调用avcodec_send_packet/avcodec_receive_frame的时候就需要这个AVCodecContext，这个流程永远如此，为什么ffmpeg不内部处理到复制呢？以为AVCodecContext还可以用于编码，而且各种参数信息可调，同时也是为了和AVStream以及其他独立开来，因为没有AVStream他也可以完成编解码，只要给到他需要的信息就行。随着你使用的深入，会发现这种设计才是最棒的。
+
+## 5 Qt设计模式
 **读《c++ Qt设计模式》书籍整理的一点经验。此书和官方的《C++ GUI Qt4编程》一起的。**
 1. 通常而言，好的做法是在包含了Qt头文件之后再包含非Qt头文件，由于Qt（为编译器和预处理器）定义了许多符号，这使得避免名称冲突变得更容易，也更容易找到文件。
 ```cpp
@@ -5175,15 +5205,15 @@ for (int i = 0; i < count; ++i) {
 
 9. 
 
-## 5 Qt大佬专区
-### 5.1 酷码大佬
+## 6 Qt大佬专区
+### 6.1 酷码大佬
 **微信：Kuma-NPC**
 1. 关于Qt事件传递的一个说明：
 - 通常写win32程序，鼠标消息应该是直接发给指定窗口句柄的，指定窗口没有处理就会转化成透传消息，交给父窗口处理。你在一个普通文字label上点击，父窗口也能收到鼠标事件。
 - Qt应该是所有消息都发给了顶层窗口，所以事件分发逻辑是自己处理，主窗口收到鼠标事件然后Qt自己分发给指定子控件，QEvent会有ignore或者accept表示自己处理了没有，例如鼠标点击事件，事件分发器发现没有被处理，数据重新计算然后分发给父窗口。这样父窗口收到的事件坐标就是基于自己窗口内的。用eventFilter就需要自己计算坐标。
 - 再比如，当使用QDialog，放一个QLineEdit并设置焦点，按Esc时QDialog也会自动关闭，本质上就是因为QLineEdit并不处理Esc的按键事件，透传给了QDialog。
 
-### 5.2 小豆君
+### 6.2 小豆君
 1. 无论你是学Qt，Java，Python或其它，都需要明白一个道理：摒弃掉你的好奇心，千万不要去追求第三方类或工具是怎么实现的，这往往会让你收效甚微，其实，你只需要熟练掌握它的接口，知道类的目的即可，不可犯面向过程的毛病，刨根问底。记住，你的目标是让其它工具为你服务，你要踩在巨人的肩膀上创造世界。
 
 2. Qt真正的核心：元对象系统、属性系统、对象模型、对象树、信号槽。往死里啃这五大特性，在你的项目中，逐渐的设法加入这些特性，多多练习使用它们，长此以往你会收获意想不到的效果。
@@ -5192,7 +5222,7 @@ for (int i = 0; i < count; ++i) {
 
 4. 在阅读Qt的帮助文档时，要静下心来，不要放过每一句，记住在文档中没有废话，尤其是每段的开头。
 
-## 6 其他经验
+## 7 其他经验
 1. Qt界的中文乱码问题，版本众多导致的如何选择安装包问题，如何打包发布程序的问题，堪称Qt界的三座大山！
 
 2. 在Qt的学习过程中，学会查看对应类的头文件是一个好习惯，如果在该类的头文件没有找到对应的函数，可以去他的父类中找找，实在不行还有爷爷类，肯定能找到的。通过头文件你会发现很多函数接口其实Qt已经帮我们封装好了，有空还可以阅读下他的实现代码。
@@ -5257,8 +5287,8 @@ for (int i = 0; i < count; ++i) {
 
 19.  最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
 
-## 7 杂七杂八
-### 7.1 推荐开源主页
+## 8 杂七杂八
+### 8.1 推荐开源主页
 |名称|网址|
 |:------ |:------|
 |Qt/C++学习高级群|751439350|
@@ -5266,7 +5296,7 @@ for (int i = 0; i < count; ++i) {
 |QtQuick/Qml开源demo集合|[https://gitee.com/jaredtao/TaoQuick](https://gitee.com/jaredtao/TaoQuick)|
 |QtQuick/Qml开源demo集合|[https://gitee.com/zhengtianzuo/QtQuickExamples](https://gitee.com/zhengtianzuo/QtQuickExamples)|
 
-### 7.2 推荐网站主页
+### 8.2 推荐网站主页
 |名称|网址|
 |:------|:------|
 |qtcn|[http://www.qtcn.org](http://www.qtcn.org)|
@@ -5288,7 +5318,7 @@ for (int i = 0; i < count; ++i) {
 |涛哥的知乎专栏|[https://zhuanlan.zhihu.com/TaoQt](https://zhuanlan.zhihu.com/TaoQt)|
 |Qt君|[https://blog.csdn.net/nicai_xiaoqinxi](https://blog.csdn.net/nicai_xiaoqinxi)|
 
-### 7.3 推荐学习网站
+### 8.3 推荐学习网站
 |名称|网址|
 |:------|:------|
 |Qt老外视频教程|[http://space.bilibili.com/2592237/#!/index](http://space.bilibili.com/2592237/#!/index)|
@@ -5315,7 +5345,7 @@ for (int i = 0; i < count; ++i) {
 |基于Qt+ffmpeg的多媒体组件QtAV|[https://github.com/wang-bin/QtAV/](https://github.com/wang-bin/QtAV/)|
 |QtAV作者最新力作mdk-sdk|[https://github.com/wang-bin/mdk-sdk/](https://github.com/wang-bin/mdk-sdk/)|
 
-## 8 书籍推荐
+## 9 书籍推荐
 1. C++入门书籍推荐《C++ primer plus》，进阶书籍推荐《C++ primer》。
 2. Qt入门书籍推荐霍亚飞的《Qt Creator快速入门》，Qt进阶书籍推荐官方的《C++ GUI Qt4编程》，qml书籍推荐《Qt5编程入门》，Qt电子书强烈推荐《Qt5.10 GUI完全参考手册》。
 3. 强烈推荐程序员自我提升、修养、规划系列书《走出软件作坊》《大话程序员》《程序员的成长课》《解忧程序员》，受益匪浅，受益终生！

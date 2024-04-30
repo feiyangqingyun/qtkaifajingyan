@@ -1223,7 +1223,7 @@ system($$QMAKE_COPY $$srcFile $$dstPath)
 ### 14：131-140
 131. Qt新版本往往会带来一些头文件的更新，比如以前使用QPainter绘制，不需要额外包含QPainterPath头文件，而5.15版本开始就需要显示主动引入#include "qpainterpath.h"才行。
 
-132. Qt6.0发布了，是个比较大的改动版本，很多基础的类或者组件都放到单独的源码包中，需要自行官网下载并编译，默认不提供集成在开发目录下，需要手动编译并集成，比如QRegExp，QTextCodec类，需要编译集成后pro文件 QT += core5compat 才能用， 具体说明在https://doc.qt.io/qt-6/qtcore5-index.html。
+132. Qt6.0发布了，是个比较大的改动版本，很多基础的类或者组件都放到单独的源码包中，6.0到6.2之间的版本需要自行官网下载并编译，需要手动编译并集成，比如QRegExp，QTextCodec类，需要编译集成后pro文件 QT += core5compat 才能用， 具体说明在https://doc.qt.io/qt-6/qtcore5-index.html。大概从Qt6.2开始，又不需要自己编译了，安装的时候勾选core5compat模块即可，默认不勾选。
 
 133. qDebug输出打印信息，默认会完整打印转义字符，例如：\\  \" \t \n" 等，所以当你发现你明明设置了转义字符以后打印确还是转义前的字符，这就懵逼了，其实这是qdebug为了方便调试将各种字符都打印输出。无可否认，很多时候，我们极其兴奋的享受着Qt带来的各种轮子各种便利，但是偶尔，稍不留意，这些便利可能也会坑你一把。要做的就是擦亮眼睛，时刻谨慎，一步一个脚印踏踏实实码代码。
 ```cpp
@@ -4485,6 +4485,41 @@ a.setAttribute(Qt::AA_NativeWindows);
 //这种方法有个缺点/就是所有的Qt程序都会应用
 ```
 
+300. 布局的setContentsMargins函数参数依次是左上右下，而qss中的margin依次是上右下左，很多人混搞混。
+
+### 31：301-310
+301. 从Qt5.2版本开始，QLineEdit文本框控件提供了setClearButtonEnabled函数用于是否开启右侧的关闭按钮，这种控件非常常见，比如还可以增加个搜索按钮，怎么添加呢，在5.2版本以前要自己定义一个布局，然后new一个按钮放在布局右侧。在5.2版本以后，提供了addAction重载方法，用于添加一个动作到文本框的前面或者后面，这种方式会自动留出边距。
+```cpp
+#if (QT_VERSION < QT_VERSION_CHECK(5,2,0))
+    //所有Qt版本都兼容的万能办法
+    QPushButton *searchButton = new QPushButton;
+    //执行对应的处理
+    connect(searchButton, SIGNAL(clicked(bool)), this, SLOT(search()));
+    searchButton->setMinimumWidth(30);
+    searchButton->setIcon(QIcon(":/main.ico"));
+
+    //实例化布局用于放置按钮
+    QHBoxLayout *layout = new QHBoxLayout(ui->lineEdit);
+    layout->setContentsMargins(0, 0, 1, 0);
+    //指定对齐方式添加按钮
+    layout->addWidget(searchButton, 0, Qt::AlignRight);
+    //设置文本的外边距/空出距离放置按钮
+    ui->lineEdit->setTextMargins(0, 0, searchButton->minimumWidth() + 3, 0);
+#else
+    //推荐用下面这个方法更方便
+    QAction *searchAction = new QAction(ui->lineEdit);
+    //执行对应的处理
+    connect(searchAction, SIGNAL(triggered(bool)), this, SLOT(search()));
+    searchAction->setIcon(QIcon(":/main.ico"));
+    //TrailingPosition表示右侧/还可以是LeadingPosition表示左侧
+    ui->lineEdit->addAction(searchAction, QLineEdit::TrailingPosition);
+#endif
+```
+
+302. 大概从6.5版本开始，mingw编译的debug套件编译大名鼎鼎的qcustomplot开源图表控件，会提示报错too many sections/file too big字样。release套件或者其他编译器都正常。你只需要在pro中加上 QMAKE_CXXFLAGS += -Wa,-mbig-obj 即可。
+
+303. 大概从2024年开始，在线安装Qt的工具默认不加载Qt5的安装包，需要在右上角有个什么 Archive 的，勾选一下，然后单击 Filter/筛选 按钮即可，这样左侧就会将Qt5的也都显示出来。估计官网是想让我们强制用Qt6，慢慢的把Qt5淘汰。可惜的是Qt6不支持win7，而win7目前用户数还是很多的。
+
 ## 2 升级到Qt6
 ### 00：直观总结
 1. 增加了很多轮子，同时原有模块拆分的也更细致，估计为了方便拓展个管理。
@@ -5350,6 +5385,7 @@ for (int i = 0; i < count; ++i) {
 |qss学习地址1|[http://47.100.39.100/qtwidgets/stylesheet-reference.html](http://47.100.39.100/qtwidgets/stylesheet-reference.html)|
 |qss学习地址2|[http://47.100.39.100/qtwidgets/stylesheet-examples.html](http://47.100.39.100/qtwidgets/stylesheet-examples.html)|
 |qss学习地址3|[https://doc.qt.io/qt-6/qstyle.html](https://doc.qt.io/qt-6/qstyle.html)|
+|查看模块协议|[https://www.qt.io/product/features](https://www.qt.io/product/features)|
 |精美图表控件Qwt|[http://qwt.sourceforge.net/](http://qwt.sourceforge.net/)|
 |精美图表控件QCustomPlot|[https://www.qcustomplot.com/](https://www.qcustomplot.com/)|
 |精美图表控件JKQtPlotter|[https://github.com/jkriege2/JKQtPlotter/](https://github.com/jkriege2/JKQtPlotter/)| 

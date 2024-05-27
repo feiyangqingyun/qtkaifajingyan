@@ -8,9 +8,9 @@
 6. **版本支持：所有项目已经全部支持Qt4/5/6所有版本以及后续版本。**
 7. 监控作品体验：[https://pan.baidu.com/s/1d7TH_GEYl5nOecuNlWJJ7g](https://pan.baidu.com/s/1d7TH_GEYl5nOecuNlWJJ7g) 提取码：01jf
 8. 其他作品体验：[https://pan.baidu.com/s/1ZxG-oyUKe286LPMPxOrO2A](https://pan.baidu.com/s/1ZxG-oyUKe286LPMPxOrO2A) 提取码：o05q
-9. 监控系统在线文档：[https://feiyangqingyun.gitee.io/QWidgetDemo/video_system/](https://feiyangqingyun.gitee.io/QWidgetDemo/video_system/)
-10. 大屏系统在线文档：[https://feiyangqingyun.gitee.io/QWidgetDemo/bigscreen/](https://feiyangqingyun.gitee.io/QWidgetDemo/bigscreen/)
-11. 物联网系统在线文档：[https://feiyangqingyun.gitee.io/QWidgetDemo/iotsystem/](https://feiyangqingyun.gitee.io/QWidgetDemo/iotsystem/)
+9. 监控系统在线文档：[http://www.qtcdev.com/video_system/](http://www.qtcdev.com/video_system/)
+10. 大屏系统在线文档：[http://www.qtcdev.com/bigscreen/](http://www.qtcdev.com/bigscreen/)
+11. 物联网系统在线文档：[http://www.qtcdev.com/iotsystem/](http://www.qtcdev.com/iotsystem/)
 
 ## 1 开发经验
 ### 01：001-010
@@ -21,6 +21,18 @@
 QMetaObject::invokeMethod(this, "load", Qt::QueuedConnection);
 //延时10毫秒执行load函数
 QTimer::singleShot(10, this, SLOT(load()));
+
+//定时器lambda表达式方式
+QTimer::singleShot(10, [&]() {
+  load();
+});
+
+QTimer *timer = new QTimer(this);
+timer->setSingleShot(true);
+connect(timer, &QTimer::timeout, this, [timer, this] {
+
+});
+timer->start(5000);
 ```
 
 3. 默认QtCreator是单线程编译，可能设计之初考虑到尽量不过多占用系统资源，而现在的电脑都是多核心的，默认msvc编译器是多线程编译的不需要手动设置，而对于其他编译器，需要手动设置才行。
@@ -561,7 +573,15 @@ setsockopt(fd, SOL_TCP, TCP_KEEPCNT, (void *)&keepCount, sizeof(keepCount));
 
 58. 非常不建议tr中包含中文，尽管现在的新版Qt支持中文到其他语言的翻译，但是很不规范，也不知道TMD是谁教的（后面发现我在刚学Qt的时候也发布了一些demo到网上也是tr包含中文的，当时就狠狠的打了自己一巴掌），tr的本意是包含英文，然后翻译到其他语言比如中文，现在大量的初学者滥用tr，如果没有翻译的需求，禁用tr，tr需要开销的，Qt默认会认为他需要翻译，会额外进行特殊处理。
 
-59. 很多人Qt和Qt Creator傻傻分不清楚，经常问Qt什么版本结果发一个Qt Creator的版本过来，Qt Creator是使用Qt编写的集成开发环境IDE，和宇宙第一的Visual Studio一样，他可以是msvc编译器的（windows对应的Qt集成安装环境中自带的Qt Cerator是msvc的），也可以是mingw编译的，还可以是gcc的。如果是自定义控件插件，需要集成到Qt Creator中，必须保证该插件的动态库文件（dll或者so等文件）对应的编译器和Qt版本以及位数和Qt Creator的版本完全一致才行，否则基本不大可能集成进去。特别注意的是Qt集成环境安装包中的Qt版本和Qt Creator版本未必完全一致，必须擦亮眼睛看清楚，有些是完全一致的。由于新版的Qt要求在线安装，而且在线安装选择器中Qt Creator的版本无法选择，新版的Qt Creator用的是Qt6编译的，所以就出现了win7系统不支持的情况，推荐用win10或者win11系统做开发环境。你可以在高版本的Qt Creator中做开发，选择支持win7的套件版本比如5.15或者选择支持xp的套件版本5.6即可，发布后依然可以正常在低版本的系统运行。
+59. 关于Qt和Qt Creator的区别
+- 很多人Qt和Qt Creator傻傻分不清楚，经常问看下Qt什么版本，结果发一个Qt Creator的版本过来。
+- Qt Creator是使用Qt编写的集成开发环境IDE，和宇宙第一的Visual Studio一样。
+- 他可以是msvc编译器的（windows对应的Qt集成安装环境中自带的Qt Cerator是msvc的），也可以是mingw编译的，还可以是gcc的。
+- 如果是自定义控件插件，需要集成到Qt Creator中，必须保证该插件的动态库文件（dll或者so等文件）对应的编译器和Qt版本以及位数和Qt Creator的版本完全一致才行，否则基本不大可能集成进去。
+- 特别注意的是Qt集成环境安装包中的Qt版本和Qt Creator版本未必完全一致，必须擦亮眼睛看清楚，有些是完全一致的。
+- 由于新版的Qt要求在线安装，而且在线安装选择器中Qt Creator的版本无法选择，新版的Qt Creator用的是Qt6编译的，所以就出现了win7系统不支持的情况。
+- 推荐用win10或者win11系统做开发环境。
+- 你可以在高版本的Qt Creator中做开发，选择支持win7的套件版本比如5.15或者选择支持xp的套件版本5.6即可，发布后依然可以正常在低版本的系统运行。
 
 60. 超过两处相同处理的代码，建议单独写成函数。代码尽量规范精简，比如 if(a == 123) 要写成 if (123 == a)，值在前面，再比如 if (ok == true) 要写成 if (ok)，if (ok == false) 要写成 if (!ok)等。
 
@@ -908,8 +928,7 @@ projD.depends = projC
 QDialog dialog;
 dialog.setWindowModality(Qt::WindowModal);
 ```
-
-107. 很多初学者甚至几年工作经验的人，对多线程有很深的误解和滥用，尤其是在串口和网络通信这块，什么都往多线程里面丢，一旦遇到界面卡，就把数据收发啥的都搞到多线程里面去，殊不知绝大部分时候那根本没啥用，因为没找到出问题的根源。
+很多初学者甚至几年工作经验的人，对多线程有很深的误解和滥用，尤其是在串口和网络通信这块，什么都往多线程里面丢，一旦遇到界面卡，就把数据收发啥的都搞到多线程里面去，殊不知绝大部分时候那根本没啥用，因为没找到出问题的根源。
 - 如果你没有使用wait***函数的话，大部分的界面卡都出在数据处理和展示中，比如传过来的是一张图片的数据，你需要将这些数据转成图片，这个肯定是耗时的；
 - 还有就是就收到的数据曲线绘制出来，如果过于频繁或者间隔过短，肯定会给UI造成很大的压力的，最好的办法是解决如何不要频繁绘制UI比如合并数据一起绘制等；
 - 如果是因为绘制UI造成的卡，那多线程也是没啥用的，因为UI只能在主线程；
@@ -918,6 +937,7 @@ dialog.setWindowModality(Qt::WindowModal);
 - 有严格数据同步需求的场景还是放到多线程会好一些，不然你wait***就卡在那边了；
 - 多线程是需要占用系统资源的，理论上来说，如果线程数量超过了CPU的核心数量，其实多线程调度可能花费的时间更多，各位在使用过程中要权衡利弊；
 - 再次强调，不要指望Qt的网络通信支持高并发，最多到1000个能正常工作就万事大吉，一般建议500以内的连接数。有大量高并发的需求请用第三方库比如swoole等。
+107. 
 
 108. 在嵌入式linux上，如果设置了无边框窗体，而该窗体中又有文本框之类的，发现没法产生焦点进行输入，此时需要主动激活窗体才行。
 ```cpp
@@ -3465,7 +3485,7 @@ class tt {
 - 查询条件中含有is null的select语句执行慢，is not null 时永远不会使用索引，一般数据量大的表不要用is null查询。
 - 不等于操作符 <> 和 != 会限制索引，引起全表扫描，即使比较的字段上有索引。
 - where子句中比较的两个条件，一个有索引，一个没索引，使用or则会引起全表扫描。
-- select count(*) from table 这样不带任何条件的count会引起全表扫描。
+- select count(\*) from table 这样不带任何条件的count会引起全表扫描。
 - in 和 not in 也要慎用，否则会导致全表扫描，能用 between 就不要用 in。
 - 用 >= 替代 >，比如 高效写法：select * from table where id >= 4，低效写法：select * from table where id > 3。
 - 如果表数据量很小，比如就几千行，请忽略上述警告，加不加索引问题不大，甚至某些时候加索引反而极大增加了数据库文件的体积，影响更新数据库的速度。
@@ -4518,7 +4538,9 @@ a.setAttribute(Qt::AA_NativeWindows);
 
 302. 大概从6.5版本开始，mingw编译的debug套件编译大名鼎鼎的qcustomplot开源图表控件，会提示报错too many sections/file too big字样。release套件或者其他编译器都正常。你只需要在pro中加上 QMAKE_CXXFLAGS += -Wa,-mbig-obj 即可。
 
-303. 大概从2024年开始，在线安装Qt的工具默认不加载Qt5的安装包，需要在右上角有个什么 Archive 的，勾选一下，然后单击 Filter/筛选 按钮即可，这样左侧就会将Qt5的也都显示出来。估计官网是想让我们强制用Qt6，慢慢的把Qt5淘汰。可惜的是Qt6不支持win7，而win7目前用户数还是很多的。
+303. 大概从2024年开始，在线安装Qt的工具默认不加载Qt5的安装包，需要在右上角有个什么 Archive 的，勾选一下，然后单击 Filter/筛选 按钮即可，这样左侧就会将Qt5的也都显示出来。估计官网是想强制让我们用Qt6，慢慢的把Qt5淘汰。可惜的是Qt6不支持win7，而win7目前用户数还是很多的。
+304. 使用Qt的drawText绘制文本，如果使用的对应参数是QPoint坐标的函数，drawText(const QPoint &p, const QString &s)，务必注意他是以左下角作为起始点的（Qt文档中特意写了 The y-position is used as the baseline of the font），这个和其他开发框架比如C#等都不同，理论上按照屏幕绘制规则，应该是左上角才对，所以涉及到和其他平台对接的时候，建议采用 void drawText(const QRect &r, const QString &text) 函数绘制，指定一个区域。这个知识点很容易被忽视，从而造成灾难性的后果。
+305. 在linux上使用webengine浏览器模块打开网页时，有些系统可能出现崩溃的现象，就算是直接编译运行自带的浏览器示例比如simplebrowser，也是无法正常打开网页。原因是为了安全性考虑，沙箱运行啥的，需要设置个环境变量。只需要在main函数最前面加一行 qputenv("QTWEBENGINE_DISABLE_SANDBOX", "1") 即可。
 
 ## 2 升级到Qt6
 ### 00：直观总结

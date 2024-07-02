@@ -4539,8 +4539,34 @@ a.setAttribute(Qt::AA_NativeWindows);
 302. 大概从6.5版本开始，mingw编译的debug套件编译大名鼎鼎的qcustomplot开源图表控件，会提示报错too many sections/file too big字样。release套件或者其他编译器都正常。你只需要在pro中加上 QMAKE_CXXFLAGS += -Wa,-mbig-obj 即可。
 
 303. 大概从2024年开始，在线安装Qt的工具默认不加载Qt5的安装包，需要在右上角有个什么 Archive 的，勾选一下，然后单击 Filter/筛选 按钮即可，这样左侧就会将Qt5的也都显示出来。估计官网是想强制让我们用Qt6，慢慢的把Qt5淘汰。可惜的是Qt6不支持win7，而win7目前用户数还是很多的。
+
 304. 使用Qt的drawText绘制文本，如果使用的对应参数是QPoint坐标的函数，drawText(const QPoint &p, const QString &s)，务必注意他是以左下角作为起始点的（Qt文档中特意写了 The y-position is used as the baseline of the font），这个和其他开发框架比如C#等都不同，理论上按照屏幕绘制规则，应该是左上角才对，所以涉及到和其他平台对接的时候，建议采用 void drawText(const QRect &r, const QString &text) 函数绘制，指定一个区域。这个知识点很容易被忽视，从而造成灾难性的后果。
 305. 在linux上使用webengine浏览器模块打开网页时，有些系统可能出现崩溃的现象，就算是直接编译运行自带的浏览器示例比如simplebrowser，也是无法正常打开网页。原因是为了安全性考虑，沙箱运行啥的，需要设置个环境变量。只需要在main函数最前面加一行 qputenv("QTWEBENGINE_DISABLE_SANDBOX", "1") 即可。
+
+305. 在QListWidgetItem设置复选框后，有时候希望在切换复选框的时候有个信号通知，以便进行处理，到这里你会发现，QListWidget所有信号中并没有该信号，通过查阅QListWidgetItem的setCheckState函数源码得知，会发送一个dataChanged信号，该信号是QListWidget的数据模型发出来的，于是就很好办了。
+```cpp
+void Form::on_listWidget_itemPressed(QListWidgetItem *item)
+{
+    //鼠标按下切换选中状态
+    item->setCheckState(item->checkState() == Qt::Checked ? Qt::Unchecked : Qt::Checked);
+}
+
+void Form::dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight)
+{
+	//为什么需要通过文本再去找到节点/而不是取选中的节点/因为不选中也可以勾选前面的复选框
+    QListWidgetItem *item;
+    QString text = topLeft.data().toString();
+    int count = ui->listWidget->count();
+    for (int i = 0; i < count; ++i) {
+        item = ui->listWidget->item(i);
+        if (item->text() == text) {
+            break;
+        }
+    }
+
+    //找到对应节点后进行处理
+}
+```
 
 ## 2 升级到Qt6
 ### 00：直观总结

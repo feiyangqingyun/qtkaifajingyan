@@ -4602,6 +4602,61 @@ dir.mkpath("f:/path/dir");
 - 综合延时：最快可以做到200-300ms的延迟，比如rtsp视频流，对实时性要求高，可以不做缓存和音视频同步，收到就立即解码播放。hls一般最快可以做到5s延迟，flv一般可以做到3s延迟。
 - 最终总结：综合考虑实时性以及支持的音视频格式，个人建议，推流用rtsp推流（支持的音视频格式最友好，比如支持265），拉流在web上个人推荐用ws-flv格式拉流（支持的格式多，没有6个同源的限制），拉流在可执行文件上用rtsp（格式多而且实时性最好，可以最快速度解码播放），在网页上虽然webrtc实时性最好，但是不支持265，这个就难搞。
 
+312. Qt自带的对话框的按钮设置中文。
+```cpp
+//信息框设置中文
+QMessageBox dialog(QMessageBox::Question, "询问", text);
+dialog.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+dialog.button(QMessageBox::Yes)->setText("确 定");
+dialog.button(QMessageBox::No)->setText("取 消");
+return dialog.exec();
+
+//输入框设置中文
+QInputDialog dialog;
+dialog.setOkButtonText("确定");
+dialog.setCancelButtonText("取消");
+return dialog.exec();
+
+//对话框设置中文
+QFileDialog dialog;
+dialog.setOption(QFileDialog::DontUseNativeDialog, true);
+QLabel *lookinLabel = dialog.findChild<QLabel*>("lookInLabel");
+lookinLabel->setText("文件目录：");
+```
+
+313. 有时候需要对树状节点进行搜索过滤显示，匹配到的节点显示，没有匹配的隐藏。这个功能很多地方用，封装了一个静态函数直接调用。
+```cpp
+//调用方法 QtHelper::search(ui->treeWidget, "测试", 5);
+void QtHelper::search(QTreeWidget *treeWidget, const QString &key, int level)
+{
+    //找到所有匹配的节点
+    QList<QTreeWidgetItem *> items = treeWidget->findItems(key, Qt::MatchContains | Qt::MatchRecursive);
+
+    //将匹配到的节点加入队列/该节点的父节点也相当于匹配/不然父节点隐藏子节点也会跟着隐藏
+    QList<QTreeWidgetItem *> itemAll;
+    foreach (QTreeWidgetItem *item, items) {
+        //当前节点的所有父节点也添加进去/几次循环相当于几个层级
+        for (int i = 0; i < level; ++i) {
+            //去重添加
+            if (!itemAll.contains(item)) {
+                itemAll << item;
+            }
+            //为空表示没有父节点则跳出循环
+            item = item->parent();
+            if (!item) {
+                break;
+            }
+        }
+    }
+
+    //遍历所有节点/匹配的节点显示否则隐藏
+    QTreeWidgetItemIterator it(treeWidget);
+    while (*it) {
+        (*it)->setHidden(!itemAll.contains(*it));
+        ++it;
+    }
+}
+```
 
 ## 2 升级到Qt6
 ### 00：直观总结

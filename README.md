@@ -929,14 +929,15 @@ QDialog dialog;
 dialog.setWindowModality(Qt::WindowModal);
 ```
 很多初学者甚至几年工作经验的人，对多线程有很深的误解和滥用，尤其是在串口和网络通信这块，什么都往多线程里面丢，一旦遇到界面卡，就把数据收发啥的都搞到多线程里面去，殊不知绝大部分时候那根本没啥用，因为没找到出问题的根源。
-- 如果你没有使用wait***函数的话，大部分的界面卡都出在数据处理和展示中，比如传过来的是一张图片的数据，你需要将这些数据转成图片，这个肯定是耗时的；
+- 如果你没有使用waitxxx函数的话，大部分的界面卡都出在数据处理和展示中，比如传过来的是一张图片的数据，你需要将这些数据转成图片，这个肯定是耗时的；
 - 还有就是就收到的数据曲线绘制出来，如果过于频繁或者间隔过短，肯定会给UI造成很大的压力的，最好的办法是解决如何不要频繁绘制UI比如合并数据一起绘制等；
 - 如果是因为绘制UI造成的卡，那多线程也是没啥用的，因为UI只能在主线程；
 - 串口和网络的数据收发默认都是异步的，由操作系统调度的，如果数据处理复杂而且数据量大，你要做的是将数据处理放到多线程中；
-- 如果没有严格的数据同步需求，根本不需要调用wait***之类的函数来立即发送和接收数据，实际需求中大部分的应用场景其实异步收发数据就足够了；
-- 有严格数据同步需求的场景还是放到多线程会好一些，不然你wait***就卡在那边了；
+- 如果没有严格的数据同步需求，根本不需要调用waitxxx之类的函数来立即发送和接收数据，实际需求中大部分的应用场景其实异步收发数据就足够了；
+- 有严格数据同步需求的场景还是放到多线程会好一些，不然你waitxxx就卡在那边了；
 - 多线程是需要占用系统资源的，理论上来说，如果线程数量超过了CPU的核心数量，其实多线程调度可能花费的时间更多，各位在使用过程中要权衡利弊；
 - 再次强调，不要指望Qt的网络通信支持高并发，最多到1000个能正常工作就万事大吉，一般建议500以内的连接数。有大量高并发的需求请用第三方库比如swoole等。
+
 107. 
 
 108. 在嵌入式linux上，如果设置了无边框窗体，而该窗体中又有文本框之类的，发现没法产生焦点进行输入，此时需要主动激活窗体才行。
@@ -2743,7 +2744,7 @@ WindowsArguments = dpiawareness=0
 195. 关于QSS要注意的坑。
 - qss源自css，相当于css的一个子集，主要支持的是css2标准，很多网上的css3的标准的写法在qss这里是不生效的，所以不要大惊小怪。
 - qss也不是完全支持所有的css2，比如text-align官方文档就有说明，只支持 QPushButton and QProgressBar，务必看清楚。
-- 有时候偷懒直接来一句 *{xxx}，你会发现大部分是应用了，也有小部分或者极个别没有应用，你可能需要在对应的窗体中 this->setStyleSheet() 来设置。
+- 有时候偷懒直接来一句 \*{xxx}，你会发现大部分是应用了，也有小部分或者极个别没有应用，你可能需要在对应的窗体中 this->setStyleSheet() 来设置。
 - qss的执行是有优先级的，如果没有指定父对象，则对所有的应用，比如在窗体widget中 {color:#ff0000;} 这样会对widget以及widget的所有子对象应用该样式，这种问题各大群每周都有人问，你会发现各种奇奇怪怪的异样不正常，怎么办呢，你需要指定类名或者对象名，比如 #widget{color:#ff0000;} 这样就只会对widget对象应用该样式，另一种写法 QWidget#widget{color:#ff0000;}，只想对窗体本身而不是子控件按钮标签等 .QWidget{color:#ff0000;} ，具体详细规则参见官方说明。
 - qss整体来说还是可以的，解析速度性能在Qt5高版本后期比Qt4好很多，尤其是修复了不少qss中的解析绘制BUG。尽管有这样那样的BUG，怀着包容的心对待它。
 - qss官方学习地址1：[http://47.100.39.100/qtwidgets/stylesheet-reference.html](http://47.100.39.100/qtwidgets/stylesheet-reference.html)
@@ -3192,7 +3193,7 @@ int DataCsv::findCode(const QString &fileName)
         } else if (b1 == 0xEF && b2 == 0xBB && b3 == 0xBF) {
             code = 4;
         } else {
-            //尝试用utf8转换,如果可用字符数大于0,则表示是ansi编码
+            //尝试用utf8转换,如果无效字符数大于0,则表示是ansi编码
             QTextCodec::ConverterState state;
             QTextCodec *codec = QTextCodec::codecForName("utf-8");
             codec->toUnicode(buffer.constData(), buffer.size(), &state);
@@ -4572,19 +4573,31 @@ void Form::dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRigh
 
 307. 在使用第三库的过程中，当你使用的库种类越多，会发现一个现象，有些库依赖编译器的，比如opencv，如果你用msvc编译出来的库，那你的程序只能用msvc的套件才能正常链接该库，你要是用mingw去链接肯定失败的，要想用mingw也能成功链接，你只能用mingw去编译opencv。到这里你是不是以为都是这个规则？那就错了，当你用ffmpeg的库的时候，就不存在这个问题，官方下载的库文件，既能用msvc也能用mingw去链接。这是因为ffmpeg是纯c项目，而opencv是纯c++项目，涉及到ABI的问题，这是C++的特性导致的。C++是一种复杂的编程语言，支持继承和多态，因此编译器要想保证准确调用函数，就需要确定其调用约定（函数名区分、参数输入、栈管理等）、返回类型及参数列表。在同一种架构下不同编译器对此导出的规则不一致。所以总结就是，纯c的项目编译出来的库不用区分编译器，纯c++的需要区分。qtav作者有个最新力作mdk项目，也是纯c写的，提供了mingw和msvc的库，无论何种编译器编译出来的库，都同时兼容msvc和mingw编译器，这就是纯c的魅力。
 
-308. 有时候我们需要写入文件到磁盘，但是有些情况下，如果对应目录不存在则写入失败，需要先判断目录是否存在，不存在则新建，QDir提供了mkdir和mkpath两种方法来创建目录，以前以为这两个是一样的功能，类似于size和length，其实不是的，直到近期才发现了区别。mkdir只会创建路径中的最末尾的目录，如果父目录不存在，则创建失败。而mkpath会逐级判断整个路径的目录，父目录不存在则创建父目录，依次下去，保证指定的路径创建成功，建议使用mkpath。
+308. 有时候我们需要写入文件到磁盘，但是有些情况下，如果对应目录不存在则写入失败，需要先判断目录是否存在，不存在则新建，QDir提供了mkdir和mkpath两种方法来创建目录，以前以为这两个是一样的功能，类似于size和length，其实不是的，直到近期才发现了区别。mkdir只会创建路径中的最末尾的目录，如果父目录不存在，则创建失败。而mkpath会逐级判断整个路径的目录，父目录不存在则创建父目录，依次下去，保证指定的路径创建成功，建议使用mkpath。这里还必须特别提示一点，使用mkpath创建相对目录，会递归多创建一个同名的子目录，比如./0则会创建 ./0/0两个目录，为了避免这个问题，需要改成绝对路径。
 ```cpp
 QDir dir;
 //如果path目录不存在则dir目录也会创建失败
 dir.mkdir("f:/path/dir");
 //会先创建path目录然后创建dir目录
 dir.mkpath("f:/path/dir");
+
+//会在可执行文件当前目录下创建 ./dir/dir 两个目录
+dir.mkdir("./dir");
+//改成绝对路径则只会创建 ./dir 目录
+QString path = "./dir";
+QDir dir(path);
+if(dir.isRelative()) {
+  dir.makeAbsolute();
+  path = dir.path();
+}
+dir.mkpath(path);
 ```
 
 309. 当你在widget项目中将js文件添加到资源文件中，编译的时候很可能出现 qmlcache_loader.o:qmlcache_loader.cpp:(.text+0x32) 错误，这是因为qtc默认会开启qtquickcompiler，以便通过预处理资源中的所有js文件，加快文件加载到Qml引擎的速度，但是有些时候我们并不是用它加载到qml运行，可能是放在QtWebEngine中用于交互，或者widget中执行js函数拿到结果。可以在qtc的项目配置中找到qt quick compiler选项，下拉框选择禁用。也可以在pro中加一行 CONFIG -= qtquickcompiler 即可。这个确切的说是qt的bug，在5.15.2以及后续版本不存在。
 
 310. 新版的QtCreator默认的编译目录路径在源码下build目录，之前是在源码同级的build-xxx目录，个人还是喜欢之前的方式，所有编译生成的临时文件在源码外单独的一个目录，不需要的时候直接删除就好，源码目录永远干干净净的。当然qtc也是提供了设置目录的地方，在首选项-》构建和运行-》Default Build Properties 里面第一行，将之前的 ./build/%{Asciify:%{Kit:FileSystemName}-%{BuildConfig:Name}} 改成 ../build-%{Project:Name}-%{Kit:FileSystemName}-%{BuildConfig:Name} 即可。
 
+### 32：311-320
 311. 关于流媒体推拉流延时的几点说明。
 - 经常看到一些流媒体相关的程序，号称零延迟，不用怀疑，这肯定吹牛逼的。
 - 搞音视频开发，有个核心的指标就是实时性，也就是延迟多少毫秒，这个问题问的也是最多的。
@@ -4657,6 +4670,70 @@ void QtHelper::search(QTreeWidget *treeWidget, const QString &key, int level)
     }
 }
 ```
+
+314. 在Qt中实现组播是非常容易的事情，从4.8开始支持组播，为啥要用组播而不是广播？因为广播会产生广播数据风暴，每个设备都会收到，而且针对某个网段的广播比如192.168.0.255，不能跨网段。而组播不仅可以跨网段，还不会出现数据风暴，只对加入了组播的目标进行数据发送，非常适合用来做局域网设备搜索和配置。在测试过程中，如果是两台真机之间测试组播，没有问题，但是很多时候开发机只有一台，最多就是在开发机上安装了虚拟机，可以有多个系统可以测试，那么问题来了，虚拟机之间的组播需要经过设置才能正常通信。第一点就是虚拟机的网络必须是桥接模式，也就是网络地址和宿主主机同一网段。第二点最关键，需要在两个虚拟机产生的网卡设备（VMware Network Adapter VMnet1/VMware Network Adapter VMnet8）右键属性进去设置，在此连接使用下列项目中勾选一个VMware Bridge Protocol确定，重启网卡即可。
+```cpp
+//绑定端口
+udpSocket->bind(QHostAddress("0.0.0.0"), 6789);
+//设置组播数据不给自己发送/一般都会有这个设置/防止数据又发给自己造成死循环
+udpSocket->setSocketOption(QAbstractSocket::MulticastLoopbackOption, 0);
+//加入组播地址
+udpSocket->joinMulticastGroup(QHostAddress("224.0.0.10"));
+//往组播发送数据
+udpSocket->writeDatagram("hello", QHostAddress("224.0.0.10"), 6789);
+//接收数据和UDP接收数据处理完全一致
+```
+
+315. 在Qt中结构体数据也是可以保存到ini配置文件，只不过保存后的数据是一堆qbytearray之类的字符，所以如果可读性优先，建议不要存储结构体数据，最起码也要是格式化后的结构体数据存储进去。要想用QSettings保存结构体数据，必须在结构体中重载实现输入输出数据流。
+```cpp
+struct ClientConfig {
+    int tabIndex;    
+    QString serverInfo;  
+
+    //重载数据流输出
+    friend QDataStream &operator << (QDataStream &out, const ClientConfig &clientConfig) {
+        out << clientConfig.tabIndex;        
+        out << clientConfig.serverInfo;        
+        return out;
+    }
+
+    //重载数据流输入
+    friend QDataStream &operator >> (QDataStream &in, ClientConfig &clientConfig)
+    {
+        in >> clientConfig.tabIndex;        
+        in >> clientConfig.serverInfo;        
+        return in;
+    }
+};
+
+//必须加上下面这句用来注册元数据类型,不然报错
+//error: static assertion failed: Type is not registered, please use the Q_DECLARE_METATYPE macro to make it known to Qt's meta-object system
+Q_DECLARE_METATYPE(ClientConfig)
+
+//定义
+ClientConfig clientConfig;
+
+//读取
+set.beginGroup("ClientConfig");
+clientConfig = set.value("clientConfig").value<ClientConfig>();
+set.endGroup();
+
+//写入
+set.beginGroup("ClientConfig");
+set.setValue("clientConfig", QVariant::fromValue(clientConfig)); 
+set.endGroup();
+```
+
+316. 将QPointF转成经纬度坐标字符串的时候，默认会丢失精度，导致计算错误，尤其是在转换成经纬度坐标的时候，可以发现偏差很大，所以在转换的时候需要指定精度。
+```cpp
+QPointF p(1.23456789, 2.3456789);
+QString p1 = QString("%1,%2").arg(p.x()).arg(p.y());
+QString p2 = QString("%1,%2").arg(p.x(), 0, 'f', 10).arg(p.y(), 0, 'f', 10);
+qDebug() << p1 << p2;
+//p1=1.23457,2.34568  p2=1.2345678900,2.3456789000
+```
+
+317. 在C++中经常会需要引入一些第三方或者系统的头文件，有时候你会发现，如果单单写个类，就引入这个文件，是没有任何问题的，而如果在前面还引入了Qt中的头文件比如 #include <QtNetwork> ，会编译通不过，报一些奇奇怪怪的问题，此时就要考虑引入的顺序问题，一般来说，要把Qt中的头文件放到后面来引入，就不会有问题，血淋淋的教训，折腾了很久才发现。貌似Qt中的头文件也会引入一些系统层面的头文件，而且还加了一些自己的定义，导致和第三方库的定义冲突了。一般来说msvc编译器最容易遇到这个现象，mingw出奇的正常。
 
 ## 2 升级到Qt6
 ### 00：直观总结

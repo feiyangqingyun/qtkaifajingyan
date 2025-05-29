@@ -5562,7 +5562,22 @@ for (int i = 0; i < count; ++i) {
 
 18. Qt绝对是个非常牛逼的项目，源码非常庞大，而且分模块设计，对于有足够精力的可以花时间学习源码中的具体实现，如果时间不多，个人推荐看 QObject、QWidget、QPainter、QString、QColor、QList、QVariant、QAbstractButton、QAbstractItemModel、qnamespace.h（整个Qt中所有的全局的枚举值）、这些类的源码即可，看看他们有哪些方法和属性，对自己的编程会有莫大的帮助。
 
-19.  最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
+19. 不知道出于什么原因考虑，Qt官方目前不提供离线的安装包下载，意味着网上各种文章提供的各种下载地址都失效了，会提示Download from your IP address is not allowed，当然目前可以在线安装，但是据说只提供了从5.15开始的版本，早期的5.12之类的版本很难再下载到，于是这块需求居然还衍生了一门生意。其实还是可以下载到的，只是需要自己组织对应的下载地址，都是有规律的，然后用迅雷等下载工具下载。
+```cpp
+//5.12.12 对应windows安装包
+https://download.qt.io/archive/qt/5.12/5.12.12/qt-opensource-windows-x86-5.12.12.exe
+
+//5.12.12 对应linux安装包
+https://download.qt.io/archive/qt/5.12/5.12.12/qt-opensource-linux-x64-5.12.12.run
+
+//5.12.12 对应mac安装包
+https://download.qt.io/archive/qt/5.12/5.12.12/qt-opensource-mac-x64-5.12.12.dmg
+
+//5.12.0 对应windows安装包
+https://download.qt.io/archive/qt/5.12/5.12.0/qt-opensource-windows-x86-5.12.0.exe
+```
+
+20.  最后一条：珍爱生命，远离编程。祝大家头发浓密，睡眠良好，情绪稳定，财富自由！
 
 ## 8 杂七杂八
 ### 8.1 推荐开源主页

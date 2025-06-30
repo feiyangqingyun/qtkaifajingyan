@@ -4671,10 +4671,10 @@ void QtHelper::search(QTreeWidget *treeWidget, const QString &key, int level)
 }
 ```
 
-314. 在Qt中实现组播是非常容易的事情，从4.8开始支持组播，为啥要用组播而不是广播？因为广播会产生广播数据风暴，每个设备都会收到，而且针对某个网段的广播比如192.168.0.255，不能跨网段。而组播不仅可以跨网段，还不会出现数据风暴，只对加入了组播的目标进行数据发送，非常适合用来做局域网设备搜索和配置。在测试过程中，如果是两台真机之间测试组播，没有问题，但是很多时候开发机只有一台，最多就是在开发机上安装了虚拟机，可以有多个系统可以测试，那么问题来了，虚拟机之间的组播需要经过设置才能正常通信。第一点就是虚拟机的网络必须是桥接模式，也就是网络地址和宿主主机同一网段。第二点最关键，需要在两个虚拟机产生的网卡设备（VMware Network Adapter VMnet1/VMware Network Adapter VMnet8）右键属性进去设置，在此连接使用下列项目中勾选一个VMware Bridge Protocol确定，重启网卡即可。
+314. 在Qt中实现组播是非常容易的事情，从4.8开始支持组播，为啥要用组播而不是广播？因为广播会产生广播数据风暴，每个设备都会收到，而且针对某个网段的广播比如192.168.0.255，不能跨网段。而组播不仅可以跨网段，还不会出现数据风暴，只对加入了组播的目标进行数据发送，非常适合用来做局域网设备搜索和配置。在测试过程中，如果是两台真机之间测试组播，没有问题，但是很多时候开发机只有一台，最多就是在开发机上安装了虚拟机，可以有多个系统可以测试，那么问题来了，虚拟机之间的组播需要经过设置才能正常通信。第一点就是虚拟机的网络必须是桥接模式，也就是网络地址和宿主主机同一网段。第二点最关键，需要在两个虚拟机产生的网卡设备（VMware Network Adapter VMnet1/VMware Network Adapter VMnet8）右键属性进去设置，在此连接使用下列项目中勾选一个VMware Bridge Protocol确定，重启网卡即可。还有个可能导致绑定组播失败，那就是多网卡的情况，需要joinMulticastGroup第二个参数指定网卡。
 ```cpp
 //绑定端口
-udpSocket->bind(QHostAddress("0.0.0.0"), 6789);
+udpSocket->bind(QHostAddress("0.0.0.0"), 6789, QUdpSocket::ShareAddress | QUdpSocket::ReuseAddressHint);
 //设置组播数据不给自己发送/一般都会有这个设置/防止数据又发给自己造成死循环
 udpSocket->setSocketOption(QAbstractSocket::MulticastLoopbackOption, 0);
 //加入组播地址
@@ -4682,6 +4682,27 @@ udpSocket->joinMulticastGroup(QHostAddress("224.0.0.10"));
 //往组播发送数据
 udpSocket->writeDatagram("hello", QHostAddress("224.0.0.10"), 6789);
 //接收数据和UDP接收数据处理完全一致
+
+//获取指定IP对应的网卡索引
+int OnvifSearchServer::getInterfaces(const QString &ip)
+{
+    QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
+    for (int i = 0; i < interfaces.count(); ++i) {
+        QList<QNetworkAddressEntry> addrs = interfaces.at(i).addressEntries();
+        foreach (QNetworkAddressEntry addr, addrs) {
+            if (addr.ip().toString() == ip) {
+                return i;
+            }
+        }
+    }
+
+    return -1;
+}
+
+//指定网卡绑定组播/防止绑定失效/也就是绑定成功但是未必是你需要的网卡
+int index = getInterfaces(ip);
+QNetworkInterface interface = QNetworkInterface::allInterfaces().at(index);
+udpSocket->joinMulticastGroup(QHostAddress("239.255.255.250"), interface);
 ```
 
 315. 在Qt中结构体数据也是可以保存到ini配置文件，只不过保存后的数据是一堆qbytearray之类的字符，所以如果可读性优先，建议不要存储结构体数据，最起码也要是格式化后的结构体数据存储进去。要想用QSettings保存结构体数据，必须在结构体中重载实现输入输出数据流。
@@ -4745,6 +4766,83 @@ qDebug() << s.toInt();
 //结果输出12
 qDebug() << s.toFloat();
 int i = s.toFloat();
+```
+
+320. 关于QByteArray变量取值注意事项的衍生问题。
+```cpp
+QString s = "abc";
+//变量c的值很可能不正确/toUtf8后是个临时变量
+char *c = s.toUtf8().data();
+//需要分成两步
+QByteArray b = s.toUtf8();
+char *c = b.data();
+
+//那么问题来了/下面这个b有没有问题
+QByteArray b = s.toUtf8().toBase64();
+//其实没有问题的/因为toBase64后返回的是一个新的对象
+//99%的人看到c有问题以为b也有问题
+```
+
+321. 民间一直流传QString最多只能带9个占位符，其实是错误的，个人认为QString类是Qt中封装的最牛逼类之一，不接受反驳，他提供了多种占位符使用方式，关于民间说的最多支持9个占位符，那是直接在一个arg中填入多个参数的方式，这个确实限制了最多就只能填9个参数值。其实QString中还有个频繁的用法是链式调用，也就是.arg().arg()一直下去，这样就突破了9个的限制，要多少个都可以，而且链式调用的方式可以传入所有支持的数据类型，可以是int也可以是QString，而重载版本最多支持9个且必须是QString字符串类型。还有个很容易忽略的细节就是，占位符对应的第一个值是%1还是%0？其实都不是，而是按照填写的最小的那个数字开始的，如果占位符中最小的是%2，则这个对应的就是第一个参数值。
+```cpp
+//输出 "0 1 2 3 4 5 6 7 8 9 10"
+QString s1 = QString("%0 %1 %2 %3 %4 %5 %6 %7 %8 %9 %10").arg(0).arg(1).arg(2).arg(3).arg(4).arg(5).arg(6).arg(7).arg(8).arg(9).arg(10);
+
+//输出 "0 1 2 3 4 5 6 7 8 %9 %10"
+QString s2 = QString("%0 %1 %2 %3 %4 %5 %6 %7 %8 %9 %10").arg("0", "1", "2", "3", "4", "5", "6", "7", "8");
+
+//输出 "a b c"
+QString s3 = QString("%2 %3 %4").arg("a").arg("b").arg("c");
+```
+
+322. 在对单次定时器使用lam表达式过程中，如果在线程中执行代码，会发现执行失败，需要异步执行。
+```cpp
+//下面这段代码在线程中会执行失败
+QTimer::singleShot(3000, [this]() {
+    ...        
+});
+
+//改成异步执行就行/相当于主线程执行
+QMetaObject::invokeMethod(this, [this]() {
+    QTimer::singleShot(3000, [this]() {
+        ...
+    });
+}, Qt::QueuedConnection);
+```
+
+323. 在使用qDebug和其他日志打印函数输出日志的时候，一般会希望打印时间戳和代码行等信息，从Qt5开始，内置了对应的宏来实现，很多人会选择在打印的代码处加上对应的宏来实现，其实Qt5开始就提供了qSetMessagePattern来统一设置，设置以后根本不需要每行打印代码都写上时间戳或者代码行对应宏等，直接写自己打印的内容就行，会自动在打印的时候填充加上你设置的附加内容。
+```cpp
+//Qt4的时候没有这些功能/只能手动打印
+qDebug() << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss zzz") << "xxx";
+
+//可以统一定义一个宏再打印/不用每个地方都写重复的代码
+#define TIMEMS qPrintable(QTime::currentTime().toString("HH:mm:ss zzz"))
+#define DATETIME qPrintable(QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss"))
+qDebug() << DATETIME << "xxx";
+
+//设置一次搭档内容/其他地方只需要输出内容即可
+qSetMessagePattern("[%{time yyyy-MM-dd hh:mm:ss zzz}] - %{message}");
+//下面打印输出 [2025-06-15 14:30:45 568] - xxx
+qDebug() << "xxx";
+```
+
+324. QString字符串操作中容易忽略的几个小细节。
+- 在使用indexOf判断是否包含某个字符的时候，建议使用indexOf(',')，而不是indexOf(",")，查找单个字符效率极高。只有确实需要查找多个字符的时候，才建议用indexOf("xxx")。
+- 同理，和indexOf方法类似，其他方法比如section/split等，单个字符串查找，都建议用(',')而不是(",")，性能会有极大提升。
+- 截取字符串一般会选择用mid(2, 5)函数，如果要截取某个索引开始后面所有字符，以前经常写成 s.mid(2, s.size()) 这种，其实第二个参数可以不填，默认不填就表示到结尾。
+- 分割字符串在某些场景写可以用section而不是split，比如文件路径截取或者IP地址截取。
+```cpp
+//直接使用section截取字符串的前面部分再拼起来/不容易理解
+QString head = ip.section('.', 0, 2);
+QString ip2 = head + "." + QString::number(123);
+
+//使用split分割字符串/很容易理解
+QStringList list = ip.split('.');
+list[3] = QString::number(123);
+QString ip3 = list.join('.');
+
+//输出 "192.168.0" "192.168.0.123" "192.168.0.123"
+qDebug() << head << ip2 << ip3;
 ```
 
 

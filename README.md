@@ -1526,8 +1526,10 @@ if (!edit->text().isEmpty()) {
 147. Qt内置了各种对话框，比如文件对话框-QFileDialog ，颜色对话框-QColorDialog ，默认都会采用系统的对话框风格样式，这样可以保持和系统一致，如果不需要的话可以取消该特性，取消以后会采用Qt自身的对话框，这样才能进行美化和其他处理。
 ```cpp
 QFileDialog *fileDialog = new QFileDialog(this);
-//不设置此属性根本查找不到任何子元素,因为默认采用的系统对话框
+//不设置此属性根本查找不到任何子元素/因为默认采用的系统对话框
 fileDialog->setOption(QFileDialog::DontUseNativeDialog, true);
+//设置只读属性/禁用新建目录
+fileDialog->setOption(QFileDialog::ReadOnly, true);
 qDebug() << fileDialog->findChildren<QLabel *>();
 //打印输出 QLabel(0x17e2ff68, name="lookInLabel"), QLabel(0x17e35f88, name="fileNameLabel"), QLabel(0x17e35e68, name="fileTypeLabel")
 ```

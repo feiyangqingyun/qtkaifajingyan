@@ -46,7 +46,7 @@ timer->start(5000);
 
 5. 很多时候找到Qt对应封装的方法后，记得多看看该函数的重载，多个参数的，你会发现不一样的世界，有时候会恍然大悟，原来Qt已经帮我们封装好了，比如QString、QColor的重载参数极其丰富，很多你做梦都想要的功能就在里面。
 
-6. 可以在pro文件中写上版本号、程序图标、产品名称、版权所有、文件说明等信息（Qt5才支持），其实在windows上就是qmake的时候会自动将此信息转换成rc文件。对于早期的Qt4版本你可以手动写rc文件实现。
+6. 可以在pro文件中写上版本号、程序图标、产品名称、版权所有、文件说明等信息（Qt5开始才支持），其实在windows上就是qmake的时候会自动将此信息转换成rc文件。可以在pro文件中写一行VERSION=xxx，编译后就会在编译文件目录有个resource.rc文件，可以记事本打开查看内容。对于早期的Qt4版本，只能手动写rc文件，然后pro加上 RC_FILE = main.rc。QMAKE_TARGET这种前缀标记是5.8版本开始支持的，qmake 会根据平台自动将其转换为相应的资源文件。
 ```cpp
 #程序版本
 VERSION  = 2025.10.01
@@ -4848,6 +4848,67 @@ QString ip3 = list.join('.');
 qDebug() << head << ip2 << ip3;
 ```
 
+325. 如何判断当前系统是嵌入式arm，在早期比如2010年的时候基本上是在代码中 #ifde __arm__ 来判断，谁知道后面基本上都是64位的嵌入式，你不要想当然的以为加个 #ifde __arm64__ ，其实是 #ifde __aarch64__ ，因为编译器基本上用的aarch，那有没有可能后面又增加其他类型的呢，是很有可能的，所以最佳方案就是在pro中识别到，然后定义一个标志，最后代码中统一用这个标志判断是否是arm即可。
+```cpp
+//pro中判断
+contains(QT_ARCH, arm) | contains(QT_ARCH, arm64) {
+DEFINES + QT_ARM_ARCH
+}
+
+//有个通用写法
+contains(QT_ARCH, arm.*) {
+DEFINES + QT_ARM_ARCH
+}
+
+//代码中判断/如果需要增加其他/每个代码的地方都需要改动
+#if defined(__arm__) || defined(__aarch64__)
+#endif
+
+//代码中判断/如果需要增加其他/只需要pro中改动一个地方即可
+#ifdef QT_ARM_ARCH
+#endif
+```
+
+326. Qt中QByteArray和16进制互转，其实已经内置了方法，之前还傻傻的逐个计算。
+```cpp
+QString IotHelper::byteArrayToHexStr(const QByteArray &data)
+{
+    //下面几个点就表示几个字符
+    QString result = data.toHex();
+#if (QT_VERSION >= QT_VERSION_CHECK(5,0,0))
+    result.replace(QRegularExpression("(..)"), "\\1 ");
+#else
+    result.replace(QRegExp("(..)"), "\\1 ");
+#endif
+    return result;
+}
+
+QByteArray IotHelper::hexStrToByteArray(const QString &data)
+{
+    //以前还傻傻的自己去逐个计算/原来已经内置了/支持带空格和不带空格
+    return QByteArray::fromHex(data.toUtf8());
+}
+```
+
+327. 关于在Qt中使用QThread::msleep延时的特别注意事项。
+```cpp
+QElapsedTimer timer;
+timer.start();
+QThread::msleep(1);
+qDebug() << timer.elapsed();
+```
+- 理论上来说执行上面这段代码，会打印1，也就是延时1ms，实际情况是半数人的电脑会打印1，有些会打印2-5，离谱的是有些会打印20-30，是不是觉得很离谱？
+- 如果是偶尔打印一次20-30，也能够理解，毕竟我们用的操作系统都不是实时操作系统，如果遇到后台任务很多的情况，或者某个进行占用在密集运算的时候，是有可能的。
+- 问题是，在这种电脑上，会一直打印20-30，也就说明并不是偶发情况，是频发情况，难道是开启了节能模式导致的？
+- 所以有些人用这个延时来控制生产消费者队列，就很容易得不到预期的结果，比如1s存入了100个数据，处理一个数据就休息1ms，理论上是可以正常运行的，实际上上有些电脑每次休息1ms实际上休息了30ms，这就导致队列中的数据越来越多。
+- 还有些人用这个延时来控制视频播放，比如fps25帧的视频文件，每次播放完整一帧就休息40ms，这样刚好1s就播放25帧，实际发现有些电脑慢的离谱，问题就出在延时这里。
+- 那如果希望实现定时处理一个任务，可以考虑用定时器，如果担心卡主，可以通过movetothread在线程中使用定时器，然后设置定时器类型为高精度定时器，QTimer *timer = new QTimer; timer->setTimerType(Qt::PreciseTimer);
+
+328. QMap内部会排序，如何设置不要排序？有些人说换成QHash，其实QHash内部使用哈希值排序，也就是并不是按照插入的顺序来存储的，如果一定要求按照插入顺序存储，需要考虑使用 QList<QPair<Key, Value>> 或者 std::vector<std::pair<Key, Value>> 这样的序列容器。如果是json数据的构建，建议用QHash，速度最快无顺序，因为json解析本身就是不需要顺序的。总之QMap严格按照key排序，QHash按照内部的哈希值排序，QList<QPair>按照插入顺序排序。
+
+329. 同一个UI界面上，如果子UI和主UI有同名对象，然后使用的on_obj_slot这种方式，让Qt内部调用connectSlotsByName自动关联的信号槽，会导致信号槽错乱，https://bugreports.qt.io/browse/QTBUG-49749，建议取不同名字，或者手动connect去关联信号槽，保证不会出错。
+
+330. 一个高分屏缩放引发的血案，在Qt5中QWidget的devicePixelRatio()是int类型，Qt6中是qreal类型，也就是说在Qt6中这个函数返回的是准确的浮点值，而在Qt5中是整数值，这就导致在Qt5中很多计算不准确，必须要用devicePixelRatioF()这个函数。怪不得之前总有人反馈那个无边框窗体在高分屏有问题，而我这里测试的又是没问题的，因为我这测试的Qt6本来就不会出问题，而Qt5中我这强制写死的用QApplication::setAttribute(Qt::AA_Use96Dpi)，不会去开启缩放。确切的说应该是Qt5中不严谨导致的，因为Qt5中的QScreen::devicePixelRatio()这个函数也是qreal的，所以在Qt6中全部统一了。血淋淋的教训。
 
 ## 2 升级到Qt6
 ### 00：直观总结

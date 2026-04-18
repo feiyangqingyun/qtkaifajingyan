@@ -928,7 +928,8 @@ projD.depends = projC
 QDialog dialog;
 dialog.setWindowModality(Qt::WindowModal);
 ```
-很多初学者甚至几年工作经验的人，对多线程有很深的误解和滥用，尤其是在串口和网络通信这块，什么都往多线程里面丢，一旦遇到界面卡，就把数据收发啥的都搞到多线程里面去，殊不知绝大部分时候那根本没啥用，因为没找到出问题的根源。
+
+107. 很多初学者甚至几年工作经验的人，对多线程有很深的误解和滥用，尤其是在串口和网络通信这块，什么都往多线程里面丢，一旦遇到界面卡，就把数据收发啥的都搞到多线程里面去，殊不知绝大部分时候那根本没啥用，因为没找到出问题的根源。
 - 如果你没有使用waitxxx函数的话，大部分的界面卡都出在数据处理和展示中，比如传过来的是一张图片的数据，你需要将这些数据转成图片，这个肯定是耗时的；
 - 还有就是就收到的数据曲线绘制出来，如果过于频繁或者间隔过短，肯定会给UI造成很大的压力的，最好的办法是解决如何不要频繁绘制UI比如合并数据一起绘制等；
 - 如果是因为绘制UI造成的卡，那多线程也是没啥用的，因为UI只能在主线程；
@@ -937,8 +938,6 @@ dialog.setWindowModality(Qt::WindowModal);
 - 有严格数据同步需求的场景还是放到多线程会好一些，不然你waitxxx就卡在那边了；
 - 多线程是需要占用系统资源的，理论上来说，如果线程数量超过了CPU的核心数量，其实多线程调度可能花费的时间更多，各位在使用过程中要权衡利弊；
 - 再次强调，不要指望Qt的网络通信支持高并发，最多到1000个能正常工作就万事大吉，一般建议500以内的连接数。有大量高并发的需求请用第三方库比如swoole等。
-
-107. 
 
 108. 在嵌入式linux上，如果设置了无边框窗体，而该窗体中又有文本框之类的，发现没法产生焦点进行输入，此时需要主动激活窗体才行。
 ```cpp
@@ -3882,7 +3881,7 @@ QSizeGrip {
 ```cpp
 //下面两个定义看具体需求调整
 #define QT_NO_OPENGL
-#define QT_NO_OPENGL_ES_3
+
 #include <QtWidgets>
 ```
 
@@ -4453,7 +4452,7 @@ btnGroup->addButton(ui->btn2, 1);
 ```
 
 295. 关于QCustomplot绘图性能的改善。
-- 尽量避免笔宽度大于1的线，默认是1，如果绘制的数据量很大，强烈不建议设置线条宽度大于1，性能会大大降低。
+- 尽量避免笔宽度大于1的线，默认是1，如果绘制的数据量很大，强烈不建议设置线条宽度大于1，性能会极大降低。
 - 避免复杂的填充，例如在具有数千个点的图形之间进行通道填充。
 - 在图表拖动期间，可以设置 setNoAntialiasingOnDrag(true)，可以提高响应速度。
 - 避免使用任何类型的alpha（透明）颜色，尤其是在填充中。
@@ -4496,7 +4495,7 @@ int main(int argc, char *argv[])
 
 298. 现在现在新版的Qt都是需要在线下载，有时候下载到中途过程会遇到提示下载错误，很可能是部分插件模块对应服务器没有打包导致的，一般都是一些末尾带TP字样的模块，这些模块一般也不会用，所以如果想要安装成功，你需要到选择Qt版本和插件的地方，打开Additional Libraries节点，将那些用不上的尤其是TP结尾的都不勾选，再安装即可。
 
-299. Qt中可以通过qputenv和qgetenv来设置和获取系统环境变量，既可以在代码中设置对应的值，也可以在系统环境变量中设置，比如windows系统环境变量中设置，相当于可以自定义字符串指定值，这样灵活性大大增强，有时候因为代码不能修改了，可以尝试去设置一个Qt认识的环境变量字符串值来产生效果。这里要特别提示的是，环境变量设置后一定要生效才能正常读取到，比如xp系统设置后可能要重启操作系统才能生效，还有一个是要重启QtCreator才能识别到最新的环境变量，可能是做了缓存机制。
+299. Qt中可以通过qputenv和qgetenv来设置和获取系统环境变量，既可以在代码中设置对应的值，也可以在系统环境变量中设置，比如windows系统环境变量中设置，相当于可以自定义字符串指定值，这样灵活性极大增强，有时候因为代码不能修改了，可以尝试去设置一个Qt认识的环境变量字符串值来产生效果。这里要特别提示的是，环境变量设置后一定要生效才能正常读取到，比如xp系统设置后可能要重启操作系统才能生效，还有一个是要重启QtCreator才能识别到最新的环境变量，可能是做了缓存机制。
 ```cpp
 //设置每个窗口都有独立的句柄
 QApplication a(argc, argv);
@@ -4908,7 +4907,17 @@ qDebug() << timer.elapsed();
 
 329. 同一个UI界面上，如果子UI和主UI有同名对象，然后使用的on_obj_slot这种方式，让Qt内部调用connectSlotsByName自动关联的信号槽，会导致信号槽错乱，https://bugreports.qt.io/browse/QTBUG-49749，建议取不同名字，或者手动connect去关联信号槽，保证不会出错。
 
-330. 一个高分屏缩放引发的血案，在Qt5中QWidget的devicePixelRatio()是int类型，Qt6中是qreal类型，也就是说在Qt6中这个函数返回的是准确的浮点值，而在Qt5中是整数值，这就导致在Qt5中很多计算不准确，必须要用devicePixelRatioF()这个函数。怪不得之前总有人反馈那个无边框窗体在高分屏有问题，而我这里测试的又是没问题的，因为我这测试的Qt6本来就不会出问题，而Qt5中我这强制写死的用QApplication::setAttribute(Qt::AA_Use96Dpi)，不会去开启缩放。确切的说应该是Qt5中不严谨导致的，因为Qt5中的QScreen::devicePixelRatio()这个函数也是qreal的，所以在Qt6中全部统一了。血淋淋的教训。
+330. 一个高分屏缩放引发的血案，在Qt5中QWidget的devicePixelRatio()是int类型，Qt6中是qreal类型，也就是说在Qt6中这个函数返回的是准确的浮点值，而在Qt5中是整数值，这就导致在Qt5中很多计算不准确，必须要用devicePixelRatioF()这个函数。怪不得之前总有人反馈那个无边框窗体在高分屏有问题，而我这里测试的又是没问题的，因为我这测试的Qt6本来就不会出问题，而Qt5中我这强制写的用QApplication::setAttribute(Qt::AA_Use96Dpi)，不会去开启缩放。确切的说应该是Qt5中不严谨导致的，因为Qt5中的QScreen::devicePixelRatio()这个函数也是qreal的，所以在Qt6中全部统一了。很惨的教训。
+
+331. 在鼠标事件中检测是否按下了左键还是右键，在mousePressEvent和mouseReleaseEvent中button()==Qt::RightButton是正确的，但是在mouseMoveEvent中居然是Qt::NoButton，必须用buttons()&Qt::RightButton这种方式判断。判断**单次点击**（按下或释放）是否为右键，请使用 `if (event->button() == Qt::RightButton)`。判断**在移动或持续状态**下右键是否被按下，请使用 `if (event->buttons() & Qt::RightButton)`。
+
+332. 浮点数的比较，强烈建议用qFuzzyCompare函数，而不是直接==比较，因为浮点数在计算机中存储涉及到精度问题，很可能不准确，导致比较失败。
+```cpp
+qreal b = 0.1 * 3;
+qreal c = 0.3;
+//打印结果 false true
+qDebug() << (b == c) << qFuzzyCompare(b, c);
+```
 
 ## 2 升级到Qt6
 ### 00：直观总结
@@ -5585,7 +5594,7 @@ public class QtAndroidActivity extends QtActivity
   }
 }
 
-//qt类中调用就方便了/如果有很多个函数都需要传入context则效率可以大大提升
+//qt类中调用就方便了/如果有很多个函数都需要传入context则效率可以极大提升
 QJniObject::callStaticMethod<void>("org/qt/QtAndroidReceiver", "getBattery", "()V");
 ```
 
@@ -5642,7 +5651,7 @@ for (int i = 0; i < count; ++i) {
 
 8. 当我们有很多项数据需要处理时，比如成千上万或者更多，那么为每个处理都创建一个线程可能导致大量的开销，这样来依次处理数据或许更快些。一种解决办法就是创建少量的辅助线程，并让每个线程只处理一组数据。
 
-9. 
+9. C++社区和《Effective C++》等权威书籍都一致建议：除非你有特殊的逻辑需要在构造函数体内进行计算后再赋值，否则永远优先使用成员初始化列表。
 
 ## 6 Qt大佬专区
 ### 6.1 酷码大佬
@@ -5782,7 +5791,7 @@ https://download.qt.io/archive/qt/5.12/5.12.0/qt-opensource-windows-x86-5.12.0.e
 |Qt官方下载新地址|[https://download.qt.io/new_archive/qt/](https://download.qt.io/new_archive/qt/)|
 |Qt国内镜像下载地址|[https://mirrors.cloud.tencent.com/qt](https://mirrors.cloud.tencent.com/qt)|
 |Qt安装包下载地址|[http://qthub.com/download/](http://qthub.com/download/)|
-|Qt最新版二进制包|[https://fsu0413.gitee.io/qtcompile/](https://fsu0413.gitee.io/qtcompile/)|
+|Qt最新版二进制包|[https://build-qt.fsu0413.me/zh-cn/](https://build-qt.fsu0413.me/zh-cn/)|
 |Qt版本更新内容|[https://doc-snapshots.qt.io/qt6-6.2/whatsnew62.html](https://doc-snapshots.qt.io/qt6-6.2/whatsnew62.html)|
 |Qt版本更新内容|[https://code.qt.io/cgit/qt/qtreleasenotes.git/about/qt/6.6.1/release-note.md](https://code.qt.io/cgit/qt/qtreleasenotes.git/about/qt/6.6.1/release-note.md)|
 |Qt中qmake变量说明|[https://doc.qt.io/qt-5/qmake-variable-reference.html](https://doc.qt.io/qt-5/qmake-variable-reference.html)|
